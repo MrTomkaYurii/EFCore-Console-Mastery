@@ -1,13 +1,13 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-
+<Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
     <ProjectReference Include="..\EFCoreMastery.Core\EFCoreMastery.Core.csproj" />
   </ItemGroup>
-
   <PropertyGroup>
     <TargetFramework>net11.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
-
+  <ItemGroup>
+    <None Include="..\..\Docs\08_AdvancedTopics\*.md" Link="Docs\%(Filename)%(Extension)" />
+  </ItemGroup>
 </Project>

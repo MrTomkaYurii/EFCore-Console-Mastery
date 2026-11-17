@@ -1,4 +1,7 @@
 <Solution>
+  <Folder Name="/Solution Items/">
+    <File Path="README.md" />
+  </Folder>
   <Folder Name="/00_Core/">
     <Project Path="src/EFCoreMastery.ConsoleApp/EFCoreMastery.ConsoleApp.csproj" />
     <Project Path="src/EFCoreMastery.Core/EFCoreMastery.Core.csproj" />
