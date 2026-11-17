@@ -1,39 +1,29 @@
 ﻿# 8.2. Проєкція запитів на представлення (Views / ToView)
 
 - **Глава:** 08. Додаткові теми
-- **Оригінал на Metanit:** [https://metanit.com/sharp/efcore/8.2.php](https://metanit.com/sharp/efcore/8.2.php)
+- **Джерело Metanit:** [https://metanit.com/sharp/efcore/8.2.php](https://metanit.com/sharp/efcore/8.2.php)
 - **Код прикладу:** [Lesson_8_2_DatabaseViews.cs](../../src/08_AdvancedTopics/Lesson_8_2_DatabaseViews.cs)
 
 ---
 
 ## Мета уроку
 
-Навчитися зіставляти `DbSet<T>` у контексті даних із SQL-представленнями (`VIEW`) бази даних за допомогою методів `HasNoKey()` і `ToView(...)`, а також виконувати поверх них типізовані LINQ-запити.
+Навчитися зіставляти `DbSet<T>` у контексті даних із SQL-представленнями (`VIEW`) бази даних за допомогою методів `HasNoKey()` і `ToView(...)`, розуміти правила роботи з безключовими сутностями (*Keyless Entity Types*) та виконувати поверх представлень типізовані LINQ-запити.
 
 ---
 
-## Теоретичний матеріал
+## Детальний теоретичний матеріал
 
-Окрім звичайних таблиць, EF Core дозволяє проєктувати дані з **представлень бази даних (Views)** на класи C#. Це особливо зручно для складних агрегованих вибірок, звітів та об'єднань (`JOIN` + `GROUP BY`), які інкапсульовані на рівні SQL.
+### 1. Навіщо використовувати SQL-представлення (`VIEW`) в EF Core?
 
-### Обмеження типів, зіставлених з представленнями (`Keyless Entity Types`)
+Окрім звичайних таблиць, реляційні бази даних підтримують **представлення (`VIEW`)** — збережені на рівні БД SQL-запити, до яких можна звертатися так само, як до таблиць. Це особливо корисно, коли:
+- у вас є складні звіти з багатьма `JOIN`, `GROUP BY` та агрегатними функціями (`COUNT`, `SUM`, `AVG`);
+- потрібно інкапсулювати бізнес-логіку вибірки на боці БД і використовувати її з різних застосунків;
+- ви хочете робити подальшу LINQ-фільтрацію (`Where`, `OrderBy`, `Skip`/`Take`) поверх уже згрупованих або об'єднаних даних.
 
-1. **Без первинного ключа:** для такого класу зазвичай викликають `HasNoKey()`.
-2. **Не відстежуються контекстом:** об'єкти, отримані з такого `DbSet`, завжди перебувають у стані `EntityState.Detached` (`ChangeTracker` їх не відстежує).
-3. **Тільки для читання:** ми можемо отримувати дані, фільтрувати та сортувати їх через LINQ, але **не можемо** додавати (`Add`), оновлювати (`Update`) чи видаляти (`Remove`) через `SaveChanges()`.
-4. **Навігаційні властивості:** звичайні сутності-таблиці не можуть мати навігаційних властивостей на безключові типи (хоча сам безключовий тип може мати посилання на звичайну сутність).
+### 2. Налаштування через `HasNoKey()` та `ToView(...)`
 
-### Навіщо потрібен `ToView(...)`?
-
-Виклик `modelBuilder.Entity<T>().ToView("ViewName")` повідомляє EF Core про дві речі:
-- Під час вибірки потрібно робити `SELECT ... FROM ViewName`.
-- Під час `EnsureCreated()` або генерації міграцій EF Core **не повинен** створювати фізичну таблицю `ViewName` (оскільки саме SQL-представлення створюється окремим SQL-скриптом або у міграції через `migrationBuilder.Sql(...)`).
-
----
-
-## Ключові фрагменти коду
-
-Конфігурація безключової сутності для представлення в `OnModelCreating`:
+У `OnModelCreating` для класу-проєкції зазвичай викликають два методи:
 
 ```csharp
 modelBuilder.Entity<CompanyProductsGroup>(pc =>
@@ -43,39 +33,101 @@ modelBuilder.Entity<CompanyProductsGroup>(pc =>
 });
 ```
 
-Створення SQL-представлення у SQLite та звернення до нього через LINQ:
+| Метод | Призначення |
+| :--- | :--- |
+| **`HasNoKey()`** | Позначає сутність як безключову (*Keyless Entity Type*), оскільки SQL-представлення (особливо з `GROUP BY`) зазвичай не мають первинного ключа. |
+| **`ToView("ViewName")`** | Повідомляє EF Core, що джерелом даних є представлення `"ViewName"`. Найважливіше: при `EnsureCreated()` або генерації міграцій EF Core **не створюватиме** фізичну таблицю з таким іменем. |
 
-```csharp
-setupDb.Database.ExecuteSqlRaw("""
-    CREATE VIEW IF NOT EXISTS View_ProductsByCompany AS
-    SELECT
-        c.Name AS CompanyName,
-        COUNT(p.Id) AS ProductCount,
-        SUM(p.Price * p.TotalCount) AS TotalSum
-    FROM Companies c
-    INNER JOIN Products p ON p.CompanyId = c.Id
-    GROUP BY c.Name;
-    """);
+> [!NOTE]
+> Одна й та сама сутність теоретично може бути одночасно зіставлена з таблицею через `ToTable(...)` (для запису) і з представленням через `ToView(...)` (для читання), але на практиці для звітів майже завжди створюють окремий клас-проєкцію без ключа.
 
-// Вибірка з фільтрацією через LINQ:
-var topCompanies = db.ProductsByCompany
-    .Where(g => g.TotalSum > 150_000)
-    .OrderByDescending(g => g.TotalSum)
-    .ToList();
+### 3. Обмеження безключових сутностей (`Keyless Entity Types`)
+
+Класи, налаштовані через `HasNoKey()` та `ToView(...)`, мають суттєві відмінності від звичайних сутностей-таблиць:
+
+1. **Відсутність первинного ключа:** EF Core не вимагає властивості `Id` або `[Key]` (атрибут `[Keyless]` із `Microsoft.EntityFrameworkCore` є альтернативою до `HasNoKey()`).
+2. **Не відстежуються контекстом (`ChangeTracker`):** об'єкти, завантажені з `DbSet` представлення, завжди перебувають у стані `EntityState.Detached` (фактично працюють як `AsNoTracking()`).
+3. **Тільки для читання (Read-Only):** ви можете виконувати `SELECT`, `Where`, `OrderBy`, `Count`, але **не можете** додавати (`Add`), оновлювати (`Update`) чи видаляти (`Remove`) такі об'єкти через `SaveChanges()`.
+4. **Обмеження навігаційних властивостей:** звичайні сутності-таблиці **не можуть** мати навігаційних властивостей, що посилаються на безключові типи (оскільки на безключовий тип неможливо створити зовнішній ключ). Проте сам безключовий тип може містити навігаційну властивість на звичайну сутність.
+
+---
+
+## Діаграма / Архітектура процесу
+
+ER-діаграма зв'язку базових таблиць (`Companies`, `Products`) та агрегованого SQL-представлення (`View_ProductsByCompany`):
+
+```mermaid
+erDiagram
+    Companies ||--o{ Products : "має багато (CompanyId)"
+    Companies {
+        int Id PK
+        string Name
+    }
+    Products {
+        int Id PK
+        string Name
+        int Price
+        int TotalCount
+        int CompanyId FK
+    }
+    View_ProductsByCompany {
+        string CompanyName "c.Name"
+        int ProductCount "COUNT(p.Id)"
+        int TotalSum "SUM(p.Price * p.TotalCount)"
+    }
+    Companies ||..|| View_ProductsByCompany : "агрегується у VIEW"
+    Products }o..|| View_ProductsByCompany : "агрегується у VIEW"
 ```
+
+---
+
+## Покроковий розбір прикладів коду
+
+У файлі [Lesson_8_2_DatabaseViews.cs](../../src/08_AdvancedTopics/Lesson_8_2_DatabaseViews.cs) реалізовано повний цикл роботи з представленням:
+
+1. **Моделі та клас-проєкція:**
+   - Таблиці представлені класами `Company` (один) та `Product` (багато), де товар має `Price` та `TotalCount`.
+   - Клас `CompanyProductsGroup` не має `Id` і містить три властивості: `CompanyName`, `ProductCount`, `TotalSum`.
+   - У `ViewsContext` оголошено `public DbSet<CompanyProductsGroup> ProductsByCompany { get; set; } = null!;`, а в `OnModelCreating` задано `pc.HasNoKey()` та `pc.ToView("View_ProductsByCompany")`.
+2. **Створення `VIEW` у базі даних:**
+   - Після `SqliteDbHelper.RecreateDatabase(setupDb)` (який створює лише таблиці `Companies` і `Products`) виконується `ExecuteSqlRaw` із командою:
+     ```sql
+     CREATE VIEW IF NOT EXISTS View_ProductsByCompany AS
+     SELECT
+         c.Name AS CompanyName,
+         COUNT(p.Id) AS ProductCount,
+         SUM(p.Price * p.TotalCount) AS TotalSum
+     FROM Companies c
+     INNER JOIN Products p ON p.CompanyId = c.Id
+     GROUP BY c.Name;
+     ```
+   - Наповнюються тестові дані для компаній `"Apple"`, `"Samsung"`, `"Huawei"`.
+3. **Секція 1 — Вибірка всіх даних із представлення:**
+   - Виклик `db.ProductsByCompany.ToList()` генерує простий запит:
+     ```sql
+     SELECT "v"."CompanyName", "v"."ProductCount", "v"."TotalSum"
+     FROM "View_ProductsByCompany" AS "v"
+     ```
+4. **Секція 2 — Додаткова LINQ-фільтрація та перевірка `ChangeTracker`:**
+   - Виклик `db.ProductsByCompany.Where(g => g.TotalSum > 150_000).OrderByDescending(g => g.TotalSum).ToList()` транслюється в SQL із `WHERE "v"."TotalSum" > 150000 ORDER BY "v"."TotalSum" DESC` — тобто фільтрація та сортування відбуваються на боці БД!
+   - Перевірка `db.ChangeTracker.Entries().Count()` повертає `0`, підтверджуючи, що безключові сутності не відстежуються контекстом.
 
 ---
 
 ## Особливості роботи в SQLite
 
-- **Синтаксис `CREATE VIEW`:** SQLite повністю підтримує стандартні SQL-представлення (`CREATE VIEW ... AS SELECT ...`), включаючи `CREATE VIEW IF NOT EXISTS`.
-- **EnsureCreated():** як і в SQL Server, `Database.EnsureCreated()` у SQLite створює лише таблиці, але **не створює** `VIEW`. Тому в навчальному прикладі ми створюємо представлення одразу після `RecreateDatabase()` за допомогою `ExecuteSqlRaw(...)`. У реальних проєктах для цього використовують EF Core Migrations (`migrationBuilder.Sql(...)`).
-- **Обмеження `ALTER VIEW` у SQLite:** на відміну від SQL Server (`CREATE OR ALTER VIEW`), SQLite не має `ALTER VIEW` — щоб змінити існуюче представлення в міграції, потрібно виконати `DROP VIEW IF EXISTS ...; CREATE VIEW ...;`.
+| Аспект | MS SQL Server | SQLite |
+| :--- | :--- | :--- |
+| **Створення представлення** | `CREATE VIEW ... AS SELECT ...` або `CREATE OR ALTER VIEW ...` | Підтримує `CREATE VIEW IF NOT EXISTS ... AS SELECT ...`. |
+| **Оновлення існуючого `VIEW`** | Можна використати `CREATE OR ALTER VIEW`. | **Немає `ALTER VIEW`!** Потрібно робити `DROP VIEW IF EXISTS ViewName; CREATE VIEW ViewName AS ...;`. |
+| **Робота `EnsureCreated()`** | Створює лише таблиці, **не створює** `VIEW`. | Створює лише таблиці, **не створює** `VIEW`. |
+| **Міграції (Migrations)** | `ToView` не генерує таблицю в міграції; `VIEW` додається вручну через `migrationBuilder.Sql(...)`. | Аналогічно: `VIEW` створюється в міграції через `migrationBuilder.Sql(...)`. |
 
 ---
 
-## Підсумок та підводні камені
+## Типові помилки, підводні камені та Best Practices
 
-- **Збіг імен стовпців:** імена псевдонімів (`AS CompanyName`, `AS ProductCount`, `AS TotalSum`) у `SELECT` представлення повинні точно збігатися з іменами властивостей C#-класу (або бути налаштовані через `HasColumnName(...)`).
-- **Не намагайтеся змінювати дані через `ToView`:** навіть якщо `VIEW` у БД теоретично оновлюване, безключова сутність (`HasNoKey`) в EF Core призначена лише для читання.
-- **Один клас — таблиця і представлення одночасно:** за потреби одну й ту саму сутність можна зіставити і з таблицею (`ToTable`), і з представленням (`ToView`), але для звітних проєкцій краще заводити окремий DTO/модельний клас.
+- **Точний збіг імен стовпців:** псевдоніми в `SELECT` представлення (`AS CompanyName`, `AS ProductCount`, `AS TotalSum`) повинні точно збігатися з іменами властивостей C#-класу (або бути явно зіставлені через `.Property(x => x.Prop).HasColumnName("...")`).
+- **Можливі `NULL` при агрегації:** якщо в `VIEW` використовується `LEFT JOIN` або `SUM(...)` по порожній таблиці, SQL може повернути `NULL`. Для таких випадків у C#-класі використовуйте nullable-типи (`int?`, `decimal?`) або `COALESCE(SUM(...), 0)` у SQL.
+- **Забутий `ToView(...)`:** якщо викликати лише `HasNoKey()` без `ToView(...)`, EF Core вважатиме, що це звичайна безключова таблиця, і під час `EnsureCreated()` або міграції спробує створити фізичну таблицю.
+- **Продуктивність вкладених фільтрів:** пам'ятайте, що кожен LINQ-запит до `ToView` обгортає `SELECT` представлення. Уникайте важких корельованих підзапитів усередині самого `VIEW`, якщо звертаєтеся до нього з високою частотою.

@@ -1,51 +1,51 @@
 ﻿# 2.12. Провайдери логування (ILoggerFactory, Console Logger)
 
 - **Глава:** 08. Додаткові теми
-- **Оригінал на Metanit:** [https://metanit.com/sharp/efcore/2.12.php](https://metanit.com/sharp/efcore/2.12.php)
+- **Джерело Metanit:** [https://metanit.com/sharp/efcore/2.12.php](https://metanit.com/sharp/efcore/2.12.php)
 - **Код прикладу:** [Lesson_2_12_LoggingProviders.cs](../../src/08_AdvancedTopics/Lesson_2_12_LoggingProviders.cs)
 
 ---
 
 ## Мета уроку
 
-Навчитися підключати та налаштовувати провайдери логування в Entity Framework Core: створювати власні провайдери через `ILoggerProvider` / `ILogger`, підключати їх локально або глобально через `ILoggerFactory`, фільтрувати події за категоріями `DbLoggerCategory` та рівнями `LogLevel`, а також використовувати стандартний консольний логер `Microsoft.Extensions.Logging.Console`.
+Навчитися підключати та налаштовувати провайдери логування в Entity Framework Core: створювати власні провайдери через інтерфейси `ILoggerProvider` та `ILogger`, підключати їх локально до конкретного контексту або глобально через `ILoggerFactory`, фільтрувати події за категоріями `DbLoggerCategory` і рівнями `LogLevel`, а також використовувати стандартний консольний логер із пакета `Microsoft.Extensions.Logging.Console`.
 
 ---
 
-## Теоретичний матеріал
+## Детальний теоретичний матеріал
 
-Хоча метод `optionsBuilder.LogTo(...)` зручний для швидкої діагностики, у реальних застосунках зазвичай використовується стандартна інфраструктура логування .NET — `Microsoft.Extensions.Logging`.
+### 1. Навіщо потрібні провайдери логування, якщо є `LogTo()`?
 
-### Власний провайдер логування (`ILoggerProvider` + `ILogger`)
+Простий метод `optionsBuilder.LogTo(Console.WriteLine)` зручний для швидкого налагодження, але у реальних застосунках використовується стандартна абстракція логування .NET — **`Microsoft.Extensions.Logging`**. Вона дозволяє:
+- централізовано керувати логами всього застосунку (ASP.NET Core, Worker Services, EF Core);
+- одночасно писати логи у кілька приймачів (консоль, файл, Serilog, Seq, Application Insights);
+- гнучко фільтрувати повідомлення за категоріями (`DbLoggerCategory`) та рівнями серйозності (`LogLevel`).
 
-Щоб реалізувати власну логіку запису логів (у файл, БД, зовнішній сервіс тощо), потрібно:
-1. Реалізувати інтерфейс `ILoggerProvider`:
-   - `CreateLogger(string categoryName)` — повертає екземпляр `ILogger` для вказаної категорії.
-   - `Dispose()` — звільняє ресурси.
-2. Реалізувати інтерфейс `ILogger`:
-   - `BeginScope<TState>(TState state)` — повертає `IDisposable?` для групування логів.
-   - `IsEnabled(LogLevel logLevel)` — визначає, чи активний логер для поточного рівня деталізації.
-   - `Log<TState>(...)` — формує та записує повідомлення за допомогою делегата `formatter(state, exception)`.
+### 2. Архітектура `ILoggerProvider` та `ILogger`
 
-### Способи підключення
+Щоб створити власний провайдер логування, необхідно реалізувати два інтерфейси з простору імен `Microsoft.Extensions.Logging`:
 
-| Спосіб | Як підключається | Коли використовувати |
+1. **`ILoggerProvider`** (наслідує `IDisposable`):
+   - `ILogger CreateLogger(string categoryName)` — фабричний метод, який створює або повертає екземпляр `ILogger` для певної категорії (наприклад, `Microsoft.EntityFrameworkCore.Database.Command`).
+   - `void Dispose()` — звільняє ресурси провайдера (закриває файлові потоки, мережеві з'єднання тощо).
+
+2. **`ILogger`**:
+   - `IDisposable? BeginScope<TState>(TState state)` — створює область видимості (*scope*) для групування логів однієї операції. Якщо області не потрібні, можна повертати `null` або `this` (якщо клас реалізує `IDisposable`).
+   - `bool IsEnabled(LogLevel logLevel)` — швидка перевірка, чи повинен логер обробляти повідомлення заданого рівня. Якщо повертає `false`, EF Core навіть не формуватиме рядок повідомлення (економія пам'яті та CPU).
+   - `void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)` — основний метод запису логу. Саме делегат `formatter(state, exception)` перетворює структурований стан події на читабельний текст.
+
+### 3. Способи підключення провайдерів до `DbContext`
+
+| Спосіб | Код підключення | Область дії та коли використовувати |
 | :--- | :--- | :--- |
-| Локально на екземпляр | `db.GetService<ILoggerFactory>().AddProvider(...)` | Для точкового діагностування окремого екземпляра `DbContext`. |
-| Глобально через фабрику | `optionsBuilder.UseLoggerFactory(MyLoggerFactory)` | Стандартний підхід: одна статична фабрика на весь тип контексту. |
-| Вбудований Console Logger | `builder.AddConsole()` (пакет `Microsoft.Extensions.Logging.Console`) | Коли достатньо структурованого кольорового виводу в консоль без написання власного провайдера. |
+| **Локально на екземпляр** | `db.GetService<ILoggerFactory>().AddProvider(new MyProvider());` | Діє лише для конкретного екземпляра `DbContext` (потрібен `using Microsoft.EntityFrameworkCore.Infrastructure;`). Зручно для точкового діагностування. |
+| **Глобально через `UseLoggerFactory`** | `optionsBuilder.UseLoggerFactory(MyLoggerFactory);` | Стандартний підхід для консольних програм: одна `static readonly ILoggerFactory` на весь тип контексту. |
+| **Вбудований Console Logger** | `builder.AddConsole()` (пакет `Microsoft.Extensions.Logging.Console`) | Коли потрібен структурований кольоровий вивід у консоль без написання власного `ILoggerProvider`. |
+| **Через DI (ASP.NET Core)** | Автоматично через `AddDbContext<AppContext>(...)` | У веб-застосунках EF Core автоматично бере `ILoggerFactory` з DI-контейнера. |
 
-### Фільтрація логів
+### 4. Фільтрація логів за категоріями та `LogLevel`
 
-Щоб не отримувати зайві технічні повідомлення EF Core (ініціалізація моделі, пул з'єднань тощо), у `LoggerFactory.Create` застосовують метод `AddFilter`:
-- `DbLoggerCategory.Database.Command.Name` — категорія, що відповідає за згенеровані та виконані SQL-запити.
-- `LogLevel.Information` — рівень, на якому логуються SQL-команди з параметрами та часом виконання.
-
----
-
-## Ключові фрагменти коду
-
-Глобальна фабрика логерів із фільтрацією лише SQL-команд:
+Без фільтрації EF Core логує десятки технічних подій: ініціалізацію моделі, компіляцію запитів, відкриття/закриття з'єднань, зміни в `ChangeTracker`. Щоб бачити лише потрібну інформацію (наприклад, SQL-запити), у `LoggerFactory.Create` використовують `AddFilter`:
 
 ```csharp
 public static readonly ILoggerFactory MyLoggerFactory = LoggerFactory.Create(builder =>
@@ -56,31 +56,81 @@ public static readonly ILoggerFactory MyLoggerFactory = LoggerFactory.Create(bui
             && level == LogLevel.Information)
         .AddConsole();
 });
-
-// У OnConfiguring:
-optionsBuilder.UseLoggerFactory(MyLoggerFactory);
 ```
 
-Локальне додавання власного провайдера до вже створеного контексту:
+#### Основні категорії `DbLoggerCategory`
 
-```csharp
-using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.Extensions.Logging;
+| Категорія | Що логує |
+| :--- | :--- |
+| `DbLoggerCategory.Database.Command.Name` | Згенеровані SQL-команди (`SELECT`, `INSERT`, `UPDATE`, `DELETE`), їхні параметри та час виконання. |
+| `DbLoggerCategory.Database.Connection.Name` | Відкриття та закриття з'єднання з БД. |
+| `DbLoggerCategory.Database.Transaction.Name` | Початок, підтвердження (`Commit`) та відкат (`Rollback`) транзакцій. |
+| `DbLoggerCategory.Query.Name` | Побудова, компіляція та виконання LINQ-запитів. |
+| `DbLoggerCategory.Update.Name` | Події `SaveChanges()`, виявлення змін та обробка пакетів команд. |
+| `DbLoggerCategory.ChangeTracking.Name` | Відстеження станів сутностей у `ChangeTracker`. |
 
-var loggerFactory = db.GetService<ILoggerFactory>();
-loggerFactory.AddProvider(new CustomFileAndConsoleLoggerProvider(logFilePath, filterSqlOnly: false));
+#### Рівні логування `LogLevel` (від найдетальнішого до критичного)
+
+`Trace` → `Debug` → `Information` → `Warning` → `Error` → `Critical` → `None`.
+SQL-команди за замовчуванням логуються на рівні **`LogLevel.Information`**, а помилки виконання SQL — на рівні **`LogLevel.Error`**.
+
+---
+
+## Діаграма / Архітектура процесу
+
+Блок-схема конвеєра логування від операції в `DbContext` до запису у файл або консоль:
+
+```mermaid
+flowchart TD
+    A["Операція в DbContext: SaveChanges() або LINQ-запит"] --> B["Внутрішній логер EF Core (категорія DbLoggerCategory)"]
+    B --> C["ILoggerFactory"]
+    C --> D{"Фільтр AddFilter(category, level)"}
+    D -- "Не відповідає фільтру" --> E["Ігнорується"]
+    D -- "Відповідає фільтру" --> F["ILoggerProvider.CreateLogger(categoryName)"]
+    F --> G{"ILogger.IsEnabled(logLevel)"}
+    G -- "false" --> E
+    G -- "true" --> H["ILogger.Log(..., formatter)"]
+    H --> I["Виклик formatter(state, exception)"]
+    I --> J["Console Logger (AddConsole)"]
+    I --> K["CustomFileAndConsoleLogger (Файл + Консоль)"]
 ```
+
+---
+
+## Покроковий розбір прикладів коду
+
+У файлі [Lesson_2_12_LoggingProviders.cs](../../src/08_AdvancedTopics/Lesson_2_12_LoggingProviders.cs) реалізовано три способи роботи з провайдерами логування:
+
+1. **Власний провайдер `CustomFileAndConsoleLoggerProvider`:**
+   - Приймає шлях до файлу `logFilePath` і прапорець `filterSqlOnly`.
+   - Метод `CreateLogger(string categoryName)` повертає вкладений клас `CustomLogger`, який запам'ятовує `categoryName`.
+   - У `IsEnabled(LogLevel logLevel)` відсікає все нижче `LogLevel.Information`.
+   - У `Log<TState>(...)` викликає `formatter(state, exception)`, дописує рядок у файл `lesson_2_12_efcore.log` через `File.AppendAllText`, а в консоль виводить повідомлення сірим кольором.
+2. **Секція 1 — Локальне підключення через `GetService<ILoggerFactory>()`:**
+   - Створюється контекст `LoggingContext(connStr)` без зовнішньої фабрики.
+   - Через `db.GetService<ILoggerFactory>().AddProvider(...)` додається `CustomFileAndConsoleLoggerProvider(..., filterSqlOnly: false)`.
+   - Під час `db.SaveChanges()` та `db.Users.ToList()` у лог потрапляють **усі** події рівня `Information` і вище (ініціалізація контексту, відкриття з'єднання, SQLite-запити `INSERT INTO "Users" ... RETURNING "Id";` та `SELECT "u"."Id", "u"."Age", "u"."Name" FROM "Users" AS "u"`).
+3. **Секція 2 — Глобальна фабрика з фільтром `DbLoggerCategory.Database.Command.Name`:**
+   - Створюється `LoggerFactory.Create(...)` із фільтром: пропускати лише події категорії `DbLoggerCategory.Database.Command.Name` з рівнем `LogLevel.Information`.
+   - Фабрика передається у `LoggingContext`, де в `OnConfiguring` викликається `optionsBuilder.UseLoggerFactory(_loggerFactory)`.
+   - Тепер при виконанні `db.Users.Where(u => u.Age >= 25).ToList()` у лог потрапляє виключно згенерований SQL-запит без зайвого шуму.
+4. **Секція 3 — Вбудований Console Logger (`builder.AddConsole()`):**
+   - Використовується стандартний провайдер із пакета `Microsoft.Extensions.Logging.Console`.
+   - Скорочений перевантажений фільтр `.AddFilter(DbLoggerCategory.Database.Command.Name, LogLevel.Information)` дозволяє бачити у консолі кольорово відформатовані SQL-команди (наприклад, `SELECT COUNT(*) FROM "Users" AS "u"`).
 
 ---
 
 ## Особливості роботи в SQLite
 
-Механізм `ILoggerFactory` та провайдери логування є **повністю незалежними від провайдера БД**. У SQLite, як і в SQL Server чи PostgreSQL, категорія `DbLoggerCategory.Database.Command` виводить точний згенерований SQLite-діалект (наприклад, `INSERT INTO "Users" ...`, `RETURNING "Id"` тощо).
+Механізм `ILoggerFactory` та провайдери логування є **повністю незалежними від провайдера бази даних**.
+- У SQLite, як і в MS SQL Server чи PostgreSQL, категорія `DbLoggerCategory.Database.Command` фіксує точний SQL-діалект провайдера (подвійні лапки для ідентифікаторів `"Users"`, `RETURNING "Id"`, `INTEGER` тощо).
+- У SQLite параметри команд у логах позначаються як `@p0`, `@p1`, але їхні реальні значення за замовчуванням приховані (`?`).
 
 ---
 
-## Підсумок та підводні камені
+## Типові помилки, підводні камені та Best Practices
 
-- **Не створюйте `LoggerFactory` всередині `OnConfiguring`!** Якщо викликати `LoggerFactory.Create(...)` при кожному створенні `DbContext`, EF Core постійно створюватиме нові екземпляри внутрішніх сервісів і швидко призведе до витоку пам'яті (EF Core навіть видасть попередження `ManyServiceProvidersCreatedWarning`). Завжди зберігайте `ILoggerFactory` у `static readonly` полі або передавайте через DI.
-- **Чутливі дані:** за замовчуванням значення параметрів SQL у логах приховані (`?` або `@p0` без значень). Щоб бачити значення параметрів під час налагодження, потрібно додатково викликати `.EnableSensitiveDataLogging()`.
-- **Пакет для Console Logger:** метод розширення `AddConsole()` знаходиться в окремому NuGet-пакеті `Microsoft.Extensions.Logging.Console`.
+- **НІКОЛИ не створюйте `LoggerFactory` всередині `OnConfiguring`!** Якщо викликати `LoggerFactory.Create(...)` при кожному створенні екземпляра `DbContext`, EF Core вважатиме, що конфігурація змінилася, і щоразу будуватиме новий внутрішній сервіс-провайдер. Це призводить до стрімкого витоку пам'яті та попередження `ManyServiceProvidersCreatedWarning`. Завжди оголошуйте `ILoggerFactory` як `static readonly` поле або передавайте через DI.
+- **Приховування чутливих даних:** за замовчуванням EF Core не виводить у логи значення SQL-параметрів (паролі, персональні дані). Щоб бачити параметри під час локального налагодження, потрібно явно додати `.EnableSensitiveDataLogging()` у `OnConfiguring` (але вимикати в Production!).
+- **NuGet-пакет для `AddConsole()`:** метод розширення `AddConsole()` не входить до базового `Microsoft.Extensions.Logging` — необхідно встановити пакет `Microsoft.Extensions.Logging.Console`.
+- **Потокобезпечність власного провайдера:** метод `ILogger.Log` може викликатися одночасно з різних потоків. У реальних проєктах для запису у файл слід використовувати `lock` або асинхронну чергу замість прямого `File.AppendAllText`.

@@ -1,53 +1,107 @@
 ﻿# 5.5. Агрегатні операції (Any, All, Count, Sum, Min, Max, Average)
 
 - **Глава:** 06. Запити та LINQ to Entities
-- **Оригінал на Metanit:** [Агрегатные операции](https://metanit.com/sharp/efcore/5.5.php)
+- **Джерело Metanit:** [Агрегатные операции](https://metanit.com/sharp/efcore/5.5.php)
 - **Код прикладу:** [Lesson_5_5_Aggregates.cs](../../src/06_QueriesAndLinq/Lesson_5_5_Aggregates.cs)
 
 ## Мета уроку
 
-Навчитися обчислювати скалярні підсумкові значення безпосередньо в SQLite (`Any`, `All`, `Count`, `Sum`, `Min`, `Max`, `Average`), не завантажуючи рядки таблиці у пам'ять застосунку.
+Навчитися виконувати скалярні агрегатні обчислення (`Any`, `All`, `Count`, `Sum`, `Min`, `Max`, `Average` та їхні `Async`-версії) безпосередньо на стороні бази даних SQLite, розуміючи, як кожен метод транслюється в SQL та як уникнути типових помилок на порожніх вибірках.
 
-## Теоретичний матеріал
+## Детальний теоретичний матеріал
 
-Агрегатні методи LINQ виконуються **негайно** (Immediate Execution) і повертають одне скалярне значення (`bool`, `int`, `double` тощо).
+Агрегатні операції LINQ to Entities відносяться до методів **негайного виконання (Immediate Execution)**: вони одразу надсилають SQL-запит до бази даних і повертають одне скалярне значення (`bool`, `int`, `long`, `double`, `decimal` тощо), не завантажуючи самі сутності в пам'ять і не залучаючи `ChangeTracker`.
 
-| Метод | Призначення | SQL-еквівалент у SQLite |
-| :--- | :--- | :--- |
-| `Any(predicate)` | Перевіряє, чи існує хоча б один елемент | `SELECT EXISTS (SELECT 1 ... WHERE ...)` |
-| `All(predicate)` | Перевіряє, чи всі елементи задовольняють умову | `SELECT NOT EXISTS (SELECT 1 ... WHERE NOT (...))` |
-| `Count()` / `Count(p)` | Підраховує кількість записів | `SELECT COUNT(*)` |
-| `Sum(selector)` | Обчислює суму значень | `SELECT COALESCE(SUM(...), 0)` |
-| `Min(selector)` | Знаходить мінімальне значення | `SELECT MIN(...)` |
-| `Max(selector)` | Знаходить максимальне значення | `SELECT MAX(...)` |
-| `Average(selector)` | Обчислює середнє арифметичне | `SELECT AVG(CAST(... AS REAL))` |
+### Огляд усіх агрегатних методів
 
-## Ключові фрагменти коду
+| Метод (та Async-версія) | Призначення | SQL-еквівалент у SQLite | Поведінка на порожній таблиці |
+| :--- | :--- | :--- | :--- |
+| `Any()` / `Any(predicate)` | Перевіряє, чи існує хоча б один рядок | `SELECT EXISTS (SELECT 1 FROM ... WHERE ...)` | Повертає `false` |
+| `All(predicate)` | Перевіряє, чи **всі** рядки задовольняють умову | `SELECT NOT EXISTS (SELECT 1 ... WHERE NOT (...))` | Повертає `true` (вакуумна істина!) |
+| `Count()` / `Count(predicate)` | Підраховує кількість рядків (`int`) | `SELECT COUNT(*) FROM ...` | Повертає `0` |
+| `LongCount()` | Підраховує кількість рядків (`long`) | `SELECT COUNT(*) FROM ...` | Повертає `0L` |
+| `Sum(selector)` | Сума значень стовпця | `SELECT COALESCE(SUM(...), 0)` | Повертає `0` (завдяки `COALESCE`) |
+| `Min(selector)` | Мінімальне значення | `SELECT MIN(...)` | Кидає `InvalidOperationException` для не-nullable `int`! |
+| `Max(selector)` | Максимальне значення | `SELECT MAX(...)` | Кидає `InvalidOperationException` для не-nullable `int`! |
+| `Average(selector)` | Середнє арифметичне | `SELECT AVG(CAST(... AS REAL))` | Кидає `InvalidOperationException` для не-nullable `int`! |
 
+> **Зверніть увагу на `All(predicate)`:** Через трансляцію в `NOT EXISTS (... WHERE NOT (condition))` метод `All` на **порожній** таблиці поверне `true`, оскільки не знайдено жодного рядка, який порушує умову.
+
+## Діаграма / Архітектура процесу
+
+```mermaid
+flowchart LR
+    A["db.Users.Where(u => u.Company.Name == Microsoft)"] --> B{"Агрегатний метод"}
+    B -- "Any()" --> C["SQL: SELECT EXISTS (...) -> bool"]
+    B -- "Count()" --> D["SQL: SELECT COUNT(*) -> int"]
+    B -- "Average(u => u.Age)" --> E["SQL: SELECT AVG(CAST(Age AS REAL)) -> double"]
+    B -- "Sum(u => u.Age)" --> F["SQL: SELECT COALESCE(SUM(Age), 0) -> int"]
+```
+
+## Покроковий розбір прикладів коду
+
+У файлі [Lesson_5_5_Aggregates.cs](../../src/06_QueriesAndLinq/Lesson_5_5_Aggregates.cs) таблиця `Users` містить 4 записи: `Tom` (36, Microsoft), `Bob` (39, Google), `Alice` (28, Microsoft), `Kate` (25, Google).
+
+### 1. Перевірка умов: `Any` та `All`
 ```csharp
 bool hasGoogleUsers = db.Users.Any(u => u.Company!.Name == "Google");
 bool allMicrosoft = db.Users.All(u => u.Company!.Name == "Microsoft");
+```
+Для `Any` SQLite виконує:
+```sql
+SELECT EXISTS (
+    SELECT 1
+    FROM "Users" AS "u"
+    INNER JOIN "Companies" AS "c" ON "u"."CompanyId" = "c"."Id"
+    WHERE "c"."Name" = 'Google')
+```
+Результат: `hasGoogleUsers = true`, `allMicrosoft = false`.
 
+### 2. Підрахунок: `Count`
+```csharp
 int totalUsers = db.Users.Count();
-int minAge = db.Users.Min(u => u.Age);
-int maxAge = db.Users.Max(u => u.Age);
+int tomUsers = db.Users.Count(u => u.Name!.Contains("Tom"));
+```
+Другий виклик генерує `SELECT COUNT(*) FROM "Users" AS "u" WHERE instr("u"."Name", 'Tom') > 0` і повертає `1` (лише `Tom`).
 
+### 3. Мінімум, максимум та середнє: `Min`, `Max`, `Average`
+```csharp
+int minAge = db.Users.Min(u => u.Age); // 25
+int maxAge = db.Users.Max(u => u.Age); // 39
 double avgMicrosoftAge = db.Users
     .Where(u => u.Company!.Name == "Microsoft")
-    .Average(u => u.Age);
+    .Average(u => u.Age); // (36 + 28) / 2 = 32.0
+```
+Для `Average` по цілочисельному полю `Age` провайдер SQLite генерує:
+```sql
+SELECT AVG(CAST("u"."Age" AS REAL))
+FROM "Users" AS "u"
+INNER JOIN "Companies" AS "c" ON "u"."CompanyId" = "c"."Id"
+WHERE "c"."Name" = 'Microsoft'
+```
 
+### 4. Сума значень: `Sum`
+```csharp
+int sumAll = db.Users.Sum(u => u.Age); // 128
 int sumMicrosoft = db.Users
     .Where(u => u.Company!.Name == "Microsoft")
-    .Sum(u => u.Age);
+    .Sum(u => u.Age); // 64
 ```
+SQLite-запит використовує `COALESCE(SUM("u"."Age"), 0)`, що гарантує повернення `0` замість `NULL`, якщо під умову `Where` не потрапить жодного запису.
 
 ## Особливості роботи в SQLite
 
-- У SQLite `SUM()` для порожньої вибірки повертає `NULL`, тому EF Core огортає його в `COALESCE(SUM(...), 0)` для не-nullable числових типів.
-- Для `Average()` над цілочисельним стовпцем EF Core додає `CAST("u"."Age" AS REAL)`, щоб уникнути цілочисельного ділення.
-- Для `decimal` у SQLite агрегати (`Sum`, `Average`, `Min`, `Max`) історично мали обмеження (оскільки SQLite не має нативного типу `DECIMAL` і зберігає його як `TEXT`). Для `int` та `double` усе працює нативно на боці БД.
+| Особливість | SQLite | MS SQL Server |
+| :--- | :--- | :--- |
+| **`Average` для `int`** | `AVG(CAST(col AS REAL))` -> `double` | `AVG(CAST(col AS float))` -> `double` |
+| **Агрегати над `decimal`** | SQLite зберігає `decimal` як `TEXT` і не підтримує `SUM`/`AVG`/`MIN`/`MAX` над `decimal` напряму в БД без явного приведення або обчислення на клієнті | Повна нативна підтримка `DECIMAL`/`MONEY` на боці сервера |
+| **`SUM` порожньої вибірки** | SQL `SUM()` повертає `NULL`, тому EF Core додає `COALESCE(..., 0)` | Аналогічно `SUM()` повертає `NULL`, EF Core додає `COALESCE(..., 0)` |
 
-## Підсумок та підводні камені
+## Типові помилки, підводні камені та Best Practices
 
-- **Порожня вибірка та `Min`/`Max`/`Average`:** виклик `Min(u => u.Age)` на порожній таблиці для не-nullable `int` викине `InvalidOperationException` (бо SQL поверне `NULL`). Безпечніше проєктувати в nullable (`Min(u => (int?)u.Age) ?? 0`).
-- Для перевірки наявності записів завжди використовуйте `Any()`, а не `Count() > 0` — `EXISTS` зупиняється на першому знайденому рядку й працює значно швидше.
+- **Використовуйте `Any()` замість `Count() > 0`:** `Count() > 0` змушує БД порахувати **всі** рядки, що відповідають умові, тоді як `Any()` (`EXISTS`) зупиняється одразу на першому знайденому збігу.
+- **Пастка порожньої вибірки для `Min`, `Max`, `Average`:** Якщо таблиця порожня (або фільтр `Where` не знайшов жодного рядка), `db.Users.Min(u => u.Age)` кине `InvalidOperationException: Nullable object must have a value`, бо SQL `MIN()` повертає `NULL`, який неможливо записати в `int`. Безпечний прийом — привести селектор до nullable:
+  ```csharp
+  int minAge = db.Users.Min(u => (int?)u.Age) ?? 0;
+  ```
+- **Поєднання фільтра та агрегату:** Замість `db.Users.Where(u => ...).Count()` можна писати коротше: `db.Users.Count(u => ...)`. Але для `Sum`, `Min`, `Max`, `Average` умова завжди задається через попередній `.Where(...)`.

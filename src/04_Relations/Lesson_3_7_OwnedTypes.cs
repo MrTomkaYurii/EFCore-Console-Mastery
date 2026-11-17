@@ -17,6 +17,10 @@ namespace EFCoreConsoleMastery.Topics.Ch04
         public int ChapterOrder => 4;
         public int LessonOrder => 10;
 
+        /// <summary>
+        /// Демонструє роботу з власними типами (Owned Entity Types) через атрибут <c>[Owned]</c> та Fluent API <c>OwnsOne</c>,
+        /// які за замовчуванням зберігаються в тій самій таблиці, що й сутність-власник (table splitting).
+        /// </summary>
         public void Run()
         {
             SqliteDbHelper.PrintSection("1. Збереження Owned Types в одній таблиці з власником");
@@ -24,6 +28,8 @@ namespace EFCoreConsoleMastery.Topics.Ch04
             {
                 SqliteDbHelper.RecreateDatabase(db);
 
+                // У SQLite створюється лише одна таблиця "Users" зі стовпцями:
+                // Id, Login, Password, Profile_Name, Profile_Age, Address_City, Address_Street.
                 var user1 = new User
                 {
                     Login = "login1",
@@ -47,7 +53,9 @@ namespace EFCoreConsoleMastery.Topics.Ch04
             SqliteDbHelper.PrintSection("2. Читання без Include (дані лежать у тій самій таблиці Users)");
             using (var db = new AppContextL3_7())
             {
-                // Owned-типи завантажуються автоматично разом із сутністю-власником
+                // На відміну від звичайних навігаційних властивостей, Owned-типи завантажуються АВТОМАТИЧНО без Include(),
+                // оскільки фізично вони є стовпцями тієї самої таблиці Users (SELECT * FROM Users без JOIN).
+                // Важливо: якщо всі стовпці Owned-типу в рядку БД дорівнюють NULL, EF Core залишить саму властивість (напр. u.Address) рівною null.
                 var users = db.Users.ToList();
                 foreach (var u in users)
                 {
@@ -62,47 +70,69 @@ namespace EFCoreConsoleMastery.Topics.Ch04
 
 namespace EFCoreConsoleMastery.Topics.Ch04.L3_7
 {
-    /// <summary>Сутність-власник (Owner).</summary>
+    /// <summary>Сутність-власник (Owner), до таблиці якої вбудовуються Owned-типи.</summary>
     public class User
     {
+        /// <summary>Первинний ключ користувача.</summary>
         public int Id { get; set; }
+
+        /// <summary>Логін користувача.</summary>
         public string? Login { get; set; }
+
+        /// <summary>Пароль користувача.</summary>
         public string? Password { get; set; }
 
-        /// <summary>Власний тип, налаштований через атрибут [Owned].</summary>
+        /// <summary>Власний тип, налаштований через атрибут <c>[Owned]</c>.</summary>
         public UserProfile? Profile { get; set; }
 
-        /// <summary>Власний тип, налаштований через Fluent API OwnsOne().</summary>
+        /// <summary>Власний тип, налаштований через Fluent API <c>OwnsOne()</c>.</summary>
         public Address? Address { get; set; }
     }
 
-    /// <summary>Власний тип не має власного первинного ключа Id.</summary>
+    /// <summary>
+    /// Власний тип (Owned Type) не має власного первинного ключа <c>Id</c> у C#-моделі —
+    /// він логічно належить лише одному власнику і не може існувати окремо як <c>DbSet&lt;UserProfile&gt;</c>.
+    /// </summary>
     [Owned]
     public class UserProfile
     {
+        /// <summary>Ім'я користувача (стовпець Profile_Name у таблиці Users).</summary>
         public string? Name { get; set; }
+
+        /// <summary>Вік користувача (стовпець Profile_Age у таблиці Users).</summary>
         public int Age { get; set; }
     }
 
-    /// <summary>Ще один власний тип, налаштований у OnModelCreating через OwnsOne.</summary>
+    /// <summary>Ще один власний тип, налаштований у <c>OnModelCreating</c> через <c>OwnsOne</c>.</summary>
     public class Address
     {
+        /// <summary>Місто (стовпець Address_City у таблиці Users).</summary>
         public string? City { get; set; }
+
+        /// <summary>Вулиця (стовпець Address_Street у таблиці Users).</summary>
         public string? Street { get; set; }
     }
 
+    /// <summary>Контекст бази даних для уроку 3.7 (SQLite).</summary>
     public class AppContextL3_7 : DbContext
     {
+        /// <summary>Користувачі (містить також вбудовані стовпці Profile_* та Address_*).</summary>
         public DbSet<User> Users { get; set; } = null!;
 
+        /// <summary>Налаштовує підключення до SQLite.</summary>
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             optionsBuilder.UseSqlite(SqliteDbHelper.GetConnectionString("ch04_l3_7"));
         }
 
+        /// <summary>
+        /// Налаштовує власний тип <see cref="Address"/> через Fluent API.
+        /// </summary>
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            // Усі властивості Address потраплять у таблицю Users зі стовпцями Address_City, Address_Street
+            // OwnsOne вбудовує властивості Address у таблицю Users зі стовпцями Address_City, Address_Street.
+            // При потребі можна викликати .ToTable("UserAddresses"), щоб винести Owned-тип в окрему таблицю зі спільним PK,
+            // або .OwnsMany(...) для колекції власних об'єктів (які завжди виносяться в окрему таблицю або JSON).
             modelBuilder.Entity<User>().OwnsOne(u => u.Address);
         }
     }

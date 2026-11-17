@@ -18,6 +18,10 @@ public class Lesson_5_9_GlobalQueryFilters : ILesson
     public int ChapterOrder => 6;
     public int LessonOrder => 10;
 
+    /// <summary>
+    /// Запускає демонстрацію глобальних фільтрів запитів (<c>HasQueryFilter</c>)
+    /// із динамічним параметром контексту (<see cref="AppDbContext.CurrentRoleId"/>) та їх відключення через <c>IgnoreQueryFilters()</c>.
+    /// </summary>
     public void Run()
     {
         // 1. Наповнення бази даних
@@ -40,6 +44,10 @@ public class Lesson_5_9_GlobalQueryFilters : ILesson
 
         // 2. Автоматичне застосування HasQueryFilter (Age > 17 && RoleId == CurrentRoleId)
         SqliteDbHelper.PrintSection("1. Запит із активним HasQueryFilter (CurrentRoleId = 2)");
+        // Прив'язка фільтра до властивості екземпляра DbContext (CurrentRoleId) є типовим прийомом для
+        // реалізації Soft Delete (IsDeleted == false) або Multi-Tenancy (TenantId == _currentTenantId).
+        // EF Core параметризує CurrentRoleId у SQLite як @__ef_filter__CurrentRoleId_0, тому план запиту кешується,
+        // а значення підставляється динамічно для кожного екземпляра AppDbContext!
         using (var db = new AppDbContext { CurrentRoleId = 2 })
         {
             var query = db.Users.Include(u => u.Role);
@@ -50,7 +58,8 @@ public class Lesson_5_9_GlobalQueryFilters : ILesson
             foreach (var user in query.ToList())
                 Console.WriteLine($"  Name: {user.Name}, Age: {user.Age}, Role: {user.Role?.Name}");
 
-            // Фільтр також діє на агрегатні операції (Min, Count тощо)
+            // Глобальний фільтр діє на УСІ LINQ-операції: вибірки, Include, Find (у EF Core), агрегати (Min, Count),
+            // а також на ExecuteUpdate / ExecuteDelete!
             int minFilteredAge = db.Users.Min(u => u.Age);
             Console.WriteLine($"\nМінімальний вік з фільтром: {minFilteredAge}");
         }
@@ -59,6 +68,10 @@ public class Lesson_5_9_GlobalQueryFilters : ILesson
         SqliteDbHelper.PrintSection("2. Відключення фільтра через IgnoreQueryFilters()");
         using (var db = new AppDbContext { CurrentRoleId = 2 })
         {
+            // IgnoreQueryFilters() вимикає ВСІ глобальні фільтри для поточного запиту (корисно для адмін-панелей,
+            // відновлення видалених записів або фонових завдань).
+            // Зауваження: для однієї сутності можна задати лише ОДИН виклик HasQueryFilter (наступний перезапише попередній),
+            // тому кілька умов об'єднують через &&.
             int minAllAge = db.Users.IgnoreQueryFilters().Min(u => u.Age);
             Console.WriteLine($"Мінімальний вік без фільтра (IgnoreQueryFilters): {minAllAge}");
 
@@ -71,37 +84,58 @@ public class Lesson_5_9_GlobalQueryFilters : ILesson
 
 namespace EFCoreConsoleMastery.Topics.Ch06.L5_9
 {
+    /// <summary>Роль користувача (довідникова сутність).</summary>
     public class Role
     {
+        /// <summary>Первинний ключ ролі.</summary>
         public int Id { get; set; }
+
+        /// <summary>Назва ролі (наприклад, "user", "admin").</summary>
         public string? Name { get; set; }
     }
 
+    /// <summary>Користувач (до цієї сутності застосовується глобальний фільтр запитів).</summary>
     public class User
     {
+        /// <summary>Первинний ключ користувача.</summary>
         public int Id { get; set; }
+
+        /// <summary>Ім'я користувача.</summary>
         public string? Name { get; set; }
+
+        /// <summary>Вік користувача.</summary>
         public int Age { get; set; }
+
+        /// <summary>Зовнішній ключ до таблиці Roles.</summary>
         public int RoleId { get; set; }
+
+        /// <summary>Навігаційна властивість до ролі користувача.</summary>
         public Role? Role { get; set; }
     }
 
+    /// <summary>Контекст бази даних для уроку 5.9 (глобальні фільтри запитів HasQueryFilter).</summary>
     public class AppDbContext : DbContext
     {
+        /// <summary>Таблиця користувачів.</summary>
         public DbSet<User> Users { get; set; } = null!;
+
+        /// <summary>Таблиця ролей.</summary>
         public DbSet<Role> Roles { get; set; } = null!;
 
-        /// <summary>Параметр рівня контексту, що використовується у глобальному фільтрі.</summary>
+        /// <summary>Параметр рівня екземпляра контексту, що динамічно підставляється у глобальний фільтр.</summary>
         public int CurrentRoleId { get; set; }
 
+        /// <summary>Налаштовує підключення до локальної БД SQLite для уроку 5.9.</summary>
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             optionsBuilder.UseSqlite(SqliteDbHelper.GetConnectionString("ch06_lesson_5_9"));
         }
 
+        /// <summary>Реєструє глобальний фільтр запитів для сутності <see cref="User"/>.</summary>
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            // Фільтр рівня моделі застосовується до всіх LINQ-запитів до User
+            // Фільтр рівня моделі застосовується до всіх LINQ-запитів до User.
+            // Звернення до властивості екземпляра CurrentRoleId транслятор перетворює на SQL-параметр.
             modelBuilder.Entity<User>()
                 .HasQueryFilter(u => u.Age > 17 && u.RoleId == CurrentRoleId);
         }

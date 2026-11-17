@@ -18,6 +18,11 @@ public class Lesson_2_5_EntityFields : ILesson
     public int ChapterOrder => 3;
     public int LessonOrder => 5;
 
+    /// <summary>
+    /// Запускає демонстрацію інкапсуляції сутності через приватні поля:
+    /// створює об'єкти через конструктор, зберігає в SQLite, а потім читає у новому контексті
+    /// та виконує LINQ-пошук по прихованому полю через EF.Property.
+    /// </summary>
     public void Run()
     {
         SqliteDbHelper.PrintSection("2.5. Використання полів сутності");
@@ -33,7 +38,9 @@ public class Lesson_2_5_EntityFields : ILesson
             db.SaveChanges();
         }
 
-        // Читаємо у новому контексті, щоб переконатися, що EF Core заповнює приватні поля
+        // Читаємо у новому контексті, щоб переконатися, що EF Core матеріалізує сутності
+        // напряму через приватні поля (без публічних set-аксесорів і без конструктора за замовчуванням?
+        // Ні: тут використовується конструктор User(string name, int age), параметри якого збігаються з іменами властивостей/полів).
         Console.WriteLine("Користувачі, прочитані з БД у приватні поля:");
         using (var db = new L2_5.ApplicationContext())
         {
@@ -43,7 +50,8 @@ public class Lesson_2_5_EntityFields : ILesson
                 user.Print();
             }
 
-            // Пошук за полем без публічної властивості (через EF.Property)
+            // Пошук за полем без публічної властивості (через EF.Property<T>):
+            // EF Core транслює цей виклик у SQL: WHERE "name" = 'Kate' LIMIT 1.
             var kateFromDb = db.Users
                 .FirstOrDefault(u => EF.Property<string>(u, "name") == "Kate");
             Console.WriteLine($"\nЗнайдено через EF.Property<string>(u, \"name\"): Id={kateFromDb?.Id}, Age={kateFromDb?.Age}");
@@ -66,20 +74,36 @@ namespace EFCoreConsoleMastery.Topics.Ch03.L2_5
         private string name;
         private int age;
 
+        /// <summary>
+        /// Ідентифікатор користувача лише для читання (backing field: <c>id</c>).
+        /// </summary>
         public int Id => id;
+
+        /// <summary>
+        /// Вік користувача лише для читання (backing field: <c>age</c>).
+        /// </summary>
         public int Age => age;
 
+        /// <summary>
+        /// Конструктор із параметрами, які EF Core також може використовувати при матеріалізації
+        /// (імена параметрів name, age збігаються з властивостями/полями моделі без урахування регістру).
+        /// </summary>
         public User(string name, int age)
         {
             this.name = name;
             this.age = age;
         }
 
+        /// <summary>Виводить інкапсульовані дані користувача в консоль.</summary>
         public void Print() => Console.WriteLine($"  {id}. {name} - {age}");
     }
 
+    /// <summary>
+    /// Контекст бази даних для уроку 2.5, що налаштовує доступ EF Core до приватних полів сутності User.
+    /// </summary>
     public class ApplicationContext : DbContext
     {
+        /// <summary>Набір користувачів у таблиці "Users".</summary>
         public DbSet<User> Users => Set<User>();
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -89,11 +113,14 @@ namespace EFCoreConsoleMastery.Topics.Ch03.L2_5
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            // Прив'язуємо властивості лише для читання до їхніх приватних полів
+            // Прив'язуємо властивості лише для читання (без set-аксесора) до їхніх приватних полів.
+            // Без HasField(...) EF Core проігнорував би Id та Age, бо вони не мають setter'а.
+            // У SQLite для Id все одно буде створено INTEGER PRIMARY KEY AUTOINCREMENT.
             modelBuilder.Entity<User>().Property("Id").HasField("id");
             modelBuilder.Entity<User>().Property("Age").HasField("age");
 
-            // Поле без публічної властивості: реєструємо безпосередньо як властивість моделі
+            // Поле без публічної властивості: реєструємо безпосередньо за іменем поля.
+            // У БД з'явиться стовпець "name" (TEXT NOT NULL), до якого можна звертатися в LINQ через EF.Property.
             modelBuilder.Entity<User>().Property("name");
         }
     }

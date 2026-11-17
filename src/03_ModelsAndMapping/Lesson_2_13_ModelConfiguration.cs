@@ -19,6 +19,11 @@ public class Lesson_2_13_ModelConfiguration : ILesson
     public int ChapterOrder => 3;
     public int LessonOrder => 12;
 
+    /// <summary>
+    /// Запускає демонстрацію двох способів винесення конфігурації сутностей із OnModelCreating:
+    /// 1) через IEntityTypeConfiguration&lt;T&gt; + modelBuilder.ApplyConfiguration(...);
+    /// 2) через атрибут [EntityTypeConfiguration(typeof(...))] без перевизначення OnModelCreating.
+    /// </summary>
     public void Run()
     {
         SqliteDbHelper.PrintSection("2.13. Конфігурація моделей (IEntityTypeConfiguration)");
@@ -31,6 +36,7 @@ public class Lesson_2_13_ModelConfiguration : ILesson
             db.Users.Add(new L2_13.User { Name = "Tom", Age = 29 });
             db.SaveChanges();
 
+            // Перевіряємо, що таблиці створені з новими іменами ("People" та "Enterprises"), заданими у конфігураціях.
             var tables = db.Database
                 .SqlQueryRaw<string>("SELECT name AS Value FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name")
                 .ToList();
@@ -60,21 +66,36 @@ public class Lesson_2_13_ModelConfiguration : ILesson
 
 namespace EFCoreConsoleMastery.Topics.Ch03.L2_13
 {
+    /// <summary>Сутність користувача, конфігурація якої винесена в <see cref="UserConfiguration"/>.</summary>
     public class User
     {
+        /// <summary>Первинний ключ (у БД буде перейменований на "user_id").</summary>
         public int Id { get; set; }
+
+        /// <summary>Ім'я користувача (у БД стане NOT NULL через IsRequired()).</summary>
         public string? Name { get; set; }
+
+        /// <summary>Вік користувача.</summary>
         public int Age { get; set; }
     }
 
+    /// <summary>Сутність компанії, конфігурація якої винесена в <see cref="CompanyConfiguration"/>.</summary>
     public class Company
     {
+        /// <summary>Первинний ключ компанії.</summary>
         public int Id { get; set; }
+
+        /// <summary>Назва компанії (у БД стане NOT NULL через IsRequired()).</summary>
         public string? Name { get; set; }
     }
 
+    /// <summary>
+    /// Ізольований клас конфігурації Fluent API для сутності <see cref="User"/>.
+    /// Дозволяє не перевантажувати метод OnModelCreating у великих проєктах.
+    /// </summary>
     public class UserConfiguration : IEntityTypeConfiguration<User>
     {
+        /// <summary>Застосовує правила відображення для сутності User.</summary>
         public void Configure(EntityTypeBuilder<User> builder)
         {
             builder.ToTable("People");
@@ -83,8 +104,12 @@ namespace EFCoreConsoleMastery.Topics.Ch03.L2_13
         }
     }
 
+    /// <summary>
+    /// Ізольований клас конфігурації Fluent API для сутності <see cref="Company"/>.
+    /// </summary>
     public class CompanyConfiguration : IEntityTypeConfiguration<Company>
     {
+        /// <summary>Застосовує правила відображення для сутності Company.</summary>
         public void Configure(EntityTypeBuilder<Company> builder)
         {
             builder.ToTable("Enterprises");
@@ -92,9 +117,15 @@ namespace EFCoreConsoleMastery.Topics.Ch03.L2_13
         }
     }
 
+    /// <summary>
+    /// Контекст, що підключає конфігурації явно через modelBuilder.ApplyConfiguration(...).
+    /// </summary>
     public class ApplyConfigContext : DbContext
     {
+        /// <summary>Набір користувачів (таблиця "People").</summary>
         public DbSet<User> Users => Set<User>();
+
+        /// <summary>Набір компаній (таблиця "Enterprises").</summary>
         public DbSet<Company> Companies => Set<Company>();
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -104,34 +135,52 @@ namespace EFCoreConsoleMastery.Topics.Ch03.L2_13
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            // Підключення окремих класів конфігурації
+            // Підключення окремих класів конфігурації вручну
             modelBuilder.ApplyConfiguration(new UserConfiguration());
             modelBuilder.ApplyConfiguration(new CompanyConfiguration());
 
-            // Примітка: у реальних проєктах також можна викликати
-            // modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplyConfigContext).Assembly);
+            // Примітка: у реальних проєктах із десятками сутностей зручніше викликати
+            // modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplyConfigContext).Assembly),
+            // щоб EF Core автоматично знайшов усі реалізації IEntityTypeConfiguration<T> у збірці.
         }
     }
 
-    // Демонстрація атрибута [EntityTypeConfiguration] (EF Core 7+)
+    /// <summary>
+    /// Конфігурація для сутності <see cref="Order"/>, що підключається автоматично через атрибут [EntityTypeConfiguration].
+    /// </summary>
     public class OrderConfiguration : IEntityTypeConfiguration<Order>
     {
+        /// <summary>Застосовує правила відображення для сутності Order.</summary>
         public void Configure(EntityTypeBuilder<Order> builder)
         {
             builder.ToTable("CustomerOrders");
+            // HasMaxLength(32) у SQLite не обрізає TEXT, але враховується у моделі та в SQL Server/PostgreSQL.
             builder.Property(o => o.Number).IsRequired().HasMaxLength(32);
         }
     }
 
+    /// <summary>
+    /// Сутність замовлення, пов'язана зі своїм класом конфігурації через атрибут
+    /// [EntityTypeConfiguration(typeof(OrderConfiguration))] (доступний починаючи з EF Core 7).
+    /// Завдяки цьому атрибуту в DbContext взагалі не потрібно перевизначати OnModelCreating.
+    /// </summary>
     [EntityTypeConfiguration(typeof(OrderConfiguration))]
     public class Order
     {
+        /// <summary>Первинний ключ замовлення.</summary>
         public int Id { get; set; }
+
+        /// <summary>Номер замовлення (обов'язковий стовпець NOT NULL).</summary>
         public string? Number { get; set; }
     }
 
+    /// <summary>
+    /// Контекст, який не перевизначає OnModelCreating: EF Core знаходить OrderConfiguration
+    /// автоматично завдяки атрибуту [EntityTypeConfiguration] на класі Order.
+    /// </summary>
     public class AttributeConfigContext : DbContext
     {
+        /// <summary>Набір замовлень (таблиця "CustomerOrders").</summary>
         public DbSet<Order> Orders => Set<Order>();
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)

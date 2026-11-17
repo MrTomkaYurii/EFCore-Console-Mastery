@@ -17,6 +17,10 @@ namespace EFCoreConsoleMastery.Topics.Ch04
         public int ChapterOrder => 4;
         public int LessonOrder => 6;
 
+        /// <summary>
+        /// Демонструє ліниве завантаження (Lazy Loading) за допомогою динамічних проксі-класів
+        /// із пакета <c>Microsoft.EntityFrameworkCore.Proxies</c> та застереження щодо проблеми N+1.
+        /// </summary>
         public void Run()
         {
             using (var db = new AppContextL3_9())
@@ -39,11 +43,15 @@ namespace EFCoreConsoleMastery.Topics.Ch04
             SqliteDbHelper.PrintSection("1. Ліниве завантаження при зверненні до virtual-властивості Company");
             using (var db = new AppContextL3_9())
             {
-                // Без Include! Запит витягує лише таблицю Users.
+                // Без Include! Перший SQL-запит витягує лише таблицю Users (SELECT Id, CompanyId, Name FROM Users).
+                // Замість звичайних класів User EF Core створює в пам'яті динамічні проксі-спадкоємці (UserProxy).
                 var users = db.Users.ToList();
                 foreach (var user in users)
                 {
-                    // Проксі-клас автоматично виконує додатковий SELECT до Companies, якщо компанії ще немає в контексті
+                    // При першому зверненні до virtual-властивості user.Company проксі перехоплює getter
+                    // і виконує додатковий SELECT * FROM Companies WHERE Id = @p0, якщо цієї компанії ще немає в Change Tracker.
+                    // Увага: у циклі це призводить до проблеми N+1 запитів (1 запит за списком + до N запитів по елементах).
+                    // Також Lazy Loading НЕ працює після закриття DbContext (ObjectDisposedException).
                     Console.WriteLine($"{user.Name} -> {user.Company?.Name}");
                 }
             }
@@ -55,7 +63,8 @@ namespace EFCoreConsoleMastery.Topics.Ch04
                 foreach (var company in companies)
                 {
                     Console.Write($"{company.Name}: ");
-                    // При першому зверненні до company.Users проксі підвантажує пов'язаних користувачів
+                    // При першому зверненні до virtual-колекції company.Users проксі виконує
+                    // SELECT * FROM Users WHERE CompanyId = @p0 для кожної компанії окремо.
                     foreach (var user in company.Users)
                     {
                         Console.Write($"{user.Name} ");
@@ -69,31 +78,55 @@ namespace EFCoreConsoleMastery.Topics.Ch04
 
 namespace EFCoreConsoleMastery.Topics.Ch04.L3_9
 {
-    // Для роботи UseLazyLoadingProxies() класи сутностей ОБОВ'ЯЗКОВО мають бути public (не sealed),
-    // а навігаційні властивості — public virtual.
+    // Вимоги UseLazyLoadingProxies():
+    // 1) Класи сутностей мають бути public та НЕ sealed (бо Castle.DynamicProxy генерує їхніх спадкоємців у рантаймі).
+    // 2) Усі навігаційні властивості, які мають ліниво завантажуватися, повинні бути public virtual.
 
+    /// <summary>Компанія (клас не-sealed з <c>virtual</c>-колекцією для проксі-генерації).</summary>
     public class Company
     {
+        /// <summary>Первинний ключ компанії.</summary>
         public int Id { get; set; }
+
+        /// <summary>Назва компанії.</summary>
         public string? Name { get; set; }
+
+        /// <summary>Віртуальна колекційна навігаційна властивість для лінивого завантаження користувачів.</summary>
         public virtual List<User> Users { get; set; } = new();
     }
 
+    /// <summary>Користувач (клас не-sealed з <c>virtual</c>-посиланням на компанію).</summary>
     public class User
     {
+        /// <summary>Первинний ключ користувача.</summary>
         public int Id { get; set; }
+
+        /// <summary>Ім'я користувача.</summary>
         public string? Name { get; set; }
+
+        /// <summary>Необов'язковий зовнішній ключ компанії.</summary>
         public int? CompanyId { get; set; }
+
+        /// <summary>Віртуальна навігаційна властивість, яку перехоплює проксі для лінивого завантаження.</summary>
         public virtual Company? Company { get; set; }
     }
 
+    /// <summary>Контекст бази даних для уроку 3.9 (SQLite з увімкненим Lazy Loading).</summary>
     public class AppContextL3_9 : DbContext
     {
+        /// <summary>Користувачі.</summary>
         public DbSet<User> Users { get; set; } = null!;
+
+        /// <summary>Компанії.</summary>
         public DbSet<Company> Companies { get; set; } = null!;
 
+        /// <summary>
+        /// Підключає <c>UseLazyLoadingProxies()</c> та провайдер SQLite.
+        /// </summary>
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
+            // UseLazyLoadingProxies() вмикає генерацію проксі-об'єктів для всіх сутностей з virtual-навігаціями.
+            // Альтернатива без проксі — ін'єкція ILazyLoader у конструктор сутності.
             optionsBuilder
                 .UseLazyLoadingProxies()
                 .UseSqlite(SqliteDbHelper.GetConnectionString("ch04_l3_9"));

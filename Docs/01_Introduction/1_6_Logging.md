@@ -1,66 +1,184 @@
 ﻿# 1.6. Логування операцій
 
 - **Глава:** 01. Вступ до Entity Framework Core
-- **Оригінал на Metanit:** [https://metanit.com/sharp/efcore/1.6.php](https://metanit.com/sharp/efcore/1.6.php)
+- **Джерело Metanit:** [https://metanit.com/sharp/efcore/1.6.php](https://metanit.com/sharp/efcore/1.6.php)
 - **Код прикладу:** [`Lesson_1_6_Logging.cs`](../../src/01_Introduction/Lesson_1_6_Logging.cs)
 
 ## Мета уроку
 
-Навчитися переглядати згенеровані SQL-запити та діагностичні повідомлення EF Core за допомогою методу `LogTo()`, а також фільтрувати логи за рівнем (`LogLevel`), ідентифікатором події (`RelationalEventId`) та категорією (`DbLoggerCategory`).
+Навчитися відстежувати внутрішню роботу Entity Framework Core та переглядати згенеровані SQL-запити за допомогою вбудованого методу `LogTo()`, а також тонко налаштовувати фільтрацію повідомлень за рівнем важливості (`LogLevel`), ідентифікатором події (`EventId`: `CoreEventId`, `RelationalEventId`, `SqliteEventId`) та категорією (`DbLoggerCategory`).
 
-## Теоретичний матеріал
+## Детальний теоретичний матеріал
 
-### Метод `LogTo`
-Метод `DbContextOptionsBuilder.LogTo(...)` дозволяє перенаправити всі діагностичні повідомлення EF Core у будь-який приймач, що приймає делегат `Action<string>`:
-- У консоль: `optionsBuilder.LogTo(Console.WriteLine)`
-- У вікно Output в IDE: `optionsBuilder.LogTo(msg => Debug.WriteLine(msg))`
-- У файл: через `StreamWriter` (із коректним закриттям потоку в перевизначених `Dispose()` / `DisposeAsync()`).
+Розуміння того, який саме SQL генерує EF Core і скільки запитів відправляється до бази даних, є критично важливим для діагностики та оптимізації продуктивності. EF Core має простий вбудований механізм простого логування (*Simple Logging*) через метод `LogTo()` у `DbContextOptionsBuilder`.
 
-### Фільтрація логів
+### Метод `LogTo()` та приймачі логів
 
-1. **За рівнем важливості (`LogLevel`):**
-   - `Trace` — максимальна деталізація (лише для розробки).
-   - `Debug` — рівень за замовчуванням для `LogTo`.
-   - `Information` — потік виконання операцій, включно з виконаними SQL-командами.
-   - `Warning`, `Error`, `Critical`, `None`.
+Метод `optionsBuilder.LogTo(...)` приймає делегат `Action<string>` — будь-який метод, що отримує рядок повідомлення і нічого не повертає:
 
-2. **За ідентифікатором події (`EventId`):**
-   - `CoreEventId` — загальні події ядра EF Core.
-   - `RelationalEventId` — події реляційних БД (наприклад, `RelationalEventId.CommandExecuted` — лише виконані SQL-команди).
-   - Специфічні класи провайдерів (наприклад, `SqliteEventId` для SQLite або `SqlServerEventId` для SQL Server).
+1. **Виведення в консоль:**
+   ```csharp
+   optionsBuilder.LogTo(Console.WriteLine);
+   ```
+2. **Виведення у вікно Output в Visual Studio / Rider:**
+   ```csharp
+   optionsBuilder.LogTo(message => System.Diagnostics.Debug.WriteLine(message));
+   ```
+3. **Запис у текстовий файл через `StreamWriter`:**
+   ```csharp
+   public class ApplicationContext : DbContext
+   {
+       private readonly StreamWriter _logStream = new StreamWriter("mylog.txt", append: true);
 
-3. **За категорією (`DbLoggerCategory`):**
-   - `DbLoggerCategory.Database.Command.Name` — SQL-команди.
-   - `DbLoggerCategory.Database.Connection.Name` — відкриття/закриття з'єднань.
-   - `DbLoggerCategory.Database.Transaction.Name` — транзакції.
-   - `DbLoggerCategory.Update.Name` — робота `SaveChanges()`.
-   - Інші: `Migration`, `Model`, `Query`, `Scaffolding`, `Infrastructure`.
+       protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+       {
+           optionsBuilder.UseSqlite("Data Source=helloapp.db");
+           optionsBuilder.LogTo(_logStream.WriteLine);
+       }
 
-## Ключові фрагменти коду
+       public override void Dispose()
+       {
+           base.Dispose();
+           _logStream.Dispose();
+       }
 
-Фільтрація за рівнем, подією та категорією:
+       public override async ValueTask DisposeAsync()
+       {
+           await base.DisposeAsync();
+           await _logStream.DisposeAsync();
+       }
+   }
+   ```
+   При роботі з `StreamWriter` усередині контексту обов'язково перевизначайте `Dispose()` та `DisposeAsync()`, щоб буфер записувався на диск і файл коректно закривався.
 
+### Три способи фільтрації логів
+
+За замовчуванням `LogTo()` виводить дуже багато технічної інформації (на рівні `LogLevel.Debug`). Метод має кілька перевантажень для точного відбору повідомлень:
+
+#### 1. Фільтрація за рівнем важливості (`LogLevel`)
+Використовується перерахування `Microsoft.Extensions.Logging.LogLevel`:
+
+| Рівень | Призначення |
+| --- | --- |
+| `Trace` | Максимальна деталізація (внутрішні деталі побудови запитів, трекера). Лише для локальної розробки. |
+| `Debug` | Детальна інформація для налагодження (**рівень за замовчуванням** для `LogTo`). |
+| `Information` | Основний потік виконання операцій, включно з виконаними SQL-командами. |
+| `Warning` | Попередження про небажані ситуації (наприклад, *Client Evaluation* або відсутність `Take` без `OrderBy`). |
+| `Error` | Помилки та винятки, що виникли під час поточної операції. |
+| `Critical` | Критичні збої (втрата даних, переповнення диска, збій ОС), які вимагають негайної реакції. |
+| `None` | Повне вимкнення логування. |
+
+Приклад:
 ```csharp
-// 1. За рівнем LogLevel
 optionsBuilder.LogTo(Console.WriteLine, LogLevel.Information);
+```
 
-// 2. Тільки виконані SQL-команди (RelationalEventId)
+#### 2. Конкретизація за ідентифікатором події (`EventId`)
+Кожна подія в EF Core має унікальний `EventId`, згрупований у класи з простору імен `Microsoft.EntityFrameworkCore.Diagnostics`:
+- `CoreEventId` — події ядра EF Core, спільні для всіх БД (ініціалізація контексту, компіляція моделі, робота `ChangeTracker`).
+- `RelationalEventId` — події, спільні для всіх реляційних БД (`CommandExecuted`, `CommandExecuting`, `ConnectionOpened`, `TransactionCommitted`).
+- Провайдер-специфічні класи: `SqliteEventId` (для SQLite), `SqlServerEventId` (для MS SQL Server).
+
+Приклад виведення **лише** виконаних SQL-команд:
+```csharp
 optionsBuilder.LogTo(Console.WriteLine, new[] { RelationalEventId.CommandExecuted });
+```
 
-// 3. За категорією DbLoggerCategory
+#### 3. Фільтрація за категорією (`DbLoggerCategory`)
+Категорії описують логічні підсистеми EF Core:
+
+| Категорія | Що логує |
+| --- | --- |
+| `DbLoggerCategory.Database.Command.Name` | Виконання SQL-команд (текст SQL, час виконання). |
+| `DbLoggerCategory.Database.Connection.Name` | Відкриття та закриття з'єднань із БД. |
+| `DbLoggerCategory.Database.Transaction.Name` | Початок, фіксація (`Commit`) та відкат (`Rollback`) транзакцій. |
+| `DbLoggerCategory.Update.Name` | Робота `DbContext.SaveChanges()`. |
+| `DbLoggerCategory.Query.Name` | Компіляція та обробка LINQ-запитів (крім самого SQL). |
+| `DbLoggerCategory.Migration.Name` | Операції міграцій. |
+| `DbLoggerCategory.Model.Name` | Побудова та прив'язка моделі даних. |
+| `DbLoggerCategory.Scaffolding.Name` | Реверс-інжиніринг існуючої БД. |
+| `DbLoggerCategory.Infrastructure.Name` | Інші інфраструктурні повідомлення. |
+
+Приклад комбінації категорії та рівня:
+```csharp
 optionsBuilder.LogTo(
     Console.WriteLine,
     new[] { DbLoggerCategory.Database.Command.Name },
     LogLevel.Information);
 ```
 
+## Діаграма / Архітектура процесу
+
+Конвеєр обробки та фільтрації діагностичних подій у `LogTo()`:
+
+```mermaid
+flowchart LR
+    EF["Події EF Core (SQL, Connection, ChangeTracker, Migration)"]
+    FilterLevel{"Фільтр за LogLevel (напр. Information)"}
+    FilterId{"Фільтр за EventId або DbLoggerCategory"}
+    Format["Форматування повідомлення"]
+    Sink["Делегат Action<string>"]
+    OutConsole["Console.WriteLine"]
+    OutDebug["Debug.WriteLine"]
+    OutFile["StreamWriter (mylog.txt)"]
+
+    EF --> FilterLevel
+    FilterLevel -- Пройшло --> FilterId
+    FilterLevel -- Відсіяно --> Drop1["Ігнорується"]
+    FilterId -- Пройшло --> Format
+    FilterId -- Відсіяно --> Drop2["Ігнорується"]
+    Format --> Sink
+    Sink --> OutConsole
+    Sink --> OutDebug
+    Sink --> OutFile
+```
+
+## Покроковий розбір прикладів коду
+
+У файлі [`Lesson_1_6_Logging.cs`](../../src/01_Introduction/Lesson_1_6_Logging.cs) продемонстровано три рівні деталізації логів на прикладі `LoggedContext(DbContextOptions<LoggedContext> options)`:
+
+### Підготовка
+Спочатку через `PlainContext` (без логування) викликається `SqliteDbHelper.RecreateDatabase(initDb)`, щоб DDL-команди створення таблиці не засмічували консоль перед демонстрацією фільтрів.
+
+### Крок 1. `LogTo` з `LogLevel.Information`
+```csharp
+var infoOptions = new DbContextOptionsBuilder<L1_6.LoggedContext>()
+    .UseSqlite(connectionString)
+    .LogTo(msg => Console.WriteLine($"  [LOG] {msg}"), LogLevel.Information)
+    .Options;
+```
+При додаванні `Tom` і виклику `SaveChanges()` у лог потрапляють як ініціалізація контексту, так і виконаний SQL-запит `INSERT INTO "Users" ("Age", "Name") VALUES (@p0, @p1) RETURNING "Id";` із часом виконання в мілісекундах.
+
+### Крок 2. Фільтрація за `RelationalEventId.CommandExecuted`
+```csharp
+var eventOptions = new DbContextOptionsBuilder<L1_6.LoggedContext>()
+    .UseSqlite(connectionString)
+    .LogTo(msg => Console.WriteLine($"  [SQL-EVENT] {msg}"), new[] { RelationalEventId.CommandExecuted })
+    .Options;
+```
+При виконанні `db.Users.Where(u => u.Age >= 25).ToList()` у консоль виводиться **тільки** фінальна виконана SQL-команда `SELECT "u"."Id", "u"."Age", "u"."Name" FROM "Users" AS "u" WHERE "u"."Age" >= 25`, без жодного зайвого шуму про ініціалізацію чи з'єднання.
+
+### Крок 3. Фільтрація за категорією `DbLoggerCategory.Database.Command`
+```csharp
+var categoryOptions = new DbContextOptionsBuilder<L1_6.LoggedContext>()
+    .UseSqlite(connectionString)
+    .LogTo(
+        msg => Console.WriteLine($"  [CATEGORY] {msg}"),
+        new[] { DbLoggerCategory.Database.Command.Name },
+        LogLevel.Information)
+    .Options;
+```
+Цей варіант фіксує всі події категорії `Database.Command` рівня `Information` і вище — як для `INSERT` (`SaveChanges()`), так і для `SELECT` (`ToList()`).
+
 ## Особливості роботи в SQLite
 
-- Для подій, специфічних для SQLite (наприклад, попередження про обмеження міграцій чи типів), замість `SqlServerEventId` (як на Metanit) використовується `SqliteEventId` з простору імен `Microsoft.EntityFrameworkCore.Diagnostics`.
-- У консольному логі SQLite ви побачите параметризований SQL з параметрами виду `@p0`, `@p1` та `RETURNING "Id"` після `INSERT INTO "Users" ...` (EF Core використовує `RETURNING` у сучасних версіях SQLite для отримання автоінкрементного первинного ключа).
+- **Специфічні події:** Замість `SqlServerEventId` (який використовується для MS SQL Server на Metanit) для SQLite існує `SqliteEventId` (`Microsoft.EntityFrameworkCore.Diagnostics.SqliteEventId`).
+- **Синтаксис `RETURNING` у логах:** Під час вставки запису в SQLite у логах буде видно `INSERT INTO "Users" ("Age", "Name") VALUES (@p0, @p1) RETURNING "Id";` — так EF Core отримує згенерований автоінкрементний ключ за один запит.
+- **Приховування значень параметрів:** За замовчуванням замість реальних значень `"Tom"` або `33` у тексті SQL відображаються заповнювачі `@p0='?'`, `@p1='?'`. Це зроблено для захисту персональних даних (PII).
 
-## Підсумок та підводні камені
+## Типові помилки, підводні камені та Best Practices
 
-- За замовчуванням значення параметрів у логах приховані (`?`) з міркувань безпеки. Для локального налагодження можна додати `.EnableSensitiveDataLogging()`, але **ніколи не вмикайте** його в продакшені.
-- Якщо ви логуєте у файл через `StreamWriter` усередині `DbContext`, не забудьте звільнити `StreamWriter` у `Dispose()` та `DisposeAsync()`, інакше файл залишиться заблокованим або дані не запишуться з буфера.
-- Надмірне логування (`LogLevel.Trace` / `Debug`) у продакшені суттєво знижує продуктивність — фільтруйте лише потрібні категорії або рівні.
+1. **Увімкнення `EnableSensitiveDataLogging()` у продакшені:** Для локального налагодження можна додати `.EnableSensitiveDataLogging()`, щоб бачити реальні значення `@p0='33'`, `@p1='Tom'`. Проте **ніколи не залишайте** цей виклик у продакшені — паролі, токени та персональні дані користувачів потраплять у файли логів.
+2. **Незакритий `StreamWriter`:** Якщо ви передаєте `logStream.WriteLine` у `LogTo` всередині `DbContext`, але забуваєте перевизначити `Dispose()` / `DisposeAsync()`, файл логів може виявитися порожнім або заблокованим після завершення роботи контексту.
+3. **Продуктивність:** Логування на рівні `LogLevel.Trace` або `Debug` під високим навантаженням створює значне навантаження на CPU та диск. У продакшені обмежуйтеся `Warning`/`Error` або інтегруйтеся з `ILoggerFactory` (`UseLoggerFactory`).
+4. **Не забувайте про `ToQueryString()`:** Якщо вам потрібно швидко подивитися SQL конкретного LINQ-запиту без увімкнення глобального `LogTo()`, викличте `var sql = db.Users.Where(...).ToQueryString();` (для запитів читання).

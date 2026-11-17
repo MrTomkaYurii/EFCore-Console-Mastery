@@ -6,56 +6,125 @@
 
 ## Мета уроку
 
-Навчитися моделювати **власні типи (Owned Entity Types)** через атрибут `[Owned]` та Fluent API `OwnsOne()`, розуміти, як вони відображаються в таблицю власника і чим відрізняються від звичайних зв'язаних сутностей.
+Навчитися моделювати **власні типи (Owned Entity Types)** в Entity Framework Core за допомогою атрибута `[Owned]` та методів Fluent API (`OwnsOne()`), розуміти, як вони зберігаються в таблиці сутності-власника (включаючи вкладені та приватні власні типи), і знати їхні ключові обмеження порівняно зі звичайними сутностями та Complex Types.
 
-## Теоретичний матеріал
+## Детальний теоретичний матеріал
 
-**Власний тип (Owned Type)** — це тип даних, який логічно належить іншій сутності-власнику (Owner) і не може існувати без неї. У DDD це наближено до концепції *Value Object* (об'єкт-значення).
+За замовчуванням EF Core відображає кожен клас моделі в окрему таблицю. Проте часто певний клас не має самостійної життєвої ідентичності в домені, а лише групує набір атрибутів головної сутності (наприклад, `UserProfile`, `Address`, `Money`, `DateRange`). У Domain-Driven Design (DDD) такі об'єкти називають *Value Objects*, а в EF Core історично для них застосовують механізм **власних типів (Owned Entity Types)**.
 
 ### Ключові характеристики Owned Types
 
-- **Не мають власного первинного ключа** (або використовують ключ власника як тіньовий).
-- **Не мають окремого `DbSet<T>`** у контексті даних.
-- За замовчуванням **усі властивості власного типу зберігаються в тій самій таблиці**, що й сутність-власник, із префіксом `<НазваВластивості>_<НазваПоля>` (наприклад, `Profile_Name`, `Profile_Age`, `Address_City`).
-- **Автоматичне завантаження:** при читанні сутності-власника (наприклад, `db.Users.ToList()`) власні типи завантажуються **без виклику `Include()`**.
+1. **Залежність від власника (Owner):** власний тип логічно належить іншій сутності-власнику і не може існувати без неї.
+2. **Відсутність власного первинного ключа в коді:** у C#-класі власного типу (`UserProfile`, `Address`) не потрібно оголошувати `Id` — EF Core використовує первинний ключ власника як тіньовий ключ.
+3. **Відсутність окремого `DbSet<T>`:** до власного типу не звертаються напряму через `db.UserProfiles` — робота відбувається виключно через сутність-власник (`db.Users`).
+4. **Зберігання в одній таблиці з власником (Table Sharing):** за замовчуванням усі властивості власного типу потрапляють у таблицю власника з іменем стовпця за шаблоном `<НазваНавігаційноїВластивості>_<НазваПоля>` (наприклад, `Profile_Name`, `Address_City`).
+5. **Автоматичне завантаження:** при запиті `db.Users.ToList()` власні типи завантажуються **автоматично без виклику `Include()`**.
 
-### Способи оголошення
+### Два способи налаштування
 
-1. Атрибут `[Owned]` над залежним класом (`[Owned] public class UserProfile`).
-2. Метод Fluent API `modelBuilder.Entity<User>().OwnsOne(u => u.Address);` (також підтримує `OwnsMany()` для колекцій власних типів, які тоді виносяться в окрему таблицю).
+1. **Через атрибут `[Owned]`** (`Microsoft.EntityFrameworkCore`):
+   ```csharp
+   [Owned]
+   public class UserProfile
+   {
+       public string? Name { get; set; }
+       public int Age { get; set; }
+   }
+   ```
+   Цей атрибут робить тип власним для всіх сутностей, які містять властивість типу `UserProfile`.
+2. **Через Fluent API `OwnsOne()`:**
+   ```csharp
+   modelBuilder.Entity<User>().OwnsOne(u => u.Address);
+   ```
+   Fluent API також дозволяє:
+   - Налаштовувати **приватні власні властивості:** `modelBuilder.Entity<User>().OwnsOne(typeof(UserProfile), "Profile");`
+   - Будувати **вкладені власні типи** (наприклад, `User -> UserProfile -> Claim`):
+     ```csharp
+     modelBuilder.Entity<User>().OwnsOne(u => u.Profile, p =>
+     {
+         p.OwnsOne(c => c.Name);
+         p.OwnsOne(c => c.Age);
+     });
+     ```
+     У такому разі імена стовпців у таблиці формуються за ланцюжком: `Profile_Name_Key`, `Profile_Name_Value`.
+   - Виносити колекції власних типів у дочірню таблицю через `OwnsMany(u => u.Addresses)`.
 
-## Ключові фрагменти коду
+## Діаграма / Архітектура процесу
+
+Відображення класів `User`, `UserProfile` та `Address` в єдину фізичну таблицю SQLite `Users`:
+
+```mermaid
+erDiagram
+    Users_Table {
+        INTEGER Id PK
+        TEXT Login
+        TEXT Password
+        TEXT Profile_Name "з [Owned] UserProfile"
+        INTEGER Profile_Age "з [Owned] UserProfile"
+        TEXT Address_City "з OwnsOne Address"
+        TEXT Address_Street "з OwnsOne Address"
+    }
+```
+
+## Покроковий розбір прикладів коду
+
+У файлі [Lesson_3_7_OwnedTypes.cs](../../src/04_Relations/Lesson_3_7_OwnedTypes.cs) продемонстровано обидва способи оголошення власних типів в одному класі `User`.
+
+### 1. Моделі та контекст `AppContextL3_7`
+
+- `User` — сутність-власник (`DbSet<User> Users`), містить `Profile` та `Address`.
+- `UserProfile` позначений атрибутом `[Owned]`.
+- `Address` не має атрибутів, але налаштований у `OnModelCreating` через `modelBuilder.Entity<User>().OwnsOne(u => u.Address);`.
+
+У результаті в SQLite створюється **одна** таблиця `"Users"`:
+
+```sql
+CREATE TABLE "Users" (
+    "Id" INTEGER NOT NULL CONSTRAINT "PK_Users" PRIMARY KEY AUTOINCREMENT,
+    "Login" TEXT NULL,
+    "Password" TEXT NULL,
+    "Profile_Name" TEXT NULL,
+    "Profile_Age" INTEGER NULL,
+    "Address_City" TEXT NULL,
+    "Address_Street" TEXT NULL
+);
+```
+
+### 2. Секція 1: Збереження Owned Types
 
 ```csharp
-public class User
+var user1 = new User
 {
-    public int Id { get; set; }
-    public string? Login { get; set; }
-    public UserProfile? Profile { get; set; } // через [Owned]
-    public Address? Address { get; set; }     // через OwnsOne()
-}
+    Login = "login1",
+    Password = "pass1234",
+    Profile = new UserProfile { Name = "Tom", Age = 23 },
+    Address = new Address { City = "Kyiv", Street = "Khreshchatyk, 1" }
+};
+```
 
-[Owned]
-public class UserProfile
+Під час `db.SaveChanges()` виконується один `INSERT INTO "Users"` без жодних додаткових таблиць або `FOREIGN KEY`.
+
+### 3. Секція 2: Читання без `Include()`
+
+```csharp
+var users = db.Users.ToList();
+foreach (var u in users)
 {
-    public string? Name { get; set; }
-    public int Age { get; set; }
+    Console.WriteLine(
+        $"Login: {u.Login} | Name: {u.Profile?.Name}, Age: {u.Profile?.Age} | " +
+        $"Address: {u.Address?.City}, {u.Address?.Street}");
 }
 ```
 
-```csharp
-protected override void OnModelCreating(ModelBuilder modelBuilder)
-{
-    modelBuilder.Entity<User>().OwnsOne(u => u.Address);
-}
-```
+У новому контексті простий виклик `db.Users.ToList()` витягує всі стовпці таблиці `"Users"` і одразу матеріалізує вкладені об'єкти `u.Profile` та `u.Address` без `Include()`.
 
 ## Особливості роботи в SQLite
 
-- Для таблиці `Users` у SQLite генеруються стовпці `"Profile_Name" TEXT NULL`, `"Profile_Age" INTEGER NULL`, `"Address_City" TEXT NULL`, `"Address_Street" TEXT NULL`.
-- Зверніть увагу: навіть якщо `Age` у C# має тип `int` (non-nullable), у таблиці БД стовпець `Profile_Age` може бути `INTEGER NULL`, якщо сама властивість `Profile` є nullable (`UserProfile?`) — це дозволяє зберігати `User` із `Profile == null`.
+- **Nullable-стовпці для value types:** зверніть увагу на DDL вище — у C# властивість `UserProfile.Age` має тип `int` (non-nullable), але в таблиці SQLite стовпець `"Profile_Age"` має тип `INTEGER NULL`. Це тому, що сама навігаційна властивість `User.Profile` є nullable (`UserProfile?`), і якщо `user.Profile == null`, усі її стовпці в БД мусять приймати `NULL`. Якщо позначити `Profile` атрибутом `[Required]` (або зробити не-nullable), стовпці стануть `NOT NULL`.
+- **Перейменування стовпців:** за замовчуванням використовується підкреслення (`Address_City`), що легко змінити через `builder.OwnsOne(u => u.Address, a => a.Property(p => p.City).HasColumnName("City"))`.
 
-## Підсумок та підводні камені
+## Типові помилки, підводні камені та Best Practices
 
-- **Один екземпляр Owned-типу не можна розділити між двома власниками!** Якщо присвоїти один і той самий об'єкт `UserProfile` двом різним `User`, EF Core викине помилку відстеження (або перезапише власника). Для спільних об'єктів-значень використовуйте `[ComplexType]` (урок 3.12).
-- Оскільки Owned-типи зберігаються в одній таблиці з власником, їх не можна запитувати напряму через `db.Set<UserProfile>()`.
+- **Заборона спільного використання екземпляра (No Sharing):** оскільки під капотом Owned Type все ще відстежується Change Tracker-ом як окрема прихована сутність із тіньовим ключем власника, **один і той самий екземпляр `Address` або `UserProfile` не можна присвоїти двом різним `User`**! Це призведе до помилки або від'єднання від першого користувача. Якщо вам потрібне спільне використання об'єктів-значень, використовуйте **`[ComplexType]`** (урок 3.12).
+- **Порожній об'єкт при всіх `NULL` у БД:** якщо в БД усі стовпці `Address_City` і `Address_Street` дорівнюють `NULL`, при читанні `user.Address` буде `null`.
+- **Коли обирати `Owned Types`, а коли `1:1`:** якщо дані профілю/адреси завжди потрібні разом із користувачем і не потребують окремого життєвого циклу, використовуйте `Owned` (або `ComplexType`) — це позбавить від зайвих `JOIN`-ів.

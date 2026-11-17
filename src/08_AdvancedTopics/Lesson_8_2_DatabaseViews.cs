@@ -16,6 +16,12 @@ namespace EFCoreConsoleMastery.Topics.Ch08
         public int ChapterOrder => 8;
         public int LessonOrder => 4;
 
+        /// <summary>
+        /// Запускає демонстрацію роботи з представленнями БД (SQL Views) у EF Core:
+        /// 1) Ручне створення <c>VIEW</c> у SQLite через <c>ExecuteSqlRaw</c> (оскільки <c>EnsureCreated()</c> не створює VIEW).
+        /// 2) Вибірка агрегованих даних через <see cref="ViewsContext.ProductsByCompany"/>.
+        /// 3) Серверна LINQ-фільтрація поверх представлення та перевірка відсутності відстеження у <c>ChangeTracker</c>.
+        /// </summary>
         public void Run()
         {
             var connStr = SqliteDbHelper.GetConnectionString("lesson_8_2_views");
@@ -25,8 +31,12 @@ namespace EFCoreConsoleMastery.Topics.Ch08
             {
                 SqliteDbHelper.RecreateDatabase(setupDb);
 
-                // EnsureCreated() створює таблиці, але не створює SQL VIEW автоматично,
-                // тому створюємо представлення у SQLite вручну через ExecuteSqlRaw
+                // ВАЖЛИВО: EnsureCreated() (і міграції за замовчуванням) створює лише таблиці,
+                // але НЕ створює SQL VIEW автоматично, навіть якщо в OnModelCreating вказано ToView(...).
+                // У реальних проєктах CREATE VIEW додають у файл міграції через migrationBuilder.Sql(...),
+                // а тут створюємо представлення в SQLite вручну через ExecuteSqlRaw.
+                // Примітка: у SQLite представлення завжди віртуальні (обчислюються при кожному SELECT),
+                // на відміну від SQL Server, де існують індексовані (матеріалізовані) представлення.
                 setupDb.Database.ExecuteSqlRaw("""
                     CREATE VIEW IF NOT EXISTS View_ProductsByCompany AS
                     SELECT
@@ -60,6 +70,8 @@ namespace EFCoreConsoleMastery.Topics.Ch08
 
             using (var db = new ViewsContext(connStr))
             {
+                // EF Core генерує звичайний SELECT до представлення:
+                // SELECT "v"."CompanyName", "v"."ProductCount", "v"."TotalSum" FROM "View_ProductsByCompany" AS "v"
                 var companyProducts = db.ProductsByCompany.ToList();
                 foreach (var item in companyProducts)
                 {
@@ -75,6 +87,8 @@ namespace EFCoreConsoleMastery.Topics.Ch08
 
             using (var db = new ViewsContext(connStr))
             {
+                // Уся фільтрація Where та сортування OrderByDescending транслюються в SQL
+                // і виконуються на стороні SQLite (WHERE "v"."TotalSum" > 150000 ORDER BY "v"."TotalSum" DESC)
                 var topCompanies = db.ProductsByCompany
                     .Where(g => g.TotalSum > 150_000)
                     .OrderByDescending(g => g.TotalSum)
@@ -86,7 +100,8 @@ namespace EFCoreConsoleMastery.Topics.Ch08
                     Console.WriteLine($"  -> {item.CompanyName}: {item.TotalSum:N0} грн");
                 }
 
-                // Сутності без ключа (HasNoKey) ніколи не відстежуються ChangeTracker
+                // Сутності без ключа (HasNoKey) автоматично працюють у режимі NoTracking:
+                // вони ніколи не потрапляють до ChangeTracker, і їх не можна змінювати через SaveChanges().
                 int trackedCount = db.ChangeTracker.Entries().Count();
                 Console.WriteLine($"\nКількість відстежуваних сутностей у ChangeTracker: {trackedCount} (тільки для читання)");
             }
@@ -96,45 +111,82 @@ namespace EFCoreConsoleMastery.Topics.Ch08
 
 namespace EFCoreConsoleMastery.Topics.Ch08.L8_2
 {
+    /// <summary>
+    /// Модель компанії-виробника (головна сутність у зв'язку 1:N із <see cref="Product"/>).
+    /// </summary>
     public class Company
     {
+        /// <summary>Первинний ключ компанії.</summary>
         public int Id { get; set; }
+
+        /// <summary>Назва компанії.</summary>
         public string? Name { get; set; }
+
+        /// <summary>Навігаційна властивість: колекція товарів цієї компанії.</summary>
         public List<Product> Products { get; set; } = new();
     }
 
+    /// <summary>
+    /// Модель товару на складі (залежна сутність із зовнішнім ключем <see cref="CompanyId"/>).
+    /// </summary>
     public class Product
     {
+        /// <summary>Первинний ключ товару.</summary>
         public int Id { get; set; }
+
+        /// <summary>Назва товару.</summary>
         public string? Name { get; set; }
+
+        /// <summary>Ціна за одиницю товару.</summary>
         public int Price { get; set; }
+
+        /// <summary>Кількість одиниць на складі.</summary>
         public int TotalCount { get; set; }
+
+        /// <summary>Зовнішній ключ до таблиці <c>Companies</c>.</summary>
         public int CompanyId { get; set; }
+
+        /// <summary>Навігаційна властивість до компанії-виробника.</summary>
         public Company? Company { get; set; }
     }
 
     /// <summary>
-    /// Клас-проєкція (без первинного ключа), зіставлений з SQL-представленням <c>View_ProductsByCompany</c>.
+    /// Клас-проєкція (Keyless Entity Type — без первинного ключа), зіставлений з SQL-представленням
+    /// <c>View_ProductsByCompany</c>. Назви властивостей збігаються з псевдонімами стовпців у <c>SELECT</c>.
     /// </summary>
     public class CompanyProductsGroup
     {
+        /// <summary>Назва компанії (<c>c.Name AS CompanyName</c>).</summary>
         public string? CompanyName { get; set; }
+
+        /// <summary>Кількість позицій товарів компанії (<c>COUNT(p.Id) AS ProductCount</c>).</summary>
         public int ProductCount { get; set; }
+
+        /// <summary>Загальна вартість товарів компанії на складі (<c>SUM(p.Price * p.TotalCount) AS TotalSum</c>).</summary>
         public int TotalSum { get; set; }
     }
 
+    /// <summary>
+    /// Контекст даних уроку 8.2, що містить звичайні таблиці та набір даних, зіставлений із SQL VIEW.
+    /// </summary>
     public class ViewsContext : DbContext
     {
         private readonly string _connectionString;
 
+        /// <summary>Таблиця товарів.</summary>
         public DbSet<Product> Products { get; set; } = null!;
+
+        /// <summary>Таблиця компаній.</summary>
         public DbSet<Company> Companies { get; set; } = null!;
 
         /// <summary>
-        /// Набір даних, зіставлений із представленням БД (тільки для читання).
+        /// Набір даних, зіставлений із представленням БД (тільки для читання, без відстеження).
         /// </summary>
         public DbSet<CompanyProductsGroup> ProductsByCompany { get; set; } = null!;
 
+        /// <summary>
+        /// Ініціалізує контекст із рядком підключення до SQLite.
+        /// </summary>
         public ViewsContext(string connectionString)
         {
             _connectionString = connectionString;
@@ -149,9 +201,13 @@ namespace EFCoreConsoleMastery.Topics.Ch08.L8_2
         {
             modelBuilder.Entity<CompanyProductsGroup>(pc =>
             {
-                // Представлення зазвичай не мають первинного ключа
+                // Представлення зазвичай не мають первинного ключа, тому обов'язково викликаємо HasNoKey().
+                // Це вимикає ChangeTracker для даної сутності та забороняє операції INSERT/UPDATE/DELETE.
                 pc.HasNoKey();
-                // Вказуємо EF Core, що це VIEW (EnsureCreated не створюватиме для нього таблицю)
+
+                // Вказуємо EF Core, що це SQL VIEW, а не таблиця:
+                // 1) EnsureCreated() і міграції не створюватимуть таблицю з таким іменем.
+                // 2) Запити до DbSet<CompanyProductsGroup> транслюватимуться у SELECT ... FROM "View_ProductsByCompany".
                 pc.ToView("View_ProductsByCompany");
             });
         }

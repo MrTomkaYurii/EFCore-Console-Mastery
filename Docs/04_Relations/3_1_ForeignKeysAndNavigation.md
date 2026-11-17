@@ -6,69 +6,164 @@
 
 ## Мета уроку
 
-Зрозуміти, як у Entity Framework Core моделюються зв'язки між сутностями за допомогою зовнішніх ключів (Foreign Keys) та навігаційних властивостей (Navigation Properties), а також як розрізняти головну (principal) і залежну (dependent) сутності.
+Зрозуміти фундаментальні механізми побудови зв'язків між сутностями в Entity Framework Core: зовнішні ключі (Foreign Keys, FK) та навігаційні властивості (Navigation Properties). Навчитися розрізняти головну (principal) і залежну (dependent) сутності, встановлювати зв'язки різними способами (через навігаційну властивість, через FK, через колекцію головної сутності) та розуміти, як EF Core генерує тіньові властивості, коли FK чи навігація опущені.
 
-## Теоретичний матеріал
+## Детальний теоретичний матеріал
 
-Для зв'язування моделей у EF Core використовуються два взаємодоповнювальні механізми:
+У реляційних базах даних зв'язки між таблицями реалізуються через первинні (Primary Key, PK) та зовнішні (Foreign Key, FK) ключі. В об'єктно-орієнтованій моделі C# класи пов'язані між собою посиланнями на інші об'єкти або колекції об'єктів. EF Core поєднує обидва світи за допомогою двох взаємодоповнювальних концепцій:
 
-- **Навігаційна властивість (Navigation Property)** — властивість C#-класу, яка посилається на іншу сутність (посилальна навігація, наприклад `Company? Company`) або на колекцію пов'язаних сутностей (колекційна навігація, наприклад `List<User> Users`).
-- **Зовнішній ключ (Foreign Key, FK)** — скалярна властивість у залежній сутності, значення якої відповідає первинному ключу (Primary Key) головної сутності.
+1. **Навігаційна властивість (Navigation Property)** — властивість C#-класу, яка дозволяє переходити від однієї сутності до іншої в об'єктній моделі:
+   - **Посилальна навігація (Reference Navigation)** — посилання на одиночний пов'язаний об'єкт (наприклад, `public Company? Company { get; set; }` у класі `User`).
+   - **Колекційна навігація (Collection Navigation)** — колекція пов'язаних об'єктів (наприклад, `public List<User> Users { get; set; } = new();` у класі `Company`).
+2. **Зовнішній ключ (Foreign Key, FK)** — скалярна властивість у залежній сутності, яка зберігає значення первинного ключа головної сутності (наприклад, `public int CompanyId { get; set; }`).
 
-### Головна та залежна сутності
+### Головна (Principal) та залежна (Dependent) сутності
 
-| Поняття | Опис | Приклад |
+У будь-якому зв'язку з зовнішнім ключем одна сторона є головною, а інша — залежною:
+
+| Характеристика | Головна сутність (Principal) | Залежна сутність (Dependent) |
 |---|---|---|
-| **Головна сутність (Principal)** | Містить первинний ключ, на який посилаються інші таблиці; може існувати незалежно. | `Company` (`Id`, `Name`, `Users`) |
-| **Залежна сутність (Dependent)** | Містить зовнішній ключ, що посилається на головну сутність. | `User` (`Id`, `Name`, `CompanyId`, `Company`) |
+| **Роль у зв'язку** | Надає первинний або альтернативний ключ, на який посилаються | Містить зовнішній ключ, що вказує на головну сутність |
+| **Незалежність існування** | Може існувати без залежних записів | При обов'язковому зв'язку не може існувати без головної сутності |
+| **Типова навігація** | Колекція залежних об'єктів (`List<User> Users`) або одиночне посилання (для 1:1) | Посилання на головний об'єкт (`Company? Company`) та скалярний FK (`CompanyId`) |
+| **Приклад у уроці** | `Company` | `User` |
 
 ### Конвенції іменування зовнішнього ключа
 
-За замовчуванням EF Core автоматично розпізнає властивість як зовнішній ключ, якщо її назва відповідає одному з шаблонів:
+За замовчуванням (Convention-based configuration) EF Core автоматично розпізнає скалярну властивість у залежній сутності як зовнішній ключ, якщо її ім'я відповідає одному з двох шаблонів:
 
-1. `<Ім'я_навігаційної_властивості><Ім'я_ключа_пов'язаної_сутності>` (наприклад, `Company` + `Id` = `CompanyId`).
-2. `<Ім'я_класу_пов'язаної_сутності><Ім'я_ключа_пов'язаної_сутності>` (наприклад, `Company` + `Id` = `CompanyId`).
+1. `<Ім'я_навігаційної_властивості><Ім'я_ключа_головної_сутності>` — наприклад, навігаційна властивість `Company` + ключ `Id` = `CompanyId`.
+2. `<Ім'я_класу_головної_сутності><Ім'я_ключа_головної_сутності>` — наприклад, клас `Company` + ключ `Id` = `CompanyId`.
 
-### Два способи встановлення зв'язку в коді
+Якщо навігаційна властивість називається, наприклад, `Employer`, а ключ `Company` називається `Id`, то за першим правилом EF Core очікуватиме `EmployerId`, а за другим — `CompanyId`.
 
-- **Через навігаційну властивість:** `user.Company = google;` — EF Core автоматично заповнить `CompanyId` після збереження `Company`.
-- **Через зовнішній ключ:** `user.CompanyId = microsoft.Id;` — зручно, коли головна сутність уже є в БД і нам відомий лише її `Id`.
+### Три способи встановлення зв'язку в C#
 
-## Ключові фрагменти коду
+EF Core достатньо гнучкий, щоб ви могли встановлювати зв'язок між об'єктами будь-яким із трьох способів:
 
-```csharp
-public class Company
-{
-    public int Id { get; set; }
-    public string? Name { get; set; }
-    public List<User> Users { get; set; } = new();
-}
+1. **Через посилальну навігаційну властивість залежної сутності:**
+   ```csharp
+   var tom = new User { Name = "Tom", Company = google };
+   ```
+   Навіть якщо `google` ще не збережений у БД і має `Id == 0`, EF Core автоматично впорядкує `INSERT`-запити під час `SaveChanges()`: спочатку вставить `Company`, отримає згенерований `Id`, а потім підставить його у `CompanyId` для `User`.
+2. **Через властивість зовнішнього ключа залежної сутності:**
+   ```csharp
+   var kate = new User { Name = "Kate", CompanyId = microsoft.Id };
+   ```
+   Цей спосіб ідеальний, коли головна сутність уже існує в БД і нам відомий лише її `Id` — не потрібно завантажувати весь об'єкт `Company` у пам'ять або викликати `Attach()`. Проте `microsoft.Id` уже має бути відомим (тобто компанія повинна бути збережена в БД до формування `User`).
+3. **Через колекційну навігаційну властивість головної сутності:**
+   ```csharp
+   var google = new Company { Name = "Google", Users = { user1, user2 } };
+   db.Companies.Add(google);
+   ```
+   Додавання `google` у контекст автоматично переводить у стан `Added` і всі пов'язані нові об'єкти в колекції `Users` (досяжність по графу об'єктів).
 
-public class User
-{
-    public int Id { get; set; }
-    public string? Name { get; set; }
-    public int CompanyId { get; set; }      // Зовнішній ключ за конвенцією
-    public Company? Company { get; set; }   // Навігаційна властивість
-}
+### Відсутність властивості зовнішнього ключа або навігаційної властивості
+
+Оголошувати зовнішній ключ або обидві навігаційні властивості у C#-класах не обов'язково:
+
+- **Без скалярного FK у класі `User`** (залишається лише `public Company? Company { get; set; }`):
+  EF Core автоматично створить **тіньову властивість (Shadow Property)** `CompanyId` типу `int?` (nullable!) та відповідний стовпець у БД. Через nullable-природу тіньового FK каскадне видалення **не** вмикається за замовчуванням (`ON DELETE NO ACTION` / `ClientSetNull`).
+- **Без навігаційної властивості `Company` і без `CompanyId` у `User`** (коли у `Company` є лише `public List<User> Users { get; set; }`):
+  EF Core все одно розпізнає зв'язок один-до-багатьох на основі колекції `Users` у `Company` і згенерує тіньовий стовпець `"CompanyId" INTEGER` із `FOREIGN KEY` у таблиці `Users`.
+
+Проте явне оголошення скалярного FK (`public int CompanyId { get; set; }`) на практиці значно зручніше: воно дозволяє фільтрувати дані за `u.CompanyId == id` без зайвого `JOIN`, легко змінювати зв'язок за ID та чітко контролювати обов'язковість (`int` vs `int?`).
+
+## Діаграма / Архітектура процесу
+
+```mermaid
+erDiagram
+    Companies {
+        INTEGER Id PK
+        TEXT Name
+    }
+    Users {
+        INTEGER Id PK
+        TEXT Name
+        INTEGER CompanyId FK
+    }
+    Companies ||--o{ Users : "1..* (Users / Company)"
 ```
 
+Механізм визначення FK та обов'язковості зв'язку за конвенціями EF Core:
+
+```mermaid
+flowchart TD
+    A["Аналіз моделі залежної сутності User"] --> B{"Чи є скалярна властивість CompanyId?"}
+    B -- "Так" --> C{"Тип CompanyId: int чи int?"}
+    B -- "Ні" --> D["Створюється тіньова властивість CompanyId (int?)"]
+    C -- "int (non-nullable)" --> E["Обов'язковий зв'язок: NOT NULL + ON DELETE CASCADE"]
+    C -- "int? (nullable)" --> F["Необов'язковий зв'язок: NULL + ClientSetNull"]
+    D --> F
+```
+
+## Покроковий розбір прикладів коду
+
+У файлі [Lesson_3_1_ForeignKeysAndNavigation.cs](../../src/04_Relations/Lesson_3_1_ForeignKeysAndNavigation.cs) продемонстровано обидва основні сценарії роботи зі зв'язком `Company` — `User`.
+
+### 1. Визначення моделей та контексту (`AppContextL3_1`)
+
+- `Company` є головною сутністю з `Id`, `Name` та колекційною навігацією `List<User> Users`.
+- `User` є залежною сутністю з `Id`, `Name`, обов'язковим зовнішнім ключем `int CompanyId` та посилальною навігацією `Company? Company`.
+- Оскільки `CompanyId` має тип `int` (не nullable), при створенні бази даних `SqliteDbHelper.RecreateDatabase(db)` виконує `EnsureDeleted()` та `EnsureCreated()`, генеруючи в SQLite такий DDL:
+
+```sql
+CREATE TABLE "Companies" (
+    "Id" INTEGER NOT NULL CONSTRAINT "PK_Companies" PRIMARY KEY AUTOINCREMENT,
+    "Name" TEXT NULL
+);
+
+CREATE TABLE "Users" (
+    "Id" INTEGER NOT NULL CONSTRAINT "PK_Users" PRIMARY KEY AUTOINCREMENT,
+    "Name" TEXT NULL,
+    "CompanyId" INTEGER NOT NULL,
+    CONSTRAINT "FK_Users_Companies_CompanyId" FOREIGN KEY ("CompanyId") REFERENCES "Companies" ("Id") ON DELETE CASCADE
+);
+```
+
+### 2. Секція 1: Встановлення зв'язку через навігаційну властивість
+
 ```csharp
-// 1. Встановлення зв'язку через навігаційну властивість
+var google = new Company { Name = "Google" };
+var microsoft = new Company { Name = "Microsoft" };
+
 var tom = new User { Name = "Tom", Company = google };
+var bob = new User { Name = "Bob", Company = microsoft };
+var alice = new User { Name = "Alice", Company = google };
 
-// 2. Встановлення зв'язку через зовнішній ключ
-var kate = new User { Name = "Kate", CompanyId = microsoft.Id };
+db.Companies.AddRange(google, microsoft);
+db.Users.AddRange(tom, bob, alice);
+db.SaveChanges();
 ```
+
+Під час `db.SaveChanges()` EF Core бачить залежність `User -> Company`:
+1. Спочатку вставляє рядки в `"Companies"` (`Google` отримує `Id = 1`, `Microsoft` — `Id = 2`).
+2. Отримані `Id` автоматично записує в `tom.CompanyId`, `bob.CompanyId`, `alice.CompanyId`.
+3. Вставляє рядки в `"Users"` із відповідними `CompanyId`.
+
+Далі запит `db.Users.Include(u => u.Company).ToList()` виконує `INNER JOIN` (оскільки `CompanyId` є `NOT NULL`) і виводить кожного користувача разом із назвою його компанії.
+
+### 3. Секція 2: Встановлення зв'язку через зовнішній ключ (`CompanyId`)
+
+У новому екземплярі `AppContextL3_1` ми знаходимо `microsoft` (`var microsoft = db.Companies.First(c => c.Name == "Microsoft");`) та створюємо нового користувача, передаючи лише числовий ключ:
+
+```csharp
+var kate = new User { Name = "Kate", CompanyId = microsoft.Id };
+db.Users.Add(kate);
+db.SaveChanges();
+```
+
+У третьому контексті (`using (var db = new AppContextL3_1())`) перевіряємо, що після `Include(u => u.Company)` у `kate` коректно заповнюється `kate.Company?.Name` (`Microsoft`), а при запиті з боку компаній `db.Companies.Include(c => c.Users)` ми бачимо згруповані списки співробітників для `Google` (`Tom, Alice`) та `Microsoft` (`Bob, Kate`).
 
 ## Особливості роботи в SQLite
 
-- У SQLite зовнішні ключі створюються безпосередньо в `CREATE TABLE` за допомогою `CONSTRAINT "FK_Users_Companies_CompanyId" FOREIGN KEY("CompanyId") REFERENCES "Companies"("Id") ON DELETE CASCADE`.
-- На відміну від SQL Server, у SQLite перевірка зовнішніх ключів (`PRAGMA foreign_keys = ON;`) історично може бути вимкнена на рівні окремих утиліт, проте провайдер `Microsoft.EntityFrameworkCore.Sqlite` автоматично вмикає її для кожного з'єднання.
-- Тип `int` у C# відображається в `INTEGER NOT NULL` у SQLite, а `string?` — у `TEXT`.
+- **Увімкнення зовнішніх ключів:** у самому рушії SQLite перевірка `FOREIGN KEY` історично вимкнена за замовчуванням для зворотної сумісності (`PRAGMA foreign_keys = OFF`). Проте провайдер `Microsoft.EntityFrameworkCore.Sqlite` **автоматично виконує `PRAGMA foreign_keys = 1;`** при відкритті кожного з'єднання, тому цілісність посилань і каскадне видалення працюють повноцінно. Якщо ж ви відкриваєте `.db`-файл стороннім клієнтом (наприклад, DB Browser for SQLite), переконайтеся, що прапорець Foreign Keys увімкнений.
+- **Типи даних та автоінкремент:** на відміну від MS SQL Server (`INT IDENTITY(1,1)` та `NVARCHAR(MAX)`), у SQLite `int` відображається в `INTEGER`, а `string?` — у `TEXT`, а автогенерація первинного ключа реалізується через `PRIMARY KEY ("Id" AUTOINCREMENT)`.
+- **Індекс на зовнішньому ключі:** EF Core автоматично створює індекс `IX_Users_CompanyId` на стовпці зовнішнього ключа для прискорення `JOIN` та каскадного видалення як у SQLite, так і в SQL Server.
 
-## Підсумок та підводні камені
+## Типові помилки, підводні камені та Best Practices
 
-- Якщо зовнішній ключ має тип `int` (не nullable), зв'язок вважається **обов'язковим**, і за замовчуванням у БД створюється `ON DELETE CASCADE`.
-- Якщо ви встановлюєте зв'язок через `CompanyId`, а навігаційна властивість `Company` залишається `null`, у поточному контексті вона автоматично підтягнеться, якщо `Company` уже відстежується контекстом, або потребуватиме `Include()` у новому контексті.
-- Наявність скалярної властивості `CompanyId` у моделі не є суворо обов'язковою (EF Core може створити тіньову властивість — shadow property), але явне оголошення FK значно спрощує фільтрацію та оновлення зв'язків.
+- **Забутий `Include()` у новому контексті:** якщо ви зберегли `kate` через `CompanyId` і потім прочитали `db.Users.ToList()` у новому `DbContext` без `.Include(u => u.Company)`, властивість `kate.Company` буде `null` (якщо не увімкнено Lazy Loading). У тому ж самому контексті, де `Microsoft` уже відстежується Change Tracker-ом, EF Core автоматично виконає *relationship fixup* і заповнить `kate.Company`.
+- **Помилка `FOREIGN KEY constraint failed`:** виникає при спробі вставити `User` із неіснуючим `CompanyId` (наприклад, `CompanyId = 0`, якщо забули зберегти `Company` або не задали навігаційну властивість).
+- **Неявний `ON DELETE CASCADE`:** через те що `int CompanyId` не допускає `null`, видалення компанії за замовчуванням видалить усіх її користувачів. Якщо такий зв'язок має бути захищеним від випадкового видалення, використовуйте `int?` або налаштовуйте `DeleteBehavior.Restrict`.
+- **Best Practice:** завжди явно оголошуйте і властивість зовнішнього ключа (`CompanyId`), і навігаційну властивість (`Company`), а в головній сутності ініціалізуйте колекцію (`= new();` або `= [];`), щоб уникнути `NullReferenceException` при додаванні елементів.

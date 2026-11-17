@@ -1,22 +1,24 @@
 ﻿# 8.3. Зберігання історії змін (Temporal Tables / SQLite Audit)
 
 - **Глава:** 08. Додаткові теми
-- **Оригінал на Metanit:** [https://metanit.com/sharp/efcore/8.3.php](https://metanit.com/sharp/efcore/8.3.php)
+- **Джерело Metanit:** [https://metanit.com/sharp/efcore/8.3.php](https://metanit.com/sharp/efcore/8.3.php)
 - **Код прикладу:** [Lesson_8_3_ChangeHistory.cs](../../src/08_AdvancedTopics/Lesson_8_3_ChangeHistory.cs)
 
 ---
 
 ## Мета уроку
 
-Вивчити механізм **темпоральних таблиць (Temporal Tables)** в EF Core для MS SQL Server (`IsTemporal()`) та реалізувати кросплатформну альтернативу для SQLite на основі **таблиці аудиту** та `SaveChangesInterceptor` для відстеження й відновлення історії змін.
+Вивчити механізм **темпоральних таблиць (Temporal Tables)** в Entity Framework Core для MS SQL Server (`IsTemporal()`, методи `TemporalAll`, `TemporalAsOf`, `TemporalFromTo`, `TemporalBetween`, `TemporalContainedIn`), а також реалізувати кросплатформну альтернативу для SQLite на основі **таблиці аудиту** та `SaveChangesInterceptor` для автоматичного логування і відновлення видалених даних.
 
 ---
 
-## Теоретичний матеріал
+## Детальний теоретичний матеріал
 
 ### 1. Темпоральні таблиці у MS SQL Server (`IsTemporal`)
 
-Починаючи з EF Core 6.0, провайдер **MS SQL Server** підтримує вбудовані системно-версіоновані таблиці (`SYSTEM_VERSIONING = ON`). При налаштуванні:
+Починаючи з EF Core 6.0, провайдер **MS SQL Server** підтримує системно-версіоновані таблиці (`SYSTEM_VERSIONING = ON`). Це дозволяє серверу БД автоматично зберігати кожну попередню версію рядка при будь-якому `UPDATE` або `DELETE`.
+
+Налаштування у `OnModelCreating`:
 
 ```csharp
 modelBuilder
@@ -24,11 +26,20 @@ modelBuilder
     .ToTable("Users", t => t.IsTemporal());
 ```
 
-SQL Server автоматично створює:
-- Два приховані (shadow) стовпці `PeriodStart` і `PeriodEnd` типу `datetime2`.
-- Паралельну таблицю історії `UsersHistory`, куди сервер БД автоматично переносить попередні версії рядків при кожному `UPDATE` або `DELETE`.
+При цьому SQL Server створює основну таблицю з двома прихованими (*shadow*) стовпцями `PeriodStart` і `PeriodEnd` типу `datetime2` та асоційовану таблицю історії `UsersHistory`:
 
-Таблицю історії та назви стовпців періоду можна кастомізувати:
+```sql
+CREATE TABLE [dbo].[Users] (
+    [Id]          INT IDENTITY (1, 1) NOT NULL,
+    [Name]        NVARCHAR (MAX) NULL,
+    [PeriodEnd]   DATETIME2 (7) GENERATED ALWAYS AS ROW END HIDDEN NOT NULL,
+    [PeriodStart] DATETIME2 (7) GENERATED ALWAYS AS ROW START HIDDEN NOT NULL,
+    PERIOD FOR SYSTEM_TIME ([PeriodStart], [PeriodEnd])
+)
+WITH (SYSTEM_VERSIONING = ON (HISTORY_TABLE=[dbo].[UsersHistory], DATA_CONSISTENCY_CHECK=ON));
+```
+
+#### Кастомізація таблиці історії та стовпців періоду
 
 ```csharp
 modelBuilder.Entity<User>().ToTable("Users", t => t.IsTemporal(h =>
@@ -39,21 +50,32 @@ modelBuilder.Entity<User>().ToTable("Users", t => t.IsTemporal(h =>
 }));
 ```
 
-#### Методи вибірки історії у SQL Server
+#### Доступ до тіньових властивостей та методи вибірки історії
+
+Для актуального об'єкта значення тіньових стовпців можна отримати через `ChangeTracker`:
+
+```csharp
+var userEntry = db.Entry(user);
+var createdAt = userEntry.Property<DateTime>("PeriodStart").CurrentValue;
+var deletedAt = userEntry.Property<DateTime>("PeriodEnd").CurrentValue; // для активного рядка це 31.12.9999 23:59:59
+```
+
+Для запитів до історії у просторі імен `Microsoft.EntityFrameworkCore` доступні 5 методів розширення для `DbSet<T>`:
 
 | Метод EF Core | Опис |
 | :--- | :--- |
-| `TemporalAll()` | Повертає всі версії рядків за весь час (і поточні, і історичні). |
-| `TemporalAsOf(date)` | Повертає стан даних на конкретний момент часу `date`. |
-| `TemporalFromTo(start, end)` | Повертає стани, що існували в інтервалі `(start, end)`. |
-| `TemporalBetween(start, end)` | Аналогічно `TemporalFromTo`, але включає межу `end`. |
-| `TemporalContainedIn(start, end)` | Повертає рядки, які почали й завершили існування виключно всередині `[start, end]`. |
+| **`TemporalAll()`** | Повертає всі версії рядків за весь час (і актуальні, і з таблиці історії). |
+| **`TemporalAsOf(date)`** | Повертає стан даних на конкретний момент часу `date` (по одному рядку на об'єкт). |
+| **`TemporalFromTo(start, end)`** | Повертає стани, що існували в інтервалі `start < t < end`. |
+| **`TemporalBetween(start, end)`** | Аналогічно `TemporalFromTo`, але включає також рядки, активні точно на момент `end`. |
+| **`TemporalContainedIn(start, end)`** | Повертає рядки, які почали й завершили своє існування виключно всередині `[start, end]`. |
 
-Доступ до прихованих стовпців періоду у запитах:
+Приклад вибірки всієї історії користувача з прихованими стовпцями через `EF.Property<DateTime>`:
+
 ```csharp
 var history = db.Users.TemporalAll()
     .Where(u => u.Id == 1)
-    .OrderBy(u => EF.Property<DateTime>(u, "PeriodStart"))
+    .OrderBy(e => EF.Property<DateTime>(e, "PeriodStart"))
     .Select(u => new
     {
         User = u,
@@ -63,63 +85,87 @@ var history = db.Users.TemporalAll()
     .ToList();
 ```
 
-Для відновлення видаленого запису зі збереженням старого `Id` у SQL Server необхідно в межах транзакції увімкнути `SET IDENTITY_INSERT [dbo].[Users] ON`.
+#### Відновлення видаленого запису в SQL Server
 
-### 2. Альтернатива для SQLite: `SaveChangesInterceptor` + таблиця аудиту
+Після видалення користувача його попередній стан можна дістати через `TemporalAsOf(date)`. Оскільки `Id` уже заданий, перед `Add(user)` і `SaveChanges()` у SQL Server потрібно в межах транзакції тимчасово дозволити явну вставку ідентифікатора:
 
-Оскільки SQLite **не підтримує** `IsTemporal()`, історію змін у SQLite реалізують одним із двох способів:
-1. **SQLite-тригери (`AFTER INSERT / UPDATE / DELETE`)**, які записують старі та нові значення у таблицю `UsersHistory`.
-2. **`SaveChangesInterceptor` (або перевизначення `SaveChanges`)**, який читає стан `ChangeTracker` (`EntityState.Added`, `Modified`, `Deleted`) та `OriginalValues` / `CurrentValues`, зберігаючи знімки у таблицю аудиту `UserHistories`.
-
-У нашому уроці реалізовано саме другий підхід — він повністю типобезпечний, працює через LINQ і легко переноситься між будь-якими СУБД.
+```csharp
+using var transaction = db.Database.BeginTransaction();
+db.Database.ExecuteSqlRaw("SET IDENTITY_INSERT [dbo].[Users] ON");
+db.Users.Add(user);
+db.SaveChanges();
+db.Database.ExecuteSqlRaw("SET IDENTITY_INSERT [dbo].[Users] OFF");
+transaction.Commit();
+```
 
 ---
 
-## Ключові фрагменти коду
+### 2. Альтернатива для SQLite: таблиця аудиту + `SaveChangesInterceptor`
 
-Перехоплення змін у `SaveChangesInterceptor`:
+SQLite не має вбудованих темпоральних таблиць (`IsTemporal()`). Для реалізації історії змін у SQLite застосовують два підходи:
+1. **SQLite-тригери (`AFTER INSERT / UPDATE / DELETE`):** записують зміни безпосередньо на рівні БД (спрацьовують навіть при сирому SQL чи `ExecuteUpdate`/`ExecuteDelete`).
+2. **`SaveChangesInterceptor` + таблиця аудиту (`UserHistories`):** перехоплює збереження змін в EF Core, читає `ChangeTracker` (`Added`, `Modified`, `Deleted`, `OriginalValues`, `CurrentValues`) і зберігає знімки в окрему таблицю. Це повністю типобезпечний, кросплатформний підхід на C#.
 
-```csharp
-foreach (var entry in eventData.Context.ChangeTracker.Entries<User>())
-{
-    if (entry.State == EntityState.Modified)
-    {
-        _pendingLogs.Add((entry, new UserHistory
-        {
-            UserId = entry.Entity.Id,
-            Operation = "UPDATE",
-            OldName = entry.OriginalValues.GetValue<string?>(nameof(User.Name)),
-            NewName = entry.CurrentValues.GetValue<string?>(nameof(User.Name)),
-            ChangedAtUtc = DateTime.UtcNow
-        }));
+---
+
+## Діаграма / Архітектура процесу
+
+ER-діаграма зв'язку основної таблиці `Users` та таблиці аудиту `UserHistories`:
+
+```mermaid
+erDiagram
+    Users ||--o{ UserHistories : "аудит змін (UserId)"
+    Users {
+        int Id PK
+        string Name
     }
-}
+    UserHistories {
+        int Id PK
+        int UserId "Id сутності User"
+        string Operation "INSERT | UPDATE | DELETE"
+        string OldName "OriginalValues"
+        string NewName "CurrentValues"
+        datetime ChangedAtUtc "Час зміни в UTC"
+    }
 ```
 
-Збереження записів аудиту в `SavedChanges` (коли для `INSERT` уже відомий згенерований `Id`):
+---
 
-```csharp
-foreach (var (entry, history) in _pendingLogs)
-{
-    if (history.UserId == 0)
-        history.UserId = entry.Entity.Id;
+## Покроковий розбір прикладів коду
 
-    eventData.Context.Set<UserHistory>().Add(history);
-}
-```
+У файлі [Lesson_8_3_ChangeHistory.cs](../../src/08_AdvancedTopics/Lesson_8_3_ChangeHistory.cs) реалізовано повний механізм аудиту в SQLite через `AuditSaveChangesInterceptor`:
+
+1. **Перехоплення до збереження (`SavingChanges`):**
+   - Інтерсептор перевіряє прапорець `_isSavingAudit`, щоб не реагувати на власні записи аудиту.
+   - Перебирає `eventData.Context.ChangeTracker.Entries<User>()` і формує список `_pendingLogs`:
+     - для `EntityState.Added`: `Operation = "INSERT"`, `OldName = null`, `NewName = entry.Entity.Name` (на цьому етапі `UserId` ще дорівнює `0`, бо SQLite ще не згенерував автоінкрементний `Id`);
+     - для `EntityState.Modified`: `Operation = "UPDATE"`, `OldName = entry.OriginalValues.GetValue<string?>("Name")`, `NewName = entry.CurrentValues.GetValue<string?>("Name")`;
+     - для `EntityState.Deleted`: `Operation = "DELETE"`, `OldName = entry.OriginalValues.GetValue<string?>("Name")`, `NewName = null`.
+2. **Запис аудиту після збереження (`SavedChanges`):**
+   - Виконується вже **після** того, як БД згенерувала реальний `Id` для нових користувачів.
+   - Інтерсептор встановлює `_isSavingAudit = true`, для записів із `UserId == 0` підставляє `entry.Entity.Id`, додає всі `UserHistory` у контекст і викликає `eventData.Context.SaveChanges()`.
+   - У блоці `finally` скидає `_isSavingAudit = false`.
+3. **Серія операцій у `Run()`:**
+   - Послідовно виконуються `INSERT` (`"Tom"`), два `UPDATE` (`"Bob"`, `"Sam"`) та `DELETE`.
+   - Запит до `db.UserHistories.Where(h => h.UserId == createdUserId).OrderBy(h => h.Id)` показує всю хронологію (аналог `TemporalAll()`).
+4. **Відновлення видаленого запису:**
+   - Знаходимо останній запис аудиту з `Operation == "DELETE"`, беремо `UserId` та `OldName` (`"Sam"`), створюємо новий `User { Id = deletedSnapshot.UserId, Name = deletedSnapshot.OldName }` і зберігаємо його в БД.
 
 ---
 
 ## Особливості роботи в SQLite
 
-- **`IsTemporal()` недоступний у SQLite:** виклик `.IsTemporal()` при використанні провайдера `Microsoft.EntityFrameworkCore.Sqlite` не підтримується (метод розширення належить пакету `Microsoft.EntityFrameworkCore.SqlServer`).
-- **Відновлення запису зі старим `Id`:** у SQL Server для вставки явного `Id` потрібна команда `SET IDENTITY_INSERT [dbo].[Users] ON`. У SQLite для стовпця `INTEGER PRIMARY KEY` ви можете просто вказати `Id = oldId` при `Add(...)` — SQLite дозволяє вставляти явні значення первинного ключа без додаткових команд.
-- **Масові операції (`ExecuteUpdate` / `ExecuteDelete`):** `SaveChangesInterceptor` спрацьовує лише при роботі через `SaveChanges()`. Якщо у проєкті використовуються `ExecuteUpdate` або `ExecuteDelete` в обхід `ChangeTracker`, для гарантованого аудиту в SQLite слід використовувати **SQL-тригери**.
+| Аспект | MS SQL Server | SQLite |
+| :--- | :--- | :--- |
+| **Вбудований `IsTemporal()`** | Повністю підтримується (пакет `Microsoft.EntityFrameworkCore.SqlServer`). | **Не підтримується** в SQLite. |
+| **Відновлення зі старим `Id`** | Потрібна транзакція та `SET IDENTITY_INSERT [dbo].[Users] ON/OFF`. | Для `INTEGER PRIMARY KEY` не потрібні жодні додаткові команди — достатньо задати `Id = oldId` при `Add(...)`. |
+| **Масові операції `ExecuteUpdate` / `ExecuteDelete`** | SQL Server автоматично записує зміни в `UsersHistory` на рівні рушія БД. | `SaveChangesInterceptor` **не спрацьовує** для `ExecuteUpdate`/`ExecuteDelete`, бо вони йдуть в обхід `ChangeTracker`. Для них у SQLite потрібні SQL-тригери. |
 
 ---
 
-## Підсумок та підводні камені
+## Типові помилки, підводні камені та Best Practices
 
-- **Захист від нескінченної рекурсії в інтерсепторі:** якщо ви викликаєте `context.SaveChanges()` всередині `SavedChanges(...)` для запису таблиці аудиту, обов'язково використовуйте прапорець-запобіжник (`_isSavingAudit`), інакше інтерсептор викличе сам себе по колу.
-- **Часова зона:** у системах аудиту та Temporal Tables завжди зберігайте мітки часу в **UTC** (`DateTime.UtcNow`), щоб уникнути плутанини при переході на літній/зимовий час.
-- **Обмеження навігації:** у SQL Server методи `Temporal*` працюють у режимі `AsNoTracking` — отримані історичні об'єкти не відстежуються контекстом.
+- **Нескінченна рекурсія в `SavedChanges`:** якщо ви викликаєте `context.SaveChanges()` всередині `SavedChanges` для збереження аудиту без запобіжника `_isSavingAudit`, інтерсептор викликатиме сам себе нескінченно до `StackOverflowException`.
+- **Потокобезпечність `SaveChangesInterceptor`:** у нашому навчальному прикладі кожен екземпляр `AuditHistoryContext` створює власний `_auditInterceptor`, тому поля `_pendingLogs` і `_isSavingAudit` безпечні. Якщо ви реєструєте один singleton-інтерсептор у DI для багатьох контекстів, зберігайте тимчасовий стан у `AsyncLocal<T>` або `ConditionalWeakTable<DbContext, ...>`.
+- **Завжди використовуйте UTC:** для систем аудиту та темпоральних таблиць зберігайте час виключно в `DateTime.UtcNow`, щоб уникнути дублювання чи зсуву годин при переході на літній/зимовий час.
+- **Відсутність відстеження для `Temporal*`:** у SQL Server усі методи `TemporalAll()`, `TemporalAsOf()` тощо повертають сутності в режимі `AsNoTracking` — щоб відновити або змінити такий об'єкт, його потрібно явно приєднати через `Add` або `Update`.

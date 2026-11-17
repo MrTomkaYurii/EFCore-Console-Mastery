@@ -18,6 +18,12 @@ namespace EFCoreConsoleMastery.Topics.Ch08
         public int ChapterOrder => 8;
         public int LessonOrder => 2;
 
+        /// <summary>
+        /// Запускає демонстрацію трьох підходів до логування в EF Core через <see cref="ILoggerFactory"/>:
+        /// 1) Локальне підключення власного <see cref="ILoggerProvider"/> через <c>GetService&lt;ILoggerFactory&gt;()</c>.
+        /// 2) Зовнішній <see cref="ILoggerFactory"/> із фільтрацією категорії <see cref="DbLoggerCategory.Database.Command"/>.
+        /// 3) Стандартний консольний провайдер <c>AddConsole()</c>.
+        /// </summary>
         public void Run()
         {
             var connStr = SqliteDbHelper.GetConnectionString("lesson_2_12_logging");
@@ -39,8 +45,9 @@ namespace EFCoreConsoleMastery.Topics.Ch08
             {
                 SqliteDbHelper.RecreateDatabase(db);
 
-                // Отримуємо вбудований ILoggerFactory конкретного екземпляра DbContext
-                // та реєструємо власний провайдер, що пише у файл і в консоль
+                // GetService<ILoggerFactory>() отримує ILoggerFactory із внутрішнього DI-контейнера EF Core.
+                // Додавання провайдера тут не потребує переконфігурації OnConfiguring, але зачіпає
+                // внутрішній ServiceProvider (який EF Core кешує між контекстами з однаковою конфігурацією).
                 var loggerFactory = db.GetService<ILoggerFactory>();
                 loggerFactory.AddProvider(new CustomFileAndConsoleLoggerProvider(logFilePath, filterSqlOnly: false));
 
@@ -48,6 +55,8 @@ namespace EFCoreConsoleMastery.Topics.Ch08
                     new User { Name = "Tom", Age = 33 },
                     new User { Name = "Alice", Age = 26 }
                 );
+                // Логер зафіксує події DbUpdate, транзакцію SQLite та INSERT-команди з часом виконання (ms).
+                // За замовчуванням значення параметрів (@p0, @p1) приховані ('?') без EnableSensitiveDataLogging().
                 db.SaveChanges();
 
                 var users = db.Users.ToList();
@@ -59,11 +68,14 @@ namespace EFCoreConsoleMastery.Topics.Ch08
             // -------------------------------------------------------------------------
             SqliteDbHelper.PrintSection("2. Глобальний ILoggerFactory + фільтр DbLoggerCategory.Database.Command");
 
-            // У реальних застосунках ILoggerFactory зазвичай оголошують як static readonly у DbContext,
-            // щоб EF Core не створював новий екземпляр провайдера на кожен запит.
+            // ВАЖЛИВО: У реальних застосунках ILoggerFactory потрібно оголошувати як static readonly
+            // або отримувати з DI-контейнера. Якщо створювати новий LoggerFactory на кожен екземпляр DbContext,
+            // EF Core щоразу будуватиме новий внутрішній IServiceProvider, що призведе до витоку пам'яті!
             using (var sqlOnlyFactory = LoggerFactory.Create(builder =>
             {
                 builder
+                    // Фільтруємо лише виконані SQL-команди (DbLoggerCategory.Database.Command) рівня Information.
+                    // Інші категорії (ChangeTracking, Query, Infrastructure) будуть відкинуті ще до виклику Log().
                     .AddFilter((category, level) =>
                         category == DbLoggerCategory.Database.Command.Name
                         && level == LogLevel.Information)
@@ -71,6 +83,7 @@ namespace EFCoreConsoleMastery.Topics.Ch08
             }))
             {
                 using var db = new LoggingContext(connStr, sqlOnlyFactory);
+                // У SQLite LINQ-запит транслюється в SELECT "u"."Id", "u"."Age", "u"."Name" FROM "Users" AS "u" WHERE "u"."Age" >= 25
                 var adults = db.Users.Where(u => u.Age >= 25).ToList();
                 foreach (var u in adults)
                 {
@@ -83,6 +96,8 @@ namespace EFCoreConsoleMastery.Topics.Ch08
             // -------------------------------------------------------------------------
             SqliteDbHelper.PrintSection("3. Вбудований Console Logger (builder.AddConsole())");
 
+            // AddConsole() використовує фонову чергу для запису в консоль, а блок using
+            // гарантує скидання (flush) буфера при завершенні роботи фабрики.
             using (var consoleFactory = LoggerFactory.Create(builder =>
             {
                 builder
@@ -91,6 +106,7 @@ namespace EFCoreConsoleMastery.Topics.Ch08
             }))
             {
                 using var db = new LoggingContext(connStr, consoleFactory);
+                // Count() згенерує SQL: SELECT COUNT(*) FROM "Users"
                 var count = db.Users.Count();
                 Console.WriteLine($"Загальна кількість записів у таблиці Users: {count}");
             }
@@ -102,20 +118,35 @@ namespace EFCoreConsoleMastery.Topics.Ch08
 
 namespace EFCoreConsoleMastery.Topics.Ch08.L2_12
 {
+    /// <summary>
+    /// Проста модель користувача для генерації SQL-запитів та демонстрації логування.
+    /// </summary>
     public class User
     {
+        /// <summary>Первинний ключ користувача.</summary>
         public int Id { get; set; }
+
+        /// <summary>Ім'я користувача (може бути null).</summary>
         public string? Name { get; set; }
+
+        /// <summary>Вік користувача.</summary>
         public int Age { get; set; }
     }
 
+    /// <summary>
+    /// Контекст даних уроку 2.12, що підтримує опційне підключення зовнішньої <see cref="ILoggerFactory"/>.
+    /// </summary>
     public class LoggingContext : DbContext
     {
         private readonly string _connectionString;
         private readonly ILoggerFactory? _loggerFactory;
 
+        /// <summary>Таблиця користувачів у SQLite.</summary>
         public DbSet<User> Users { get; set; } = null!;
 
+        /// <summary>
+        /// Ініціалізує контекст із рядком підключення та необов'язковою фабрикою логерів.
+        /// </summary>
         public LoggingContext(string connectionString, ILoggerFactory? loggerFactory = null)
         {
             _connectionString = connectionString;
@@ -128,7 +159,8 @@ namespace EFCoreConsoleMastery.Topics.Ch08.L2_12
 
             if (_loggerFactory is not null)
             {
-                // Підключаємо зовнішню фабрику логерів для цього контексту
+                // Підключаємо зовнішню фабрику логерів замість стандартної внутрішньої фабрики EF Core.
+                // Альтернатива для швидкого налагодження без ILoggerFactory: optionsBuilder.LogTo(Console.WriteLine).
                 optionsBuilder.UseLoggerFactory(_loggerFactory);
             }
         }
@@ -143,15 +175,23 @@ namespace EFCoreConsoleMastery.Topics.Ch08.L2_12
         private readonly string _logFilePath;
         private readonly bool _filterSqlOnly;
 
+        /// <summary>
+        /// Створює провайдер із вказаним шляхом до файлу логів та режимом фільтрації виводу в консоль.
+        /// </summary>
         public CustomFileAndConsoleLoggerProvider(string logFilePath, bool filterSqlOnly)
         {
             _logFilePath = logFilePath;
             _filterSqlOnly = filterSqlOnly;
         }
 
+        /// <summary>
+        /// Викликається інфраструктурою <see cref="ILoggerFactory"/> для кожної категорії логів EF Core
+        /// (наприклад, <c>Microsoft.EntityFrameworkCore.Database.Command</c>).
+        /// </summary>
         public ILogger CreateLogger(string categoryName) =>
             new CustomLogger(categoryName, _logFilePath, _filterSqlOnly);
 
+        /// <summary>Звільняє ресурси провайдера (тут додаткових некерованих ресурсів немає).</summary>
         public void Dispose() { }
 
         private sealed class CustomLogger : ILogger, IDisposable
@@ -167,10 +207,12 @@ namespace EFCoreConsoleMastery.Topics.Ch08.L2_12
                 _filterSqlOnly = filterSqlOnly;
             }
 
+            // BeginScope дозволяє групувати пов'язані логи; повертаємо this як заглушку IDisposable
             public IDisposable? BeginScope<TState>(TState state) where TState : notnull => this;
 
             public void Dispose() { }
 
+            // Відсікаємо Trace та Debug повідомлення на рівні самого логера для економії ресурсів
             public bool IsEnabled(LogLevel logLevel) => logLevel >= LogLevel.Information;
 
             public void Log<TState>(
@@ -180,10 +222,12 @@ namespace EFCoreConsoleMastery.Topics.Ch08.L2_12
                 Exception? exception,
                 Func<TState, Exception?, string> formatter)
             {
+                // formatter перетворює структурований об'єкт state та виняток у готовий текстовий рядок
                 var message = formatter(state, exception);
                 var tag = _filterSqlOnly ? "SQL-LOG" : "CUSTOM-LOG";
                 var formatted = $"[{tag} | {logLevel} | {_categoryName}] {message}{Environment.NewLine}";
 
+                // У навчальному прикладі дописуємо синхронно у файл; у production краще використовувати буферизований запис
                 File.AppendAllText(_logFilePath, formatted);
 
                 // Щоб не засмічувати консоль у режимі без фільтра, виводимо лише SQL-команди або короткі повідомлення

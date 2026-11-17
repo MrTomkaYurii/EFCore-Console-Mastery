@@ -4,57 +4,84 @@ using Microsoft.EntityFrameworkCore;
 
 namespace EFCoreConsoleMastery.Topics._07_SqlAndStoredProcedures.L6_2
 {
-    /// <summary>Модель компанії для уроку 6.2.</summary>
+    /// <summary>
+    /// Модель компанії для уроку 6.2 (демонстрація збережених функцій та SQLite UDF).
+    /// </summary>
     public class Company
     {
+        /// <summary>Первинний ключ компанії.</summary>
         public int Id { get; set; }
+
+        /// <summary>Назва компанії.</summary>
         public string? Name { get; set; }
+
+        /// <summary>Колекційна навігаційна властивість до працівників компанії.</summary>
         public List<User> Users { get; set; } = new();
     }
 
-    /// <summary>Модель користувача для уроку 6.2.</summary>
+    /// <summary>
+    /// Модель користувача для уроку 6.2.
+    /// </summary>
     public class User
     {
+        /// <summary>Первинний ключ користувача.</summary>
         public int Id { get; set; }
+
+        /// <summary>Ім'я користувача.</summary>
         public string? Name { get; set; }
+
+        /// <summary>Вік користувача.</summary>
         public int Age { get; set; }
+
+        /// <summary>Зовнішній ключ на таблицю <c>Companies</c>.</summary>
         public int CompanyId { get; set; }
+
+        /// <summary>Посилальна навігаційна властивість на компанію користувача.</summary>
         public Company? Company { get; set; }
     }
 
     /// <summary>
-    /// Контекст БД із демонстрацією проєкції функцій БД на C#-методи через HasDbFunction.
-    /// У SQLite табличні функції (TVF) через CREATE FUNCTION не підтримуються,
-    /// натомість можна реєструвати скалярні UDF через SqliteConnection.CreateFunction
-    /// або проєктувати вбудовані функції SQLite (length, upper тощо).
+    /// Контекст БД із демонстрацією проєкції функцій БД на C#-методи через <c>HasDbFunction</c>.
+    /// У SQLite табличні функції (TVF) через <c>CREATE FUNCTION</c> не підтримуються,
+    /// натомість можна реєструвати скалярні UDF (User-Defined Functions) через <c>SqliteConnection.CreateFunction</c>
+    /// або проєктувати вбудовані функції SQLite (<c>length</c>, <c>upper</c> тощо).
     /// </summary>
     public class ApplicationContext : DbContext
     {
         private readonly SqliteConnection _connection;
 
+        /// <summary>
+        /// Ініціалізує контекст із уже створеним і відкритим з'єднанням <see cref="SqliteConnection"/>,
+        /// на якому зареєстровані користувацькі SQLite-функції (UDF).
+        /// </summary>
+        /// <param name="connection">Відкрите з'єднання SQLite із зареєстрованими UDF.</param>
         public ApplicationContext(SqliteConnection connection)
         {
             _connection = connection;
         }
 
+        /// <summary>Таблиця користувачів (<c>Users</c>).</summary>
         public DbSet<User> Users => Set<User>();
+
+        /// <summary>Таблиця компаній (<c>Companies</c>).</summary>
         public DbSet<Company> Companies => Set<Company>();
 
         /// <summary>
-        /// Проєкція на користувацьку SQLite-функцію is_senior_user(age, threshold).
-        /// Безпосередньо в пам'яті не викликається — транслюється EF Core у SQL.
+        /// C#-заглушка для проєкції на користувацьку SQLite-функцію <c>is_senior_user(age, threshold)</c>.
+        /// Безпосередньо в пам'яті не викликається — під час побудови дерева виразів LINQ
+        /// EF Core замінює виклик цього методу на SQL-виклик <c>is_senior_user("u"."Age", @__threshold_0)</c>.
         /// </summary>
         public static bool IsSeniorUser(int age, int threshold)
             => throw new NotSupportedException("Цей метод призначений лише для LINQ-запитів EF Core.");
 
         /// <summary>
-        /// Проєкція на користувацьку SQLite-функцію format_user_badge(name, age).
+        /// C#-заглушка для проєкції на користувацьку SQLite-функцію <c>format_user_badge(name, age)</c>.
         /// </summary>
         public static string FormatUserBadge(string name, int age)
             => throw new NotSupportedException("Цей метод призначений лише для LINQ-запитів EF Core.");
 
         /// <summary>
-        /// Проєкція на вбудовану скалярну функцію SQLite length(text).
+        /// C#-заглушка для проєкції на вбудовану скалярну функцію SQLite <c>length(text)</c>.
         /// </summary>
         public static int SqliteLength(string? text)
             => throw new NotSupportedException("Цей метод призначений лише для LINQ-запитів EF Core.");
@@ -69,17 +96,30 @@ namespace EFCoreConsoleMastery.Topics._07_SqlAndStoredProcedures.L6_2
         //
         // І реєструється в OnModelCreating:
         // modelBuilder.HasDbFunction(() => GetUsersByAge(default));
+        //
+        // Для скалярної функції SQL Server також можна вказати схему через .HasSchema("dbo").
+        // У SQLite схем (dbo тощо) немає, тому використовуємо лише .HasName(...).
         // -------------------------------------------------------------------------
 
+        /// <summary>
+        /// Налаштовує EF Core на використання переданого з'єднання <see cref="_connection"/>.
+        /// </summary>
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            // Передаємо вже відкрите SqliteConnection із зареєстрованими UDF
+            // Передаємо вже відкрите SqliteConnection із зареєстрованими UDF.
+            // ВАЖЛИВО: Якщо передавати лише рядок підключення, EF Core відкриє нове з'єднання,
+            // на якому наші UDF не будуть зареєстровані!
             optionsBuilder.UseSqlite(_connection);
         }
 
+        /// <summary>
+        /// Реєструє скалярні функції БД у моделі EF Core через Fluent API (<c>HasDbFunction</c>).
+        /// </summary>
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            // Реєструємо скалярні функції в моделі EF Core
+            // Прив'язуємо статичний C#-метод до SQL-імені функції.
+            // Використання typeof(...).GetMethod(...) з точним переліком типів параметрів
+            // однозначно ідентифікує метод для транслятора LINQ-to-SQL.
             modelBuilder.HasDbFunction(
                     typeof(ApplicationContext).GetMethod(nameof(IsSeniorUser), new[] { typeof(int), typeof(int) })!)
                 .HasName("is_senior_user");
@@ -111,22 +151,37 @@ namespace EFCoreConsoleMastery.Topics._07_SqlAndStoredProcedures
         public int ChapterOrder => 7;
         public int LessonOrder => 2;
 
+        /// <summary>
+        /// Запускає демонстрацію збережених функцій в EF Core 11, адаптованих під SQLite:
+        /// <list type="number">
+        /// <item><description>реєстрація C#-делегатів як скалярних функцій SQLite (<c>SqliteConnection.CreateFunction</c>);</description></item>
+        /// <item><description>виклик користувацьких та вбудованих функцій у LINQ через <c>HasDbFunction</c>;</description></item>
+        /// <item><description>виклик зареєстрованої функції безпосередньо в сирому SQL (<c>FromSqlRaw</c>);</description></item>
+        /// <item><description>порівняння з MS SQL Server (<c>CREATE FUNCTION</c> і TVF).</description></item>
+        /// </list>
+        /// </summary>
         public void Run()
         {
             string dbName = "lesson_6_2_stored_functions";
             string dbPath = SqliteDbHelper.GetDbPath(dbName);
             string connectionString = SqliteDbHelper.GetConnectionString(dbName);
 
-            // Очищаємо попередню БД до відкриття зовнішнього SqliteConnection (інакше файл буде заблоковано)
+            // Очищаємо пул з'єднань SQLite перед видаленням файлу БД:
+            // ADO.NET пулінг тримає дескриптор файлу відкритим навіть після Dispose(),
+            // що на Windows призведе до IOException при File.Delete(dbPath).
             SqliteConnection.ClearAllPools();
             if (File.Exists(dbPath))
                 File.Delete(dbPath);
 
-            // Створюємо та відкриваємо SqliteConnection, щоб зареєструвати користувацькі функції (UDF)
+            // Створюємо та відкриваємо SqliteConnection, щоб зареєструвати користувацькі функції (UDF).
+            // У SQLite функції не зберігаються в самому .db-файлі (на відміну від MS SQL Server),
+            // а існують у пам'яті поточного з'єднання протягом його часу життя.
             using var connection = new SqliteConnection(connectionString);
             connection.Open();
 
-            // Реєструємо C#-делегати як SQLite-функції (аналог скалярних збережених функцій)
+            // Реєструємо C#-делегати як скалярні SQLite-функції (аналог скалярних збережених функцій).
+            // isDeterministic: true повідомляє оптимізатору SQLite, що функція завжди повертає
+            // однаковий результат для однакових аргументів (це дозволяє кешувати обчислення в межах запиту).
             connection.CreateFunction<int, int, bool>(
                 "is_senior_user",
                 (age, threshold) => age >= threshold,
@@ -140,6 +195,7 @@ namespace EFCoreConsoleMastery.Topics._07_SqlAndStoredProcedures
             // 1. Ініціалізація бази даних
             using (var db = new ApplicationContext(connection))
             {
+                // Створюємо таблиці, якщо їх ще немає (EnsureDeleted не викликаємо, бо файл щойно перестворено)
                 db.Database.EnsureCreated();
 
                 Company microsoft = new() { Name = "Microsoft" };
@@ -162,6 +218,13 @@ namespace EFCoreConsoleMastery.Topics._07_SqlAndStoredProcedures
                 // 2. Виклик SQLite UDF через LINQ (HasDbFunction)
                 SqliteDbHelper.PrintSection("1. Виклик SQLite UDF через HasDbFunction у LINQ");
 
+                // EF Core транслює цей LINQ-запит у SQL приблизно такого вигляду:
+                // SELECT format_user_badge(COALESCE("u"."Name", 'Unknown'), "u"."Age") AS "Badge",
+                //        length("u"."Name") AS "NameLength"
+                // FROM "Users" AS "u"
+                // WHERE is_senior_user("u"."Age", @__threshold_0)
+                // ORDER BY "u"."Age"
+                // Тобто фільтрація та форматування відбуваються на боці SQLite, а не після ToList() у C#!
                 int threshold = 30;
                 var seniorBadges = db.Users
                     .Where(u => ApplicationContext.IsSeniorUser(u.Age, threshold))
@@ -180,7 +243,9 @@ namespace EFCoreConsoleMastery.Topics._07_SqlAndStoredProcedures
                 // 3. Виклик зареєстрованої функції безпосередньо в сирому SQL (FromSqlRaw)
                 SqliteDbHelper.PrintSection("2. Виклик функції безпосередньо у FromSqlRaw");
 
-                // Аналогічно до виклику збереженої функції в SQL-запиті на SQL Server
+                // Аналогічно до виклику збереженої функції в SQL-запиті на SQL Server.
+                // Зверніть увагу на "= 0": у SQLite немає окремого типу BOOLEAN —
+                // значення bool із C#-функції повертається як INTEGER (1 для true, 0 для false).
                 var youngerUsers = db.Users
                     .FromSqlRaw("SELECT * FROM Users WHERE is_senior_user(Age, {0}) = 0 ORDER BY Age", threshold)
                     .ToList();

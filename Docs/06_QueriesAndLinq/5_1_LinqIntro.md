@@ -1,65 +1,117 @@
 ﻿# 5.1. Вступ до LINQ to Entities
 
 - **Глава:** 06. Запити та LINQ to Entities
-- **Оригінал на Metanit:** [Введение в LINQ to Entities](https://metanit.com/sharp/efcore/5.1.php)
+- **Джерело Metanit:** [Введение в LINQ to Entities](https://metanit.com/sharp/efcore/5.1.php)
 - **Код прикладу:** [Lesson_5_1_LinqIntro.cs](../../src/06_QueriesAndLinq/Lesson_5_1_LinqIntro.cs)
 
 ## Мета уроку
 
-Ознайомитися з технологією **LINQ to Entities**, зрозуміти, як EF Core перетворює C#-вирази на SQL-запити, та навчитися будувати запити двома способами: через **оператори LINQ** (Query Syntax) і через **методи розширення** (Method Syntax).
+Ознайомитися з технологією **LINQ to Entities**, зрозуміти механізм трансляції дерев виразів C# (`Expression<TDelegate>`) у SQL-запити конкретної СУБД (SQLite, MS SQL Server, PostgreSQL), а також навчитися формувати запити двома еквівалентними способами: за допомогою **операторів запиту LINQ** (Query Syntax) та **методів розширення LINQ** (Method Syntax).
 
-## Теоретичний матеріал
+## Детальний теоретичний матеріал
 
 ### Що таке LINQ to Entities
-Реляційні бази даних (SQLite, SQL Server, PostgreSQL) розуміють лише мову SQL. **LINQ to Entities** — це провайдер запитів у складі Entity Framework Core, який приймає дерево виразів C# (`IQueryable<T>`) та транслює його у відповідний SQL-діалект вибраної СУБД.
+
+Реляційні бази даних (SQLite, SQL Server, PostgreSQL) розуміють виключно мову SQL. Натомість у .NET-застосунках розробник працює з об'єктами C#, класами сутностей і властивостями `DbSet<T>`. Для подолання цього розриву Entity Framework Core використовує **LINQ to Entities** — спеціалізований провайдер запитів, побудований на основі LINQ (Language Integrated Query).
+
+Коли ви пишете запит до `DbSet<User>`, компілятор C# не виконує фільтрацію в пам'яті одразу. Оскільки `DbSet<T>` реалізує інтерфейс `IQueryable<T>`, усі лямбда-вирази передаються у вигляді **дерева виразів (Expression Tree)**. Під час матеріалізації запиту провайдер EF Core (наприклад, `Microsoft.EntityFrameworkCore.Sqlite`) обходить це дерево, оптимізує його та генерує нативний SQL-запит із параметрами.
 
 ### Два способи побудови запитів
 
-| Спосіб | Синтаксис | Коли зручніше використовувати |
+У C# та LINQ to Entities існують два синтаксиси для опису того самого запиту:
+
+| Критерій | Оператори LINQ (Query Syntax) | Методи розширення (Method Syntax) |
 | :--- | :--- | :--- |
-| **Оператори LINQ (Query Syntax)** | `from u in db.Users where ... select u` | Складні запити з кількома `join` або `let` |
-| **Методи розширення (Method Syntax)** | `db.Users.Where(...).Include(...)` | Більшість повсякденних запитів, динамічна фільтрація, виклик методів на кшталт `Count()`, `FirstOrDefault()`, `AsNoTracking()` |
+| **Зовнішній вигляд** | Декларативний SQL-подібний синтаксис (`from ... where ... select`) | Ланцюжок викликів методів (`db.Users.Where(...).Include(...)`) |
+| **Компіляція** | Компілятор C# перетворює Query Syntax у виклики методів розширення | Безпосередній виклик методів класу `Queryable` та `EntityFrameworkQueryableExtensions` |
+| **Згенерований SQL** | Ідентичний | Ідентичний |
+| **Підтримка операцій** | Обмежена частина операторів (немає `Include`, `Count`, `FirstOrDefault`, `AsNoTracking` у вигляді ключових слів) | Повний набір методів LINQ та специфічних методів EF Core |
+| **Коли доречніше** | Складні запити з кількома `join`, `let`, перехресними вибірками | Більшість реальних сценаріїв, динамічна фільтрація, пагінація |
 
-Обидва підходи компілюються в ідентичні дерева виразів і генерують однаковий SQL.
+На практиці ці підходи часто комбінують: наприклад, базовий запит описують через `from ... where ... select`, а до результату застосовують `.ToList()`, `.FirstOrDefault()` або `.Include(...)`.
 
-### Основні методи LINQ to Entities
-- **Фільтрація та пошук:** `Where`, `First` / `FirstOrDefault`, `Single` / `SingleOrDefault`, `Find` / `FindAsync`.
-- **Сортування та проекція:** `OrderBy`, `OrderByDescending`, `ThenBy`, `ThenByDescending`, `Select`.
-- **З'єднання та групування:** `Join`, `GroupBy`, `Include` / `ThenInclude`.
-- **Операції з множинами:** `Union`, `Intersect`, `Except`.
-- **Агрегати:** `Any`, `All`, `Count`, `Sum`, `Min`, `Max`, `Average`.
-- **Керування виконанням:** `ToList` / `ToListAsync`, `ToArray`, `AsNoTracking`, `IgnoreQueryFilters`.
+### Повний перелік основних методів LINQ to Entities
 
-## Ключові фрагменти коду
+Згідно з керівництвом Metanit, у EF Core найчастіше використовуються такі методи (багато з них мають синхронну та асинхронну версії):
 
-```csharp
-// 1. Query Syntax (оператори LINQ)
-var query1 = from user in db.Users.Include(u => u.Company)
-             where user.CompanyId == 1
-             select user;
+| Категорія | Методи | Призначення |
+| :--- | :--- | :--- |
+| **Перевірка умов** | `All` / `AllAsync`, `Any` / `AnyAsync`, `Contains` / `ContainsAsync` | Перевірка, чи всі / хоча б один / конкретний елемент задовольняють умову |
+| **Пошук одного елемента** | `First` / `FirstAsync`, `FirstOrDefault` / `FirstOrDefaultAsync`, `Single` / `SingleAsync`, `SingleOrDefault` / `SingleOrDefaultAsync`, `Find` / `FindAsync` | Отримання одного запису з БД (або `null`, якщо не знайдено) |
+| **Агрегація** | `Count` / `CountAsync`, `LongCount`, `Sum` / `SumAsync`, `Min` / `MinAsync`, `Max` / `MaxAsync`, `Average` / `AverageAsync` | Обчислення підсумкових значень на стороні БД |
+| **Фільтрація та зрізи** | `Where`, `Skip`, `Take` | Відбір рядків за умовою та реалізація пагінації |
+| **Проекція та сортування** | `Select`, `OrderBy`, `OrderByDescending`, `ThenBy`, `ThenByDescending` | Вибір потрібних стовпців/DTO та впорядкування результату |
+| **З'єднання та групування** | `Join`, `GroupBy`, `Include`, `ThenInclude` | Поєднання таблиць і завантаження пов'язаних сутностей |
+| **Операції з множинами** | `Union`, `Concat`, `Intersect`, `Except`, `Distinct` | Об'єднання, перетин, різниця та унікалізація вибірок |
+| **Матеріалізація** | `ToList` / `ToListAsync`, `ToArray` / `ToArrayAsync`, `ToDictionary` / `ToDictionaryAsync` | Негайне виконання SQL-запиту та завантаження даних у пам'ять |
+| **Керування трекінгом і фільтрами** | `AsNoTracking`, `AsNoTrackingWithIdentityResolution`, `IgnoreQueryFilters`, `ToQueryString` | Оптимізація продуктивності та діагностика SQL |
 
-// 2. Method Syntax (методи розширення)
-var query2 = db.Users
-    .Include(u => u.Company)
-    .Where(u => u.CompanyId == 1);
+### Налагодження та перегляд SQL через `ToQueryString()`
+
+Починаючи з EF Core 5, будь-який `IQueryable<T>` має метод розширення `ToQueryString()`. Він **не виконує** запит у базі даних, а лише запускає конвеєр трансляції LINQ -> SQL і повертає точний рядок SQL-команди з оголошенням параметрів. Це найзручніший спосіб перевірити, чи ефективно транслюється ваш LINQ-вираз.
+
+## Діаграма / Архітектура процесу
+
+```mermaid
+flowchart LR
+    A["C# код (Query або Method Syntax)"] --> B["IQueryable&lt;T&gt; + Expression Tree"]
+    B --> C["EF Core Query Compiler"]
+    C --> D["SQLite Query SqlGenerator"]
+    D --> E["SQL-запит із параметрами"]
+    E --> F["Виконання в SQLite (при ToList або foreach)"]
+    F --> G["Матеріалізація сутностей + ChangeTracker"]
 ```
 
-Обидва запити транслюються в один і той самий SQL:
+## Покроковий розбір прикладів коду
 
+У файлі [Lesson_5_1_LinqIntro.cs](../../src/06_QueriesAndLinq/Lesson_5_1_LinqIntro.cs) змодельовано зв'язок один-до-багатьох між `Company` (головна сутність) та `User` (залежна сутність із зовнішнім ключем `CompanyId`).
+
+### Крок 1. Ініціалізація та наповнення бази даних
+Метод `SqliteDbHelper.RecreateDatabase(db)` гарантує чистий стан БД для кожного запуску уроку (`EnsureDeleted()` + `EnsureCreated()`). Далі створюються дві компанії (`Microsoft` з `Id = 1`, `Google` з `Id = 2`) та чотири користувачі (`Tom`, `Bob`, `Alice`, `Kate`), які зберігаються через `db.SaveChanges()`.
+
+### Крок 2. Запит через Query Syntax та діагностика SQL
+```csharp
+var query = from user in db.Users.Include(u => u.Company)
+            where user.CompanyId == 1
+            select user;
+
+Console.WriteLine(query.ToQueryString());
+var users = query.ToList();
+```
+1. `db.Users.Include(u => u.Company)` вказує EF Core завантажити зв'язану компанію через `JOIN`.
+2. `where user.CompanyId == 1` додає умову фільтрації.
+3. До виклику `query.ToList()` запит до SQLite ще не надсилався — `query` є лише об'єктом `IQueryable<User>`.
+4. `query.ToQueryString()` повертає такий SQLite-запит:
 ```sql
 SELECT "u"."Id", "u"."Age", "u"."CompanyId", "u"."Name", "c"."Id", "c"."Name"
 FROM "Users" AS "u"
 INNER JOIN "Companies" AS "c" ON "u"."CompanyId" = "c"."Id"
 WHERE "u"."CompanyId" = 1
 ```
+5. `query.ToList()` виконує SQL-запит і повертає `Tom (36) - Microsoft` та `Alice (28) - Microsoft`.
+
+### Крок 3. Еквівалентний запит через Method Syntax
+```csharp
+var query = db.Users
+    .Include(u => u.Company)
+    .Where(u => u.CompanyId == 1);
+
+var users = query.ToList();
+```
+Цей запит формує точно таке саме дерево виразів і транслюється в ідентичний SQL-код із `INNER JOIN`. Зверніть увагу, що оскільки зовнішній ключ `CompanyId` має тип `int` (не nullable), EF Core оптимізує `Include` і генерує `INNER JOIN` замість `LEFT JOIN`.
 
 ## Особливості роботи в SQLite
 
-- У SQLite ідентифікатори таблиць і стовпців екрануються подвійними лапками (`"Users"`, `"CompanyId"`), тоді як у SQL Server використовуються квадратні дужки (`[Users]`, `[CompanyId]`).
-- EF Core автоматично враховує особливості провайдера `Microsoft.EntityFrameworkCore.Sqlite`, тому той самий LINQ-код працює без змін.
+| Аспект | SQLite (`Microsoft.EntityFrameworkCore.Sqlite`) | MS SQL Server (`Microsoft.EntityFrameworkCore.SqlServer`) |
+| :--- | :--- | :--- |
+| **Екранування ідентифікаторів** | Подвійні лапки: `"Users"`, `"CompanyId"` | Квадратні дужки: `[Users]`, `[CompanyId]` |
+| **Типи даних у таблиці** | Динамічна типізація (`INTEGER`, `TEXT`, `REAL`, `BLOB`) | Сувора типізація (`int`, `nvarchar`, `datetime2`) |
+| **Параметри запиту** | Підтримує іменовані параметри (`@__p_0`), які підставляються безпечно | Підтримує `@__p_0` і планування запитів на сервері |
+| **Провайдерні обмеження** | Немає деяких серверних функцій (наприклад, окремі типи `DateTimeOffset` операцій або специфічні `APPLY` конструкції) | Повна підтримка складних конструкцій T-SQL (`CROSS APPLY`, `OFFSET/FETCH`) |
 
-## Підсумок та підводні камені
+## Типові помилки, підводні камені та Best Practices
 
-- Поки не викликано матеріалізуючий метод (`ToList()`, `FirstOrDefault()`, `Count()` тощо), SQL-запит **не виконується**.
-- Деякі складні C#-методи всередині `Where` або `Select` не можуть бути перекладені в SQL і викликають виняток `InvalidOperationException` під час виконання запиту.
-- Для перегляду згенерованого SQL безпосередньо в коді зручно використовувати метод `.ToQueryString()`.
+1. **Виклик неперекладних C#-методів усередині запиту.** Якщо у `Where` або `Select` викликати власний метод C# (наприклад, `Where(u => MyHelper.Check(u.Name))`), EF Core не зможе перетворити його на SQL і кине `InvalidOperationException` під час виконання.
+2. **Плутанина між моментом створення запиту і моментом його виконання.** `var query = db.Users.Where(...)` лише описує запит. Реальне звернення до SQLite відбувається під час `ToList()`, `FirstOrDefault()`, `Count()` або перебору в `foreach`.
+3. **Використовуйте `ToQueryString()` під час розробки.** Це допомагає вчасно помітити зайві `JOIN`, відсутність `WHERE` або небажані підзапити.
+4. **Віддавайте перевагу асинхронним методам (`ToListAsync`, `FirstOrDefaultAsync`) у реальних веб- і десктопних застосунках**, щоб не блокувати потік на час очікування відповіді від БД.

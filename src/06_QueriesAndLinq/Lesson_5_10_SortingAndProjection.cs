@@ -17,6 +17,10 @@ public class Lesson_5_10_SortingAndProjection : ILesson
     public int ChapterOrder => 6;
     public int LessonOrder => 3;
 
+    /// <summary>
+    /// Запускає демонстрацію проекцій (<c>Select</c> в анонімний тип та DTO)
+    /// і багаторівневого сортування (<c>OrderBy</c>, <c>OrderByDescending</c>, <c>ThenByDescending</c>) у SQLite.
+    /// </summary>
     public void Run()
     {
         using (var db = new AppDbContext())
@@ -40,7 +44,9 @@ public class Lesson_5_10_SortingAndProjection : ILesson
         SqliteDbHelper.PrintSection("1. Проекція в анонімний тип (Select)");
         using (var db = new AppDbContext())
         {
-            // Select вибирає лише потрібні стовпці, без завантаження зайвих даних і без Include
+            // Select вибирає лише потрібні стовпці (зменшує трафік та пам'ять), автоматично генерує JOIN
+            // для u.Company!.Name без виклику Include, і НЕ відстежує результат у ChangeTracker
+            // (бо повертається анонімний тип, а не сутність моделі).
             var query = db.Users.Select(u => new
             {
                 u.Name,
@@ -62,6 +68,9 @@ public class Lesson_5_10_SortingAndProjection : ILesson
         SqliteDbHelper.PrintSection("2. Проекція у визначений тип (UserModel)");
         using (var db = new AppDbContext())
         {
+            // Проекція в іменований DTO-клас (Data Transfer Object) дає змогу повертати результат
+            // із методів сервісів/репозиторіїв (анонімні типи обмежені межами одного методу).
+            // Якщо всередині Select явно не включено саму сутність (наприклад, User = u), ChangeTracker її не відстежує.
             var users = db.Users
                 .Select(u => new UserModel
                 {
@@ -81,6 +90,9 @@ public class Lesson_5_10_SortingAndProjection : ILesson
         SqliteDbHelper.PrintSection("3. Сортування (OrderBy, OrderByDescending, ThenBy)");
         using (var db = new AppDbContext())
         {
+            // OrderBy транслюється в SQL ORDER BY "u"."Name" ASC.
+            // Примітка щодо SQLite: за замовчуванням текстове сортування використовує BINARY collation (чутливе до регістру ASCII),
+            // тоді як у MS SQL Server за замовчуванням сортування зазвичай регістронезалежне (CI).
             Console.WriteLine("За зростанням імені (OrderBy):");
             foreach (var u in db.Users.OrderBy(u => u.Name).ToList())
                 Console.WriteLine($"  {u.Id}. {u.Name} ({u.Age})");
@@ -89,6 +101,9 @@ public class Lesson_5_10_SortingAndProjection : ILesson
             foreach (var u in db.Users.OrderByDescending(u => u.Name).ToList())
                 Console.WriteLine($"  {u.Id}. {u.Name} ({u.Age})");
 
+            // Повторний виклик OrderBy перезаписав би попереднє сортування;
+            // для додавання вторинного критерію сортування обов'язково використовуйте ThenBy / ThenByDescending
+            // (транслюється в ORDER BY "u"."Age", "c"."Name" DESC).
             Console.WriteLine("\nБагаторівневе сортування: Age (зростання), потім Company.Name (спадання):");
             var sorted = db.Users
                 .Include(u => u.Company)
@@ -105,35 +120,61 @@ public class Lesson_5_10_SortingAndProjection : ILesson
 
 namespace EFCoreConsoleMastery.Topics.Ch06.L5_10
 {
+    /// <summary>Компанія (головна сутність).</summary>
     public class Company
     {
+        /// <summary>Первинний ключ компанії.</summary>
         public int Id { get; set; }
+
+        /// <summary>Назва компанії.</summary>
         public string? Name { get; set; }
+
+        /// <summary>Навігаційна колекція користувачів компанії.</summary>
         public List<User> Users { get; set; } = new();
     }
 
+    /// <summary>Користувач (залежна сутність).</summary>
     public class User
     {
+        /// <summary>Первинний ключ користувача.</summary>
         public int Id { get; set; }
+
+        /// <summary>Ім'я користувача.</summary>
         public string? Name { get; set; }
+
+        /// <summary>Вік користувача.</summary>
         public int Age { get; set; }
+
+        /// <summary>Зовнішній ключ до таблиці Companies.</summary>
         public int CompanyId { get; set; }
+
+        /// <summary>Навігаційна властивість до компанії.</summary>
         public Company? Company { get; set; }
     }
 
-    /// <summary>DTO-модель для проекції результатів запиту.</summary>
+    /// <summary>DTO-модель (Data Transfer Object) для проекції результатів запиту без відстеження.</summary>
     public class UserModel
     {
+        /// <summary>Ім'я користувача.</summary>
         public string? Name { get; set; }
+
+        /// <summary>Назва компанії користувача.</summary>
         public string? Company { get; set; }
+
+        /// <summary>Вік користувача.</summary>
         public int Age { get; set; }
     }
 
+    /// <summary>Контекст бази даних для уроку 5.10 (сортування та проекція).</summary>
     public class AppDbContext : DbContext
     {
+        /// <summary>Таблиця користувачів.</summary>
         public DbSet<User> Users { get; set; } = null!;
+
+        /// <summary>Таблиця компаній.</summary>
         public DbSet<Company> Companies { get; set; } = null!;
 
+        /// <summary>Налаштовує підключення до локальної БД SQLite для уроку 5.10.</summary>
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             optionsBuilder.UseSqlite(SqliteDbHelper.GetConnectionString("ch06_lesson_5_10"));

@@ -19,6 +19,10 @@ public class Lesson_2_15_RequiredAndOptional : ILesson
     public int ChapterOrder => 3;
     public int LessonOrder => 7;
 
+    /// <summary>
+    /// Запускає демонстрацію обов'язкових (NOT NULL) та необов'язкових (NULL) властивостей:
+    /// виводить DDL таблиці Users, зберігає валідний запис і перевіряє помилку БД при Email = null.
+    /// </summary>
     public void Run()
     {
         SqliteDbHelper.PrintSection("2.15. Обов'язкові та необов'язкові властивості");
@@ -39,7 +43,7 @@ public class Lesson_2_15_RequiredAndOptional : ILesson
             Name = "Tom",
             Email = "tom@example.com",
             Login = "tom_dev",
-            Company = null, // Необов'язкова властивість
+            Company = null, // Необов'язкова властивість (стовпець допускає NULL)
             Age = 28
         });
         db.SaveChanges();
@@ -51,9 +55,11 @@ public class Lesson_2_15_RequiredAndOptional : ILesson
             db.Users.Add(new L2_15.User
             {
                 Name = "Bob",
-                Email = null,   // Порушує [Required] -> NOT NULL у БД
+                Email = null,   // Порушує [Required] -> NOT NULL constraint failed у SQLite
                 Login = "bob"
             });
+            // Увага: у консольному EF Core SaveChanges() не виконує DataAnnotations-валідацію на клієнті,
+            // тому запит іде в SQLite, який і кидає SqliteException (NOT NULL constraint failed: Users.Email).
             db.SaveChanges();
         }
         catch (DbUpdateException ex)
@@ -67,29 +73,49 @@ public class Lesson_2_15_RequiredAndOptional : ILesson
 
 namespace EFCoreConsoleMastery.Topics.Ch03.L2_15
 {
+    /// <summary>
+    /// Сутність користувача, що демонструє всі способи задання обов'язковості (NOT NULL) у EF Core.
+    /// </summary>
     public class User
     {
+        /// <summary>Первинний ключ (завжди NOT NULL).</summary>
         public int Id { get; set; }
 
-        // Не-nullable тип у C# -> автоматично NOT NULL у БД
+        /// <summary>
+        /// Не-nullable посилальний тип (NRT у C# з увімкненим &lt;Nullable&gt;enable&lt;/Nullable&gt;) ->
+        /// EF Core за угодою створює стовпець TEXT NOT NULL у SQLite.
+        /// </summary>
         public string Name { get; set; } = string.Empty;
 
-        // Nullable-тип, але з атрибутом [Required] -> стає NOT NULL у БД
+        /// <summary>
+        /// Nullable-тип (string?), але з атрибутом [Required] -> стає NOT NULL у БД.
+        /// Зручно, коли в C# об'єкт може створюватися поетапно, але в БД поле обов'язкове.
+        /// </summary>
         [Required]
         public string? Email { get; set; }
 
-        // Nullable-тип, налаштований як обов'язковий через Fluent API IsRequired()
+        /// <summary>
+        /// Nullable-тип (string?), налаштований як обов'язковий через Fluent API IsRequired() у OnModelCreating.
+        /// </summary>
         public string? Login { get; set; }
 
-        // Nullable-тип без обмежень -> допускає NULL у БД
+        /// <summary>
+        /// Nullable-тип без обмежень -> допускає NULL у БД (стовпець TEXT без NOT NULL).
+        /// </summary>
         public string? Company { get; set; }
 
-        // Значимий тип int (не int?) -> NOT NULL у БД
+        /// <summary>
+        /// Значимий тип int (не int?) -> завжди NOT NULL у БД (для nullable потрібен int?).
+        /// </summary>
         public int Age { get; set; }
     }
 
+    /// <summary>
+    /// Контекст бази даних для уроку 2.15.
+    /// </summary>
     public class ApplicationContext : DbContext
     {
+        /// <summary>Набір користувачів (таблиця "Users").</summary>
         public DbSet<User> Users => Set<User>();
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -99,6 +125,8 @@ namespace EFCoreConsoleMastery.Topics.Ch03.L2_15
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            // Позначаємо Login як обов'язковий (NOT NULL) через Fluent API.
+            // Зворотна дія (зробити не-nullable поле необов'язковим) виконується через IsRequired(false).
             modelBuilder.Entity<User>()
                 .Property(u => u.Login)
                 .IsRequired();

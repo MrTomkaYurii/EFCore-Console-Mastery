@@ -18,6 +18,10 @@ public class Lesson_5_7_TrackingAndAsNoTracking : ILesson
     public int ChapterOrder => 6;
     public int LessonOrder => 7;
 
+    /// <summary>
+    /// Запускає демонстрацію режимів відстеження змін (Tracking vs AsNoTracking),
+    /// глобального налаштування <see cref="ChangeTracker.QueryTrackingBehavior"/> та локального перевизначення через <c>AsTracking()</c>.
+    /// </summary>
     public void Run()
     {
         using (var db = new AppDbContext())
@@ -37,12 +41,14 @@ public class Lesson_5_7_TrackingAndAsNoTracking : ILesson
         SqliteDbHelper.PrintSection("1. Відстежуваний запит (за замовчуванням)");
         using (var db = new AppDbContext())
         {
+            // За замовчуванням EF Core зберігає знімок (snapshot) початкових значень кожної завантаженої сутності у ChangeTracker.
+            // Коли викликається SaveChanges(), EF Core порівнює поточні властивості зі знімком і генерує UPDATE лише для змінених колонок.
             var user = db.Users.FirstOrDefault();
             if (user is not null)
             {
                 user.Age = 18;
                 Console.WriteLine($"Відстежується сутностей у ChangeTracker: {db.ChangeTracker.Entries().Count()}");
-                db.SaveChanges(); // Зміна зберігається в БД
+                db.SaveChanges(); // Генерує UPDATE "Users" SET "Age" = @p0 WHERE "Id" = @p1
             }
 
             foreach (var u in db.Users.ToList())
@@ -53,12 +59,14 @@ public class Lesson_5_7_TrackingAndAsNoTracking : ILesson
         SqliteDbHelper.PrintSection("2. Невідстежуваний запит через AsNoTracking()");
         using (var db = new AppDbContext())
         {
+            // AsNoTracking() ідеально підходить для сценаріїв «тільки читання» (read-only: звіти, API GET-запити),
+            // оскільки не створює snapshot у ChangeTracker — це зменшує споживання пам'яті та прискорює матеріалізацію.
             var user = db.Users.AsNoTracking().FirstOrDefault();
             if (user is not null)
             {
                 user.Age = 99; // Зміна лише в пам'яті — ChangeTracker про неї не знає!
                 Console.WriteLine($"Відстежується сутностей у ChangeTracker: {db.ChangeTracker.Entries().Count()}");
-                int affected = db.SaveChanges();
+                int affected = db.SaveChanges(); // Поверне 0, жодного SQL UPDATE не буде відправлено до SQLite
                 Console.WriteLine($"SaveChanges() оновив рядків: {affected}");
             }
 
@@ -70,6 +78,8 @@ public class Lesson_5_7_TrackingAndAsNoTracking : ILesson
         SqliteDbHelper.PrintSection("3. Глобальне налаштування ChangeTracker.QueryTrackingBehavior = NoTracking");
         using (var db = new AppDbContext())
         {
+            // Корисно для read-only сервісів або CQRS Query-обробників;
+            // альтернативно це можна задати в OnConfiguring через optionsBuilder.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking).
             db.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
 
             var user = db.Users.FirstOrDefault();
@@ -80,7 +90,8 @@ public class Lesson_5_7_TrackingAndAsNoTracking : ILesson
                 Console.WriteLine($"SaveChanges() після глобального NoTracking оновив рядків: {affected}");
             }
 
-            // Якщо все ж потрібно відстежити конкретний запит, можна викликати .AsTracking()
+            // Якщо все ж потрібно відстежити конкретний запит (наприклад, для подальшого оновлення),
+            // можна локально увімкнути відстеження через .AsTracking()
             var trackedUser = db.Users.AsTracking().FirstOrDefault();
             Console.WriteLine($"Після AsTracking() у ChangeTracker записів: {db.ChangeTracker.Entries().Count()} (перший: {trackedUser?.Name})");
         }
@@ -90,17 +101,26 @@ public class Lesson_5_7_TrackingAndAsNoTracking : ILesson
 
 namespace EFCoreConsoleMastery.Topics.Ch06.L5_7
 {
+    /// <summary>Користувач (сутність для демонстрації відстеження змін у ChangeTracker).</summary>
     public class User
     {
+        /// <summary>Первинний ключ користувача.</summary>
         public int Id { get; set; }
+
+        /// <summary>Ім'я користувача.</summary>
         public string? Name { get; set; }
+
+        /// <summary>Вік користувача.</summary>
         public int Age { get; set; }
     }
 
+    /// <summary>Контекст бази даних для уроку 5.7 (Tracking та AsNoTracking).</summary>
     public class AppDbContext : DbContext
     {
+        /// <summary>Таблиця користувачів.</summary>
         public DbSet<User> Users { get; set; } = null!;
 
+        /// <summary>Налаштовує підключення до локальної БД SQLite для уроку 5.7.</summary>
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             optionsBuilder.UseSqlite(SqliteDbHelper.GetConnectionString("ch06_lesson_5_7"));

@@ -1,62 +1,115 @@
 ﻿# 5.11. Масове оновлення та видалення. ExecuteUpdate і ExecuteDelete
 
 - **Глава:** 06. Запити та LINQ to Entities
-- **Оригінал на Metanit:** [Массовое обновление и удаление. ExecuteUpdate и ExecuteDelete](https://metanit.com/sharp/efcore/5.11.php)
+- **Джерело Metanit:** [Массовое обновление и удаление. ExecuteUpdate и ExecuteDelete](https://metanit.com/sharp/efcore/5.11.php)
 - **Код прикладу:** [Lesson_5_11_BulkExecuteUpdateDelete.cs](../../src/06_QueriesAndLinq/Lesson_5_11_BulkExecuteUpdateDelete.cs)
 
 ## Мета уроку
 
-Навчитися виконувати масове оновлення та видалення записів одним SQL-запитом без попереднього завантаження об'єктів у пам'ять за допомогою `ExecuteUpdate` / `ExecuteUpdateAsync` та `ExecuteDelete` / `ExecuteDeleteAsync`.
+Навчитися виконувати високоефективне масове оновлення та видалення записів у базі даних одним SQL-запитом (`ExecuteUpdate` / `ExecuteUpdateAsync` та `ExecuteDelete` / `ExecuteDeleteAsync`) без завантаження сутностей у пам'ять, а також розуміти ключовий наслідок цього підходу — **обхід `ChangeTracker`**.
 
-## Теоретичний матеріал
+## Детальний теоретичний матеріал
 
-### Навіщо потрібні `ExecuteUpdate` та `ExecuteDelete`
-Класичний підхід в EF Core (`завантажити -> змінити / Remove -> SaveChanges`) вимагає зайвого мережевого/дискового обміну та витрат пам'яті, коли потрібно оновити або видалити десятки чи тисячі рядків за певною умовою.
+### 1. Проблема класичного підходу (`Load -> Modify -> SaveChanges`)
 
-Починаючи з EF Core 7.0, для `IQueryable<T>` доступні методи масових операцій:
-- **`ExecuteUpdate` / `ExecuteUpdateAsync`** — формує один SQL-запит `UPDATE ... SET ... WHERE ...` і повертає кількість оновлених рядків (`int`). За допомогою ланцюжка `.SetProperty(selector, valueExpression)` можна оновити кілька стовпців за раз.
-- **`ExecuteDelete` / `ExecuteDeleteAsync`** — формує один SQL-запит `DELETE FROM ... WHERE ...` і повертає кількість видалених рядків (`int`).
+Традиційно для оновлення або видалення записів в EF Core потрібно було:
+1. Виконати `SELECT` і завантажити сутності в пам'ять (`ChangeTracker`).
+2. Змінити властивості в циклі або викликати `RemoveRange(...)`.
+3. Викликати `db.SaveChanges()`.
 
-### Порівняння підходів
+Якщо потрібно оновити 10 000 рядків (наприклад, підвищити ціни на 5% або видалити застарілі сесії), завантаження всіх 10 000 об'єктів у RAM і генерація тисяч окремих команд створюють величезне навантаження.
 
-| Критерій | `SaveChanges()` | `ExecuteUpdate` / `ExecuteDelete` |
+### 2. Методи `ExecuteUpdate` та `ExecuteDelete` (EF Core 7.0+)
+
+Починаючи з EF Core 7.0, для будь-якого `IQueryable<T>` доступні методи масових операцій (разом з асинхронними версіями `ExecuteUpdateAsync` і `ExecuteDeleteAsync`):
+
+- **`ExecuteUpdate(setPropertyCalls)`** — транслює LINQ-вибірку (`Where`, `Skip`, `Take` тощо) у єдину SQL-команду `UPDATE` і повертає `int` (кількість оновлених рядків).
+  - Метод приймає делегат `s => s.SetProperty(propertySelector, valueExpression)`.
+  - `SetProperty` можна викликати **ланцюжком** для одночасного оновлення кількох стовпців.
+  - Другий параметр `SetProperty` може бути як константою/змінною (`_ => "Tomas"`), так і виразом на основі поточного значення в БД (`u => u.Age + 10`).
+- **`ExecuteDelete()`** — транслює LINQ-вибірку у єдину SQL-команду `DELETE FROM` і повертає `int` (кількість видалених рядків).
+
+### 3. Порівняння `SaveChanges()` vs `ExecuteUpdate` / `ExecuteDelete`
+
+| Критерій | Класичний `SaveChanges()` | `ExecuteUpdate` / `ExecuteDelete` |
 | :--- | :--- | :--- |
-| Попереднє завантаження сутностей | Потрібне (`SELECT` + `ChangeTracker`) | Не потрібне (одразу `UPDATE` / `DELETE`) |
-| Синхронізація з `ChangeTracker` | Автоматична | **Відсутня** (обходить `ChangeTracker`) |
-| Швидкодія на масових даних | Нижча | Значно вища (1 SQL-запит) |
+| **Завантаження сутностей у пам'ять** | Обов'язкове (`SELECT`) | **Не потрібне** (одразу `UPDATE` / `DELETE`) |
+| **Виклик `SaveChanges()`** | Обов'язковий | **Не потрібен** (виконується негайно) |
+| **Взаємодія з `ChangeTracker`** | Повна синхронізація | **Повністю обходить `ChangeTracker`** |
+| **Глобальні фільтри (`HasQueryFilter`)** | Враховуються при завантаженні | Враховуються (можна вимкнути через `IgnoreQueryFilters()`) |
+| **Транзакційність** | В одній транзакції на `SaveChanges()` | Виконується в поточній транзакції або створює власну |
+| **Підтримка складних зв'язків** | Оновлює цілий граф об'єктів | Працює лише з **однією таблицею** за виклик |
 
-## Ключові фрагменти коду
+## Діаграма / Архітектура процесу
 
+```mermaid
+flowchart LR
+    A["db.Users.Where(u => u.Name == Alice).ExecuteUpdate(...)"] --> B["EF Core Query Translator"]
+    B -- "Обходить ChangeTracker!" --> C["SQLite: UPDATE Users SET Age = 50 WHERE Name = Alice"]
+    CT["ChangeTracker (у пам'яті уже є Alice з Age = 28)"] -. "НЕ оновлюється автоматично!" .-> CT
+    C --> D["Потрібен db.Entry(alice).Reload() або новий DbContext"]
+```
+
+## Покроковий розбір прикладів коду
+
+У файлі [Lesson_5_11_BulkExecuteUpdateDelete.cs](../../src/06_QueriesAndLinq/Lesson_5_11_BulkExecuteUpdateDelete.cs) база даних ініціалізується 4 користувачами: `Tom` (36), `Bob` (39), `Alice` (28), `Kate` (25).
+
+### 1. Масове оновлення через `ExecuteUpdate`
 ```csharp
-// Масове оновлення кількох властивостей за умовою Where
-int updated = db.Users
+// Збільшити Age на 1 для всіх
+int updatedAll = db.Users.ExecuteUpdate(s => s.SetProperty(u => u.Age, u => u.Age + 1));
+
+// Оновити кілька властивостей за умовою Where
+int updatedTom = db.Users
     .Where(u => u.Name == "Tom")
     .ExecuteUpdate(s => s
         .SetProperty(u => u.Age, u => u.Age + 10)
         .SetProperty(u => u.Name, _ => "Tomas"));
-
-// Масове видалення за умовою Where
-int deleted = db.Users
-    .Where(u => u.Name == "Bob")
-    .ExecuteDelete();
 ```
-
-Згенерований SQL для `ExecuteUpdate` у SQLite:
-
+Другий виклик генерує в SQLite такий SQL:
 ```sql
 UPDATE "Users" AS "u"
 SET "Name" = 'Tomas',
     "Age" = "u"."Age" + 10
 WHERE "u"."Name" = 'Tom'
 ```
+Усі зміни відбуваються одним зверненням до файлу БД без жодного `SELECT`.
+
+### 2. Розсинхронізація з `ChangeTracker`
+```csharp
+var trackedAlice = db.Users.First(u => u.Name == "Alice"); // Age = 29 (після +1)
+
+db.Users.Where(u => u.Name == "Alice")
+    .ExecuteUpdate(s => s.SetProperty(u => u.Age, _ => 50));
+
+// У пам'яті все ще 29!
+Console.WriteLine(trackedAlice.Age);
+
+db.Entry(trackedAlice).Reload(); // Тепер 50
+```
+Оскільки `trackedAlice` була завантажена в `ChangeTracker` **до** виклику `ExecuteUpdate`, її властивість `Age` у пам'яті залишається застарілою (`29`). Щоб синхронізувати об'єкт у пам'яті зі станом у БД, викликається `db.Entry(trackedAlice).Reload()` (або запит виконується в новому екземплярі `DbContext`).
+
+### 3. Масове видалення через `ExecuteDelete`
+```csharp
+int deleted = db.Users.Where(u => u.Name == "Bob").ExecuteDelete();
+```
+SQLite виконує:
+```sql
+DELETE FROM "Users" AS "u"
+WHERE "u"."Name" = 'Bob'
+```
+Функція повертає `1` (кількість видалених рядків).
 
 ## Особливості роботи в SQLite
 
-- У SQL Server EF Core генерує синтаксис `UPDATE [u] SET ... FROM [Users] AS [u]`, тоді як у SQLite — `UPDATE "Users" AS "u" SET ...` та `DELETE FROM "Users" AS "u" WHERE ...`.
-- Обидва методи виконуються негайно в межах поточної транзакції (або створюють неявну транзакцію, якщо активної немає) без виклику `SaveChanges()`.
+| Аспект | SQLite | MS SQL Server |
+| :--- | :--- | :--- |
+| **Синтаксис `UPDATE`** | `UPDATE "Users" AS "u" SET ... WHERE ...` | `UPDATE [u] SET ... FROM [Users] AS [u] WHERE ...` |
+| **Синтаксис `DELETE`** | `DELETE FROM "Users" AS "u" WHERE ...` | `DELETE [u] FROM [Users] AS [u] WHERE ...` |
+| **Каскадне видалення** | Працює за умови `PRAGMA foreign_keys = ON` (EF Core вмикає це за замовчуванням для SQLite) | Працює на рівні обмежень `FK` у схемі |
 
-## Підсумок та підводні камені
+## Типові помилки, підводні камені та Best Practices
 
-- **Головний підводний камінь:** `ExecuteUpdate` і `ExecuteDelete` **не оновлюють `ChangeTracker`**. Якщо сутність уже була завантажена в поточний `DbContext` раніше, її властивості в пам'яті залишаться старими! Щоб отримати актуальні значення, викличте `db.Entry(entity).Reload()` або використовуйте новий `DbContext`.
-- Ці методи працюють лише з **однією таблицею** за виклик (не можна в одному `ExecuteUpdate` оновити поля і `User`, і пов'язаної `Company`).
-- При `ExecuteDelete` потрібно враховувати обмеження зовнішніх ключів (`FOREIGN KEY`) у БД: за відсутності каскадного видалення спочатку видаляйте залежні записи.
+- **Застарілі дані в `ChangeTracker`:** Ніколи не поєднуйте в одному методі завантаження сутностей із подальшим `ExecuteUpdate`/`ExecuteDelete` по тій самій таблиці без `Reload()` або `ChangeTracker.Clear()`, інакше при подальшому `SaveChanges()` ви можете випадково перезаписати нові дані в БД старими значеннями з пам'яті.
+- **Оптимістичне блокування (`ConcurrencyCheck` / `RowVersion`) та аудит-інтерцептори:** Оскільки `ExecuteUpdate` і `ExecuteDelete` обходять `ChangeTracker` і `SaveChanges()`, інтерцептори `SaveChangesInterceptor` (які часто використовують для автоматичного заповнення `UpdatedAt` або Soft Delete) **не спрацюють**! Поля аудиту в `ExecuteUpdate` потрібно оновлювати явно через `.SetProperty(...)`.
+- **Оновлення лише однієї таблиці:** Не можна в одному `ExecuteUpdate` змінити поля і `User`, і `Company`. Для кожної таблиці виконується окремий виклик.

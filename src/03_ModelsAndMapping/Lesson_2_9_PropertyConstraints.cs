@@ -19,6 +19,12 @@ public class Lesson_2_9_PropertyConstraints : ILesson
     public int ChapterOrder => 3;
     public int LessonOrder => 11;
 
+    /// <summary>
+    /// Запускає демонстрацію обмежень властивостей:
+    /// 1) виводить DDL таблиці Users з CHECK-обмеженням "ValidAge";
+    /// 2) перевіряє збереження валідного запису та блокування невалідного віку на рівні БД;
+    /// 3) демонструє особливість SQLite: ігнорування обмеження довжини [MaxLength] / HasMaxLength.
+    /// </summary>
     public void Run()
     {
         SqliteDbHelper.PrintSection("2.9. Обмеження властивостей");
@@ -42,6 +48,7 @@ public class Lesson_2_9_PropertyConstraints : ILesson
         try
         {
             db.Users.Add(new L2_9.User { Name = "Bob", Email = "bob@example.com", Age = 123 });
+            // SQLite перевіряє CONSTRAINT "ValidAge" CHECK (Age > 0 AND Age < 120) під час INSERT і кидає SqliteException (обгорнуте в DbUpdateException).
             db.SaveChanges();
         }
         catch (DbUpdateException ex)
@@ -49,10 +56,11 @@ public class Lesson_2_9_PropertyConstraints : ILesson
             Console.WriteLine($"\nОчікувана помилка при Age=123 (порушення CHECK \"ValidAge\"):\n  {ex.InnerException?.Message}");
         }
 
-        // Від'єднуємо невалідного Bob, щоб наступний SaveChanges() не намагався зберегти його знову
+        // Від'єднуємо невалідного Bob (очищаємо ChangeTracker), щоб наступний SaveChanges() не намагався зберегти його знову.
         db.ChangeTracker.Clear();
 
         // 3. Демонстрація MaxLength у SQLite: SQLite ігнорує довжину TEXT і зберігає рядок > 10 символів
+        // (на відміну від MS SQL Server, де nvarchar(10) спричинив би помилку "String or binary data would be truncated").
         var longName = "ДужеДовгеІм'яПонадДесятьСимволів";
         db.Users.Add(new L2_9.User { Name = longName, Email = "long@example.com", Age = 25 });
         db.SaveChanges();
@@ -64,22 +72,39 @@ public class Lesson_2_9_PropertyConstraints : ILesson
 
 namespace EFCoreConsoleMastery.Topics.Ch03.L2_9
 {
+    /// <summary>
+    /// Сутність користувача з обмеженнями довжини рядків та CHECK-обмеженням на вік.
+    /// </summary>
     public class User
     {
+        /// <summary>Первинний ключ користувача.</summary>
         public int Id { get; set; }
 
-        // Анотація [MaxLength(10)] у SQL Server створить nvarchar(10), але в SQLite стовпець лишиться TEXT
+        /// <summary>
+        /// Ім'я користувача з атрибутом [MaxLength(10)].
+        /// У MS SQL Server це створить стовпець nvarchar(10), але у SQLite тип усе одно буде TEXT
+        /// без примусового обмеження довжини. Водночас [MaxLength] використовується валідацією (напр., ASP.NET / DataAnnotations).
+        /// </summary>
         [MaxLength(10)]
         public string? Name { get; set; }
 
-        // Налаштовано через Fluent API HasMaxLength(50)
+        /// <summary>
+        /// Електронна пошта; максимальна довжина 50 символів задана через Fluent API HasMaxLength(50).
+        /// </summary>
         public string? Email { get; set; }
 
+        /// <summary>
+        /// Вік користувача, обмежений на рівні БД через CHECK-обмеження "ValidAge" (Age &gt; 0 AND Age &lt; 120).
+        /// </summary>
         public int Age { get; set; }
     }
 
+    /// <summary>
+    /// Контекст бази даних для уроку 2.9, що налаштовує CHECK-обмеження та HasMaxLength.
+    /// </summary>
     public class ApplicationContext : DbContext
     {
+        /// <summary>Набір користувачів (таблиця "Users").</summary>
         public DbSet<User> Users => Set<User>();
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -89,10 +114,12 @@ namespace EFCoreConsoleMastery.Topics.Ch03.L2_9
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            // Обмеження CHECK на рівні таблиці (працює і в SQLite, і в SQL Server)
+            // Обмеження CHECK на рівні таблиці (працює і в SQLite, і в MS SQL Server).
+            // Додає в DDL: CONSTRAINT "ValidAge" CHECK (Age > 0 AND Age < 120).
             modelBuilder.Entity<User>()
                 .ToTable(t => t.HasCheckConstraint("ValidAge", "Age > 0 AND Age < 120"));
 
+            // Fluent API еквівалент [MaxLength(50)].
             modelBuilder.Entity<User>()
                 .Property(u => u.Email)
                 .HasMaxLength(50);

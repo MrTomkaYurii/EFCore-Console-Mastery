@@ -18,8 +18,14 @@ public class Lesson_1_4_CrudOperations : ILesson
     public int ChapterOrder => 1;
     public int LessonOrder => 5;
 
+    /// <summary>
+    /// Запускає демонстрацію повного циклу CRUD-операцій (Create, Read, Update, Delete),
+    /// відстежуваного та від'єднаного оновлення, пакетних методів і асинхронного API.
+    /// </summary>
     public void Run()
     {
+        // Оскільки інтерфейс ILesson.Run() синхронний, запускаємо асинхронний метод синхронно
+        // (у реальних ASP.NET Core / консольних async Main застосунках слід використовувати await напряму)
         RunAsync().GetAwaiter().GetResult();
     }
 
@@ -27,7 +33,7 @@ public class Lesson_1_4_CrudOperations : ILesson
     {
         var connectionString = SqliteDbHelper.GetConnectionString("lesson_1_4");
 
-        // Початкове перестворення БД
+        // Початкове перестворення БД в окремому короткоживучому контексті
         using (var setupDb = new L1_4.CrudContext(connectionString))
         {
             SqliteDbHelper.RecreateDatabase(setupDb);
@@ -41,8 +47,11 @@ public class Lesson_1_4_CrudOperations : ILesson
             var alice = new L1_4.User { Name = "Alice", Age = 26 };
             var kate = new L1_4.User { Name = "Kate", Age = 29 };
 
+            // Add() додає один об'єкт у Change Tracker зі станом Added
             db.Users.Add(tom);
+            // AddRange() ефективніше за кілька викликів Add() для пакетного додавання (менше накладних витрат на DetectChanges)
             db.Users.AddRange(alice, kate);
+            // EF Core об'єднує всі три INSERT-и в один пакет команд у межах транзакції
             db.SaveChanges();
         }
 
@@ -50,6 +59,8 @@ public class Lesson_1_4_CrudOperations : ILesson
         SqliteDbHelper.PrintSection("2. Read — Дані після додавання");
         using (var db = new L1_4.CrudContext(connectionString))
         {
+            // У новому контексті Change Tracker спочатку порожній; ToList() завантажує рядки з SQLite
+            // і переводить отримані сутності у стан Unchanged
             PrintUsers(db.Users.ToList());
         }
 
@@ -62,7 +73,8 @@ public class Lesson_1_4_CrudOperations : ILesson
             {
                 user.Name = "Bob";
                 user.Age = 44;
-                // Викликати db.Users.Update(user) тут не обов'язково — Change Tracker сам бачить зміни
+                // Викликати db.Users.Update(user) тут не обов'язково — Change Tracker автоматично
+                // порівнює поточні значення зі збереженим знімком (snapshot) і генерує UPDATE лише для змінених стовпців
                 db.SaveChanges();
             }
 
@@ -75,7 +87,7 @@ public class Lesson_1_4_CrudOperations : ILesson
         using (var db1 = new L1_4.CrudContext(connectionString))
         {
             detachedUser = db1.Users.FirstOrDefault(u => u.Name == "Alice");
-        }
+        } // Після виходу з using db1 знищується, тому detachedUser стає від'єднаним (Detached)
 
         if (detachedUser is not null)
         {
@@ -83,7 +95,9 @@ public class Lesson_1_4_CrudOperations : ILesson
             detachedUser.Age = 27;
 
             using var db2 = new L1_4.CrudContext(connectionString);
-            // Оскільки db2 не відстежує detachedUser, явно позначаємо його як Modified через Update()
+            // Оскільки db2 не відстежує detachedUser і не має його початкового знімка,
+            // метод Update() примусово позначає ВСІ властивості (окрім ключа Id) як Modified,
+            // тому в SQL UPDATE потраплять усі стовпці таблиці (SET "Age" = @p0, "Name" = @p1 WHERE "Id" = @p2)
             db2.Users.Update(detachedUser);
             db2.SaveChanges();
 
@@ -97,6 +111,8 @@ public class Lesson_1_4_CrudOperations : ILesson
             var user = db.Users.FirstOrDefault();
             if (user is not null)
             {
+                // Remove() переводить сутність у стан EntityState.Deleted;
+                // SaveChanges() виконає DELETE FROM "Users" WHERE "Id" = @p0
                 db.Users.Remove(user);
                 db.SaveChanges();
             }
@@ -105,6 +121,8 @@ public class Lesson_1_4_CrudOperations : ILesson
         }
 
         // 6. ASYNC API (AddRangeAsync, ToListAsync, FirstOrDefaultAsync, SaveChangesAsync)
+        // Примітка: у SQLite операції вводу-виводу фактично виконуються синхронно на рівні нативної бібліотеки e_sqlite3,
+        // але використання Async API є обов'язковою практикою для сумісності з серверними БД (SQL Server, PostgreSQL)
         SqliteDbHelper.PrintSection("6. Асинхронний CRUD API");
         using (var db = new L1_4.CrudContext(connectionString))
         {
@@ -138,17 +156,40 @@ public class Lesson_1_4_CrudOperations : ILesson
 
 namespace EFCoreConsoleMastery.Topics.Ch01.L1_4
 {
+    /// <summary>
+    /// Сутність користувача для демонстрації CRUD-операцій.
+    /// </summary>
     public class User
     {
+        /// <summary>
+        /// Первинний ключ таблиці Users (INTEGER PRIMARY KEY AUTOINCREMENT у SQLite).
+        /// </summary>
         public int Id { get; set; }
+
+        /// <summary>
+        /// Ім'я користувача (TEXT NULL у SQLite).
+        /// </summary>
         public string? Name { get; set; }
+
+        /// <summary>
+        /// Вік користувача (INTEGER NOT NULL у SQLite).
+        /// </summary>
         public int Age { get; set; }
     }
 
+    /// <summary>
+    /// Контекст даних для демонстрації базових операцій створення, читання, оновлення та видалення.
+    /// </summary>
     public class CrudContext(string connectionString) : DbContext
     {
+        /// <summary>
+        /// Набір користувачів, що відповідає таблиці "Users".
+        /// </summary>
         public DbSet<User> Users => Set<User>();
 
+        /// <summary>
+        /// Налаштовує провайдер SQLite за допомогою переданого рядка підключення.
+        /// </summary>
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             optionsBuilder.UseSqlite(connectionString);

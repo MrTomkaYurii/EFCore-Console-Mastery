@@ -17,28 +17,40 @@ namespace EFCoreConsoleMastery.Topics.Ch08
         public int ChapterOrder => 8;
         public int LessonOrder => 3;
 
-        // 1. Синхронний скомпільований запит: пошук одного користувача за Id з підвантаженням Company
+        // Скомпільовані запити ОБОВ'ЯЗКОВО зберігають у static readonly полях!
+        // Якщо викликати EF.CompileQuery щоразу в методі, компіляція дерева виразів виконуватиметься
+        // повторно на кожен запит, що зробить код повільнішим за звичайний LINQ (і призведе до витоку пам'яті).
+
+        // 1. Синхронний скомпільований запит: пошук одного користувача за Id з підвантаженням Company.
+        // EF Core заздалегідь будує SQL (SELECT ... FROM Users LEFT JOIN Companies ... WHERE Id = @__id LIMIT 1)
+        // і делегат матеріалізації, минаючи етап хешування Expression Tree при кожному виклику.
         private static readonly Func<CompiledQueriesContext, int, User?> UserByIdQuery =
             EF.CompileQuery((CompiledQueriesContext db, int id) =>
                 db.Users
                     .Include(u => u.Company)
                     .FirstOrDefault(u => u.Id == id));
 
-        // 2. Синхронний скомпільований запит, що повертає колекцію (IEnumerable<User>) з LIKE та фільтром за віком
+        // 2. Синхронний скомпільований запит, що повертає колекцію (IEnumerable<User>) з LIKE та фільтром за віком.
+        // Важливо: запит повертає потоковий IEnumerable<User>, тому DbContext має залишатися відкритим
+        // до завершення ітерації (наприклад, до виклику .ToList()).
+        // EF.Functions.Like() транслюється в SQL-оператор LIKE (у SQLite для ASCII він за замовчуванням регістронезалежний).
         private static readonly Func<CompiledQueriesContext, string, int, IEnumerable<User>> UsersByNameAndAgeQuery =
             EF.CompileQuery((CompiledQueriesContext db, string namePattern, int minAge) =>
                 db.Users
                     .Include(u => u.Company)
                     .Where(u => EF.Functions.Like(u.Name!, namePattern) && u.Age > minAge));
 
-        // 3. Асинхронний скомпільований запит для одного об'єкта (повертає Task<User?>)
+        // 3. Асинхронний скомпільований запит для одного об'єкта (повертає Task<User?>).
+        // У лямбді всередині CompileAsyncQuery використовується синхронний FirstOrDefault,
+        // але EF Core сам перетворює його на асинхронне виконання до БД (ExecuteReaderAsync).
         private static readonly Func<CompiledQueriesContext, int, Task<User?>> UserByIdAsyncQuery =
             EF.CompileAsyncQuery((CompiledQueriesContext db, int id) =>
                 db.Users
                     .Include(u => u.Company)
                     .FirstOrDefault(u => u.Id == id));
 
-        // 4. Асинхронний скомпільований запит для потоку результатів (повертає IAsyncEnumerable<User>)
+        // 4. Асинхронний скомпільований запит для потоку результатів (повертає IAsyncEnumerable<User>).
+        // Дозволяє обробляти рядки з SQLite по одному через await foreach без проміжного ToListAsync() у пам'яті.
         private static readonly Func<CompiledQueriesContext, string, IAsyncEnumerable<User>> UsersByCompanyAsyncQuery =
             EF.CompileAsyncQuery<CompiledQueriesContext, string, User>((CompiledQueriesContext db, string companyName) =>
                 db.Users
@@ -46,6 +58,12 @@ namespace EFCoreConsoleMastery.Topics.Ch08
                     .Where(u => u.Company != null && u.Company.Name == companyName)
                     .OrderBy(u => u.Name));
 
+        /// <summary>
+        /// Запускає демонстрацію скомпільованих запитів (<c>EF.CompileQuery</c> та <c>EF.CompileAsyncQuery</c>):
+        /// 1) Синхронне виконання попередньо скомпільованих запитів.
+        /// 2) Асинхронне виконання (<c>Task&lt;User?&gt;</c> та <c>IAsyncEnumerable&lt;User&gt;</c>).
+        /// 3) Порівняння продуктивності зі звичайним LINQ-запитом на 200 ітераціях.
+        /// </summary>
         public void Run()
         {
             var connStr = SqliteDbHelper.GetConnectionString("lesson_8_1_compiled_queries");
@@ -104,12 +122,13 @@ namespace EFCoreConsoleMastery.Topics.Ch08
 
             using (var db = new CompiledQueriesContext(connStr))
             {
-                // Прогрів кешу запитів
+                // Прогрів кешу запитів (перший виклик завжди виконує компіляцію/підготовку плану виконання)
                 _ = db.Users.FirstOrDefault(u => u.Id == 1);
                 _ = UserByIdQuery(db, 1);
 
                 const int iterations = 200;
 
+                // Звичайний LINQ-запит щоразу будує Expression Tree, обчислює його хеш і шукає у внутрішньому кеші EF Core
                 var swRegular = Stopwatch.StartNew();
                 for (int i = 0; i < iterations; i++)
                 {
@@ -117,6 +136,7 @@ namespace EFCoreConsoleMastery.Topics.Ch08
                 }
                 swRegular.Stop();
 
+                // Скомпільований запит пропускає побудову й хешування Expression Tree — одразу підставляє параметр @id у готовий делегат
                 var swCompiled = Stopwatch.StartNew();
                 for (int i = 0; i < iterations; i++)
                 {
@@ -150,29 +170,58 @@ namespace EFCoreConsoleMastery.Topics.Ch08
 
 namespace EFCoreConsoleMastery.Topics.Ch08.L8_1
 {
+    /// <summary>
+    /// Модель компанії (головна сутність у зв'язку 1:N з <see cref="User"/>).
+    /// </summary>
     public class Company
     {
+        /// <summary>Первинний ключ компанії.</summary>
         public int Id { get; set; }
+
+        /// <summary>Назва компанії.</summary>
         public string? Name { get; set; }
+
+        /// <summary>Навігаційна властивість: список працівників компанії.</summary>
         public List<User> Users { get; set; } = new();
     }
 
+    /// <summary>
+    /// Модель користувача (залежна сутність із зовнішнім ключем <see cref="CompanyId"/>).
+    /// </summary>
     public class User
     {
+        /// <summary>Первинний ключ користувача.</summary>
         public int Id { get; set; }
+
+        /// <summary>Ім'я користувача.</summary>
         public string? Name { get; set; }
+
+        /// <summary>Вік користувача.</summary>
         public int Age { get; set; }
+
+        /// <summary>Зовнішній ключ до таблиці <c>Companies</c>.</summary>
         public int CompanyId { get; set; }
+
+        /// <summary>Навігаційна властивість до компанії користувача (підвантажується через <c>Include</c>).</summary>
         public Company? Company { get; set; }
     }
 
+    /// <summary>
+    /// Контекст даних уроку 8.1 для демонстрації скомпільованих запитів.
+    /// </summary>
     public class CompiledQueriesContext : DbContext
     {
         private readonly string _connectionString;
 
+        /// <summary>Таблиця користувачів.</summary>
         public DbSet<User> Users { get; set; } = null!;
+
+        /// <summary>Таблиця компаній.</summary>
         public DbSet<Company> Companies { get; set; } = null!;
 
+        /// <summary>
+        /// Ініціалізує контекст із рядком підключення до SQLite.
+        /// </summary>
         public CompiledQueriesContext(string connectionString)
         {
             _connectionString = connectionString;

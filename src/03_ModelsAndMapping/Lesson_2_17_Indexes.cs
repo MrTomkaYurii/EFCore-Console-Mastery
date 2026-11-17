@@ -18,6 +18,12 @@ public class Lesson_2_17_Indexes : ILesson
     public int ChapterOrder => 3;
     public int LessonOrder => 9;
 
+    /// <summary>
+    /// Запускає демонстрацію індексів у SQLite:
+    /// 1) виводить усі згенеровані CREATE [UNIQUE] INDEX із системної таблиці sqlite_master;
+    /// 2) показує, що фільтрований унікальний індекс (HasFilter) дозволяє кілька значень NULL;
+    /// 3) перевіряє блокування дубліката за унікальним індексом Passport.
+    /// </summary>
     public void Run()
     {
         SqliteDbHelper.PrintSection("2.17. Налаштування індексів");
@@ -25,7 +31,8 @@ public class Lesson_2_17_Indexes : ILesson
         using var db = new L2_17.ApplicationContext();
         SqliteDbHelper.RecreateDatabase(db);
 
-        // Переглядаємо всі створені індекси в SQLite через sqlite_master
+        // Переглядаємо всі створені індекси в SQLite через sqlite_master.
+        // Умова sql IS NOT NULL відфільтровує автоматичні внутрішні індекси SQLite (sqlite_autoindex_*).
         var indexes = db.Database
             .SqlQueryRaw<string>("SELECT sql AS Value FROM sqlite_master WHERE type='index' AND sql IS NOT NULL ORDER BY name")
             .ToList();
@@ -36,7 +43,10 @@ public class Lesson_2_17_Indexes : ILesson
             Console.WriteLine($"  {idxSql}");
         }
 
-        // Додаємо записи: PhoneNumber може бути NULL у кількох користувачів завдяки фільтрованому унікальному індексу
+        // Додаємо записи: PhoneNumber може бути NULL у кількох користувачів завдяки фільтрованому унікальному індексу.
+        // Примітка: у SQLite звичайний UNIQUE-індекс також дозволяє кілька NULL (за стандартом SQL NULL != NULL),
+        // але в MS SQL Server без HasFilter("[PhoneNumber] IS NOT NULL") другий NULL спричинив би помилку!
+        // Крім того, фільтрований (partial) індекс у SQLite менший за розміром, бо не індексує NULL-рядки.
         db.Users.AddRange(
             new L2_17.User { Name = "Tom", Passport = "P-100", PhoneNumber = "+380501112233" },
             new L2_17.User { Name = "Alice", Passport = "P-200", PhoneNumber = null },
@@ -49,6 +59,7 @@ public class Lesson_2_17_Indexes : ILesson
         try
         {
             db.Users.Add(new L2_17.User { Name = "Clone", Passport = "P-100", PhoneNumber = "+380509998877" });
+            // SQLite перевіряє UNIQUE INDEX IX_Users_Passport_Unique і відхиляє дублікат "P-100".
             db.SaveChanges();
         }
         catch (DbUpdateException ex)
