@@ -1,4 +1,4 @@
-<Solution>
+﻿<Solution>
   <Folder Name="/Solution Items/">
     <File Path="README.md" />
   </Folder>
@@ -15,5 +15,79 @@
     <Project Path="src/06_QueriesAndLinq/EFCoreMastery.Ch06.QueriesAndLinq.csproj" />
     <Project Path="src/07_SqlAndStoredProcedures/EFCoreMastery.Ch07.SqlAndStoredProcedures.csproj" />
     <Project Path="src/08_AdvancedTopics/EFCoreMastery.Ch08.AdvancedTopics.csproj" />
+  </Folder>
+  <Folder Name="/Docs/01_Introduction/">
+    <File Path="Docs/01_Introduction/1_1_WhatIsEfCore.md" />
+    <File Path="Docs/01_Introduction/1_2_FirstApp.md" />
+    <File Path="Docs/01_Introduction/1_3_ExistingDatabase.md" />
+    <File Path="Docs/01_Introduction/1_4_CrudOperations.md" />
+    <File Path="Docs/01_Introduction/1_5_ConnectionConfiguration.md" />
+    <File Path="Docs/01_Introduction/1_6_Logging.md" />
+    <File Path="Docs/01_Introduction/2_16_DatabaseManagement.md" />
+    <File Path="Docs/01_Introduction/2_2_Migrations.md" />
+  </Folder>
+  <Folder Name="/Docs/02_DatabaseProviders/">
+    <File Path="Docs/02_DatabaseProviders/7_1_SqlServerProvider.md" />
+    <File Path="Docs/02_DatabaseProviders/7_2_MySqlProvider.md" />
+    <File Path="Docs/02_DatabaseProviders/7_3_PostgreSqlProvider.md" />
+  </Folder>
+  <Folder Name="/Docs/03_ModelsAndMapping/">
+    <File Path="Docs/03_ModelsAndMapping/2_1_ModelsAndFluentApi.md" />
+    <File Path="Docs/03_ModelsAndMapping/2_10_EntityConstructors.md" />
+    <File Path="Docs/03_ModelsAndMapping/2_13_ModelConfiguration.md" />
+    <File Path="Docs/03_ModelsAndMapping/2_14_DataSeeding.md" />
+    <File Path="Docs/03_ModelsAndMapping/2_15_RequiredAndOptional.md" />
+    <File Path="Docs/03_ModelsAndMapping/2_17_Indexes.md" />
+    <File Path="Docs/03_ModelsAndMapping/2_3_DefiningModels.md" />
+    <File Path="Docs/03_ModelsAndMapping/2_4_EntityProperties.md" />
+    <File Path="Docs/03_ModelsAndMapping/2_5_EntityFields.md" />
+    <File Path="Docs/03_ModelsAndMapping/2_6_TablesAndColumns.md" />
+    <File Path="Docs/03_ModelsAndMapping/2_7_Keys.md" />
+    <File Path="Docs/03_ModelsAndMapping/2_8_ValueGeneration.md" />
+    <File Path="Docs/03_ModelsAndMapping/2_9_PropertyConstraints.md" />
+  </Folder>
+  <Folder Name="/Docs/04_Relations/">
+    <File Path="Docs/04_Relations/3_1_ForeignKeysAndNavigation.md" />
+    <File Path="Docs/04_Relations/3_10_ForeignKeyConfig.md" />
+    <File Path="Docs/04_Relations/3_11_HierarchicalData.md" />
+    <File Path="Docs/04_Relations/3_12_ComplexTypes.md" />
+    <File Path="Docs/04_Relations/3_2_CascadeDelete.md" />
+    <File Path="Docs/04_Relations/3_3_EagerLoadingInclude.md" />
+    <File Path="Docs/04_Relations/3_4_OneToOne.md" />
+    <File Path="Docs/04_Relations/3_5_OneToMany.md" />
+    <File Path="Docs/04_Relations/3_6_ManyToMany.md" />
+    <File Path="Docs/04_Relations/3_7_OwnedTypes.md" />
+    <File Path="Docs/04_Relations/3_8_ExplicitLoading.md" />
+    <File Path="Docs/04_Relations/3_9_LazyLoading.md" />
+  </Folder>
+  <Folder Name="/Docs/05_Inheritance/">
+    <File Path="Docs/05_Inheritance/4_1_TphInheritance.md" />
+    <File Path="Docs/05_Inheritance/4_2_TptInheritance.md" />
+    <File Path="Docs/05_Inheritance/4_3_TpcInheritance.md" />
+  </Folder>
+  <Folder Name="/Docs/06_QueriesAndLinq/">
+    <File Path="Docs/06_QueriesAndLinq/5_1_LinqIntro.md" />
+    <File Path="Docs/06_QueriesAndLinq/5_10_SortingAndProjection.md" />
+    <File Path="Docs/06_QueriesAndLinq/5_11_BulkExecuteUpdateDelete.md" />
+    <File Path="Docs/06_QueriesAndLinq/5_2_Filtering.md" />
+    <File Path="Docs/06_QueriesAndLinq/5_3_JoinAndGroupBy.md" />
+    <File Path="Docs/06_QueriesAndLinq/5_4_SetOperations.md" />
+    <File Path="Docs/06_QueriesAndLinq/5_5_Aggregates.md" />
+    <File Path="Docs/06_QueriesAndLinq/5_6_IEnumerableVsIQueryable.md" />
+    <File Path="Docs/06_QueriesAndLinq/5_7_TrackingAndAsNoTracking.md" />
+    <File Path="Docs/06_QueriesAndLinq/5_8_QueryExecution.md" />
+    <File Path="Docs/06_QueriesAndLinq/5_9_GlobalQueryFilters.md" />
+  </Folder>
+  <Folder Name="/Docs/07_SqlAndStoredProcedures/">
+    <File Path="Docs/07_SqlAndStoredProcedures/6_1_RawSqlQueries.md" />
+    <File Path="Docs/07_SqlAndStoredProcedures/6_2_StoredFunctions.md" />
+    <File Path="Docs/07_SqlAndStoredProcedures/6_3_StoredProcedures.md" />
+  </Folder>
+  <Folder Name="/Docs/08_AdvancedTopics/">
+    <File Path="Docs/08_AdvancedTopics/2_11_Concurrency.md" />
+    <File Path="Docs/08_AdvancedTopics/2_12_LoggingProviders.md" />
+    <File Path="Docs/08_AdvancedTopics/8_1_CompiledQueries.md" />
+    <File Path="Docs/08_AdvancedTopics/8_2_DatabaseViews.md" />
+    <File Path="Docs/08_AdvancedTopics/8_3_ChangeHistory.md" />
   </Folder>
 </Solution>
