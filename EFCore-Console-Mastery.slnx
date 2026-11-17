@@ -1,0 +1,16 @@
+<Solution>
+  <Folder Name="/00_Core/">
+    <Project Path="src/EFCoreMastery.ConsoleApp/EFCoreMastery.ConsoleApp.csproj" />
+    <Project Path="src/EFCoreMastery.Core/EFCoreMastery.Core.csproj" />
+  </Folder>
+  <Folder Name="/Chapters/">
+    <Project Path="src/01_Introduction/EFCoreMastery.Ch01.Introduction.csproj" />
+    <Project Path="src/02_DatabaseProviders/EFCoreMastery.Ch02.DatabaseProviders.csproj" />
+    <Project Path="src/03_ModelsAndMapping/EFCoreMastery.Ch03.ModelsAndMapping.csproj" />
+    <Project Path="src/04_Relations/EFCoreMastery.Ch04.Relations.csproj" />
+    <Project Path="src/05_Inheritance/EFCoreMastery.Ch05.Inheritance.csproj" />
+    <Project Path="src/06_QueriesAndLinq/EFCoreMastery.Ch06.QueriesAndLinq.csproj" />
+    <Project Path="src/07_SqlAndStoredProcedures/EFCoreMastery.Ch07.SqlAndStoredProcedures.csproj" />
+    <Project Path="src/08_AdvancedTopics/EFCoreMastery.Ch08.AdvancedTopics.csproj" />
+  </Folder>
+</Solution>

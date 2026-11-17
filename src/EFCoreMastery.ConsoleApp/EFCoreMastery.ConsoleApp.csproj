@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\EFCoreMastery.Core\EFCoreMastery.Core.csproj" />
+    <ProjectReference Include="..\01_Introduction\EFCoreMastery.Ch01.Introduction.csproj" />
+    <ProjectReference Include="..\02_DatabaseProviders\EFCoreMastery.Ch02.DatabaseProviders.csproj" />
+    <ProjectReference Include="..\03_ModelsAndMapping\EFCoreMastery.Ch03.ModelsAndMapping.csproj" />
+    <ProjectReference Include="..\04_Relations\EFCoreMastery.Ch04.Relations.csproj" />
+    <ProjectReference Include="..\05_Inheritance\EFCoreMastery.Ch05.Inheritance.csproj" />
+    <ProjectReference Include="..\06_QueriesAndLinq\EFCoreMastery.Ch06.QueriesAndLinq.csproj" />
+    <ProjectReference Include="..\07_SqlAndStoredProcedures\EFCoreMastery.Ch07.SqlAndStoredProcedures.csproj" />
+    <ProjectReference Include="..\08_AdvancedTopics\EFCoreMastery.Ch08.AdvancedTopics.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net11.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+</Project>
