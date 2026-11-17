@@ -73,19 +73,34 @@ public class Lesson_2_17_Indexes : ILesson
 
 namespace EFCoreConsoleMastery.Topics.Ch03.L2_17
 {
-    // Приклад налаштування індексу через атрибут [Index] (з простору Microsoft.EntityFrameworkCore)
+    /// <summary>
+    /// Сутність користувача з індексами, заданими через атрибути [Index] (з простору Microsoft.EntityFrameworkCore):
+    /// 1) звичайний індекс на PhoneNumber із власним іменем "Attr_Phone_Index";
+    /// 2) складений індекс на (PhoneNumber, Passport) зі стандартним іменем IX_Users_PhoneNumber_Passport.
+    /// </summary>
     [Index(nameof(PhoneNumber), Name = "Attr_Phone_Index")]
-    [Index(nameof(PhoneNumber), nameof(Passport))] // Складений індекс через атрибут
+    [Index(nameof(PhoneNumber), nameof(Passport))] // Складений індекс через атрибут (порядок стовпців має значення для B-Tree!)
     public class User
     {
+        /// <summary>Первинний ключ користувача.</summary>
         public int Id { get; set; }
+
+        /// <summary>Ім'я користувача (без індексу).</summary>
         public string? Name { get; set; }
+
+        /// <summary>Номер паспорта (має унікальний індекс через Fluent API).</summary>
         public string? Passport { get; set; }
+
+        /// <summary>Номер телефону (має звичайний індекс через [Index] та фільтрований унікальний через Fluent API).</summary>
         public string? PhoneNumber { get; set; }
     }
 
+    /// <summary>
+    /// Контекст бази даних для уроку 2.17, що налаштовує унікальний та фільтрований індекси через Fluent API.
+    /// </summary>
     public class ApplicationContext : DbContext
     {
+        /// <summary>Набір користувачів (таблиця "Users").</summary>
         public DbSet<User> Users => Set<User>();
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -95,14 +110,17 @@ namespace EFCoreConsoleMastery.Topics.Ch03.L2_17
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            // Унікальний індекс на Passport через Fluent API
+            // Унікальний індекс на Passport через Fluent API.
+            // Генерує: CREATE UNIQUE INDEX "IX_Users_Passport_Unique" ON "Users" ("Passport").
             modelBuilder.Entity<User>()
                 .HasIndex(u => u.Passport)
                 .IsUnique()
                 .HasDatabaseName("IX_Users_Passport_Unique");
 
-            // Фільтрований (частковий) унікальний індекс у SQLite:
-            // індексує та перевіряє унікальність лише для непорожніх номерів телефону
+            // Фільтрований (частковий / partial) унікальний індекс у SQLite:
+            // індексує та перевіряє унікальність лише для непорожніх номерів телефону.
+            // Зверніть увагу на синтаксис ідентифікаторів у HasFilter: подвійні лапки "" для SQLite/PostgreSQL
+            // (у MS SQL Server використовуються квадратні дужки [PhoneNumber] IS NOT NULL).
             modelBuilder.Entity<User>()
                 .HasIndex(u => u.PhoneNumber)
                 .IsUnique()
