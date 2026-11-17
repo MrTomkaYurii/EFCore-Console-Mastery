@@ -54,7 +54,7 @@ static void RunInteractiveMenu(List<ILesson> lessons)
 
     while (true)
     {
-        Console.Clear();
+        SafeClearConsole();
         Console.ForegroundColor = ConsoleColor.Green;
         Console.WriteLine("============================================================");
         Console.WriteLine("   EFCore-Console-Mastery (SQLite + Metanit EF Core Guide)  ");
@@ -107,7 +107,7 @@ static void RunChapterMenu(string chapterTitle, List<ILesson> chapterLessons)
 {
     while (true)
     {
-        Console.Clear();
+        SafeClearConsole();
         Console.ForegroundColor = ConsoleColor.Cyan;
         Console.WriteLine($"=== {chapterTitle} ===");
         Console.ResetColor();
@@ -197,4 +197,19 @@ static void Pause()
 {
     Console.WriteLine("\nНатисніть Enter для продовження...");
     Console.ReadLine();
+}
+
+static void SafeClearConsole()
+{
+    if (!Console.IsOutputRedirected)
+    {
+        try
+        {
+            Console.Clear();
+        }
+        catch (IOException)
+        {
+            // Ігноруємо, якщо консоль не підтримує очищення буфера (наприклад, у деяких IDE-терміналах)
+        }
+    }
 }
