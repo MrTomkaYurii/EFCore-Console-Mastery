@@ -1,83 +1,6 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Design;
 
 namespace EFCoreConsoleMastery.Core.Domain;
-
-/// <summary>Країна розташування компанії (таблиця dbo.Countries).</summary>
-public class Country
-{
-    public int Id { get; set; }
-    public string Name { get; set; } = string.Empty;
-    public List<Company> Companies { get; set; } = new();
-}
-
-/// <summary>Компанія (таблиця dbo.Companies).</summary>
-public class Company
-{
-    public int Id { get; set; }
-    public string Name { get; set; } = string.Empty;
-    public int? CountryId { get; set; }
-    public Country? Country { get; set; }
-    public List<User> Users { get; set; } = new();
-    public List<Product> Products { get; set; } = new();
-}
-
-/// <summary>Роль користувача (таблиця dbo.Roles).</summary>
-public class Role
-{
-    public int Id { get; set; }
-    public string Name { get; set; } = string.Empty;
-    public List<User> Users { get; set; } = new();
-}
-
-/// <summary>Користувач (таблиця dbo.Users).</summary>
-public class User
-{
-    public int Id { get; set; }
-    public string Name { get; set; } = string.Empty;
-    public int Age { get; set; }
-    public int? CompanyId { get; set; }
-    public Company? Company { get; set; }
-    public int? RoleId { get; set; }
-    public Role? Role { get; set; }
-    public UserProfile? Profile { get; set; }
-}
-
-/// <summary>Профіль користувача 1:1 (таблиця dbo.UserProfiles).</summary>
-public class UserProfile
-{
-    public int Id { get; set; }
-    public string Login { get; set; } = string.Empty;
-    public string? Bio { get; set; }
-    public int UserId { get; set; }
-    public User? User { get; set; }
-}
-
-/// <summary>Продукт компанії (таблиця dbo.Products).</summary>
-public class Product
-{
-    public int Id { get; set; }
-    public string Name { get; set; } = string.Empty;
-    public decimal Price { get; set; }
-    public int CompanyId { get; set; }
-    public Company? Company { get; set; }
-}
-
-/// <summary>Навчальний курс для зв'язку M:N (таблиця dbo.Courses).</summary>
-public class Course
-{
-    public int Id { get; set; }
-    public string Name { get; set; } = string.Empty;
-    public List<Student> Students { get; set; } = new();
-}
-
-/// <summary>Студент для зв'язку M:N (таблиця dbo.Students).</summary>
-public class Student
-{
-    public int Id { get; set; }
-    public string Name { get; set; } = string.Empty;
-    public List<Course> Courses { get; set; } = new();
-}
 
 /// <summary>
 /// Наскрізний доменний DbContext курсу (схема dbo в EFCoreMasteryDb).
@@ -134,8 +57,7 @@ public class MasteryDbContext : DbContext
     }
 
     /// <summary>
-    /// Перестворює схему dbo та наповнює її базовим набором тестових даних
-    /// для уроків CRUD, LINQ, Joins, Views та Stored Procedures.
+    /// Перестворює схему dbo та наповнює її базовим набором тестових даних.
     /// </summary>
     public static void ResetAndSeed()
     {
@@ -173,18 +95,5 @@ public class MasteryDbContext : DbContext
         db.Products.AddRange(p1, p2, p3);
         db.Students.AddRange(s1, s2);
         db.SaveChanges();
-    }
-}
-
-/// <summary>
-/// Фабрика для CLI-інструментів EF Core (dotnet ef migrations add / database update).
-/// </summary>
-public class MasteryDbContextFactory : IDesignTimeDbContextFactory<MasteryDbContext>
-{
-    public MasteryDbContext CreateDbContext(string[] args)
-    {
-        var optionsBuilder = new DbContextOptionsBuilder<MasteryDbContext>();
-        optionsBuilder.UseSqlServer(SqlServerDbHelper.ConnectionString);
-        return new MasteryDbContext(optionsBuilder.Options);
     }
 }
