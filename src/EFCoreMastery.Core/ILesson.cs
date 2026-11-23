@@ -5,7 +5,7 @@ namespace EFCoreConsoleMastery.Core;
 /// </summary>
 public interface ILesson
 {
-    /// <summary>Номер параграфа згідно з курсом Metanit (наприклад, "1.1", "2.16").</summary>
+    /// <summary>Послідовний номер параграфа у форматі "&lt;Глава&gt;.&lt;Урок&gt;" (наприклад, "1.1", "3.12").</summary>
     string Id { get; }
 
     /// <summary>Назва розділу (глави), до якого належить урок.</summary>

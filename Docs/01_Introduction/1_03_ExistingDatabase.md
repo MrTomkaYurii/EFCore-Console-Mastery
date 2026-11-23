@@ -156,4 +156,4 @@ EF Core успішно підключається до існуючої табл
 
 ---
 <!-- lesson-nav -->
-← [1.2. Перший застосунок на EF Core](1_02_FirstApp.md) | [Шпаргалка глави (Runs.md)](Runs.md) | [Зміст курсу (README)](../../README.md) | [2.16. Управління базою даних](2_16_DatabaseManagement.md) →
+← [1.2. Перший застосунок на EF Core](1_02_FirstApp.md) | [Шпаргалка глави (Runs.md)](Runs.md) | [Зміст курсу (README)](../../README.md) | [1.4. Управління базою даних](1_04_DatabaseManagement.md) →
