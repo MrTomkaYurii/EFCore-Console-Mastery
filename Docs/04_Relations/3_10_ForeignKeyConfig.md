@@ -157,4 +157,4 @@ CREATE TABLE "Employees" (
 
 ---
 <!-- lesson-nav -->
-← [3.1. Зовнішні ключі та навігаційні властивості](3_1_ForeignKeysAndNavigation.md) | [Шпаргалка глави (Runs.md)](Runs.md) | [Зміст курсу (README)](../../README.md) | [3.2. Каскадне видалення](3_2_CascadeDelete.md) →
+← [3.1. Зовнішні ключі та навігаційні властивості](3_01_ForeignKeysAndNavigation.md) | [Шпаргалка глави (Runs.md)](Runs.md) | [Зміст курсу (README)](../../README.md) | [3.2. Каскадне видалення](3_02_CascadeDelete.md) →

@@ -147,4 +147,4 @@ public class Company
 
 ---
 <!-- lesson-nav -->
-← [2.4. Властивості сутності](2_4_EntityProperties.md) | [Шпаргалка глави (Runs.md)](Runs.md) | [Зміст курсу (README)](../../README.md) | [2.5. Використання полів сутності](2_5_EntityFields.md) →
+← [2.4. Властивості сутності](2_04_EntityProperties.md) | [Шпаргалка глави (Runs.md)](Runs.md) | [Зміст курсу (README)](../../README.md) | [2.5. Використання полів сутності](2_05_EntityFields.md) →

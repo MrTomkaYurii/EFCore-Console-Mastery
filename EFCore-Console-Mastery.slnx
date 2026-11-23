@@ -1,4 +1,4 @@
-﻿<Solution>
+<Solution>
   <Folder Name="/Solution Items/">
     <File Path="README.md" />
   </Folder>
@@ -18,84 +18,84 @@
   </Folder>
   <Folder Name="/Docs/01_Introduction/">
     <File Path="Docs/01_Introduction/Runs.md" />
-    <File Path="Docs/01_Introduction/1_1_WhatIsEfCore.md" />
-    <File Path="Docs/01_Introduction/1_2_FirstApp.md" />
-    <File Path="Docs/01_Introduction/1_3_ExistingDatabase.md" />
-    <File Path="Docs/01_Introduction/1_4_CrudOperations.md" />
-    <File Path="Docs/01_Introduction/1_5_ConnectionConfiguration.md" />
-    <File Path="Docs/01_Introduction/1_6_Logging.md" />
+    <File Path="Docs/01_Introduction/1_01_WhatIsEfCore.md" />
+    <File Path="Docs/01_Introduction/1_02_FirstApp.md" />
+    <File Path="Docs/01_Introduction/1_03_ExistingDatabase.md" />
+    <File Path="Docs/01_Introduction/1_04_CrudOperations.md" />
+    <File Path="Docs/01_Introduction/1_05_ConnectionConfiguration.md" />
+    <File Path="Docs/01_Introduction/1_06_Logging.md" />
     <File Path="Docs/01_Introduction/2_16_DatabaseManagement.md" />
-    <File Path="Docs/01_Introduction/2_2_Migrations.md" />
+    <File Path="Docs/01_Introduction/2_02_Migrations.md" />
   </Folder>
   <Folder Name="/Docs/02_DatabaseProviders/">
     <File Path="Docs/02_DatabaseProviders/Runs.md" />
-    <File Path="Docs/02_DatabaseProviders/7_1_SqlServerProvider.md" />
-    <File Path="Docs/02_DatabaseProviders/7_2_MySqlProvider.md" />
-    <File Path="Docs/02_DatabaseProviders/7_3_PostgreSqlProvider.md" />
+    <File Path="Docs/02_DatabaseProviders/7_01_SqlServerProvider.md" />
+    <File Path="Docs/02_DatabaseProviders/7_02_MySqlProvider.md" />
+    <File Path="Docs/02_DatabaseProviders/7_03_PostgreSqlProvider.md" />
   </Folder>
   <Folder Name="/Docs/03_ModelsAndMapping/">
     <File Path="Docs/03_ModelsAndMapping/Runs.md" />
-    <File Path="Docs/03_ModelsAndMapping/2_1_ModelsAndFluentApi.md" />
+    <File Path="Docs/03_ModelsAndMapping/2_01_ModelsAndFluentApi.md" />
     <File Path="Docs/03_ModelsAndMapping/2_10_EntityConstructors.md" />
     <File Path="Docs/03_ModelsAndMapping/2_13_ModelConfiguration.md" />
     <File Path="Docs/03_ModelsAndMapping/2_14_DataSeeding.md" />
     <File Path="Docs/03_ModelsAndMapping/2_15_RequiredAndOptional.md" />
     <File Path="Docs/03_ModelsAndMapping/2_17_Indexes.md" />
-    <File Path="Docs/03_ModelsAndMapping/2_3_DefiningModels.md" />
-    <File Path="Docs/03_ModelsAndMapping/2_4_EntityProperties.md" />
-    <File Path="Docs/03_ModelsAndMapping/2_5_EntityFields.md" />
-    <File Path="Docs/03_ModelsAndMapping/2_6_TablesAndColumns.md" />
-    <File Path="Docs/03_ModelsAndMapping/2_7_Keys.md" />
-    <File Path="Docs/03_ModelsAndMapping/2_8_ValueGeneration.md" />
-    <File Path="Docs/03_ModelsAndMapping/2_9_PropertyConstraints.md" />
+    <File Path="Docs/03_ModelsAndMapping/2_03_DefiningModels.md" />
+    <File Path="Docs/03_ModelsAndMapping/2_04_EntityProperties.md" />
+    <File Path="Docs/03_ModelsAndMapping/2_05_EntityFields.md" />
+    <File Path="Docs/03_ModelsAndMapping/2_06_TablesAndColumns.md" />
+    <File Path="Docs/03_ModelsAndMapping/2_07_Keys.md" />
+    <File Path="Docs/03_ModelsAndMapping/2_08_ValueGeneration.md" />
+    <File Path="Docs/03_ModelsAndMapping/2_09_PropertyConstraints.md" />
   </Folder>
   <Folder Name="/Docs/04_Relations/">
     <File Path="Docs/04_Relations/Runs.md" />
-    <File Path="Docs/04_Relations/3_1_ForeignKeysAndNavigation.md" />
+    <File Path="Docs/04_Relations/3_01_ForeignKeysAndNavigation.md" />
     <File Path="Docs/04_Relations/3_10_ForeignKeyConfig.md" />
     <File Path="Docs/04_Relations/3_11_HierarchicalData.md" />
     <File Path="Docs/04_Relations/3_12_ComplexTypes.md" />
-    <File Path="Docs/04_Relations/3_2_CascadeDelete.md" />
-    <File Path="Docs/04_Relations/3_3_EagerLoadingInclude.md" />
-    <File Path="Docs/04_Relations/3_4_OneToOne.md" />
-    <File Path="Docs/04_Relations/3_5_OneToMany.md" />
-    <File Path="Docs/04_Relations/3_6_ManyToMany.md" />
-    <File Path="Docs/04_Relations/3_7_OwnedTypes.md" />
-    <File Path="Docs/04_Relations/3_8_ExplicitLoading.md" />
-    <File Path="Docs/04_Relations/3_9_LazyLoading.md" />
+    <File Path="Docs/04_Relations/3_02_CascadeDelete.md" />
+    <File Path="Docs/04_Relations/3_03_EagerLoadingInclude.md" />
+    <File Path="Docs/04_Relations/3_04_OneToOne.md" />
+    <File Path="Docs/04_Relations/3_05_OneToMany.md" />
+    <File Path="Docs/04_Relations/3_06_ManyToMany.md" />
+    <File Path="Docs/04_Relations/3_07_OwnedTypes.md" />
+    <File Path="Docs/04_Relations/3_08_ExplicitLoading.md" />
+    <File Path="Docs/04_Relations/3_09_LazyLoading.md" />
   </Folder>
   <Folder Name="/Docs/05_Inheritance/">
     <File Path="Docs/05_Inheritance/Runs.md" />
-    <File Path="Docs/05_Inheritance/4_1_TphInheritance.md" />
-    <File Path="Docs/05_Inheritance/4_2_TptInheritance.md" />
-    <File Path="Docs/05_Inheritance/4_3_TpcInheritance.md" />
+    <File Path="Docs/05_Inheritance/4_01_TphInheritance.md" />
+    <File Path="Docs/05_Inheritance/4_02_TptInheritance.md" />
+    <File Path="Docs/05_Inheritance/4_03_TpcInheritance.md" />
   </Folder>
   <Folder Name="/Docs/06_QueriesAndLinq/">
     <File Path="Docs/06_QueriesAndLinq/Runs.md" />
-    <File Path="Docs/06_QueriesAndLinq/5_1_LinqIntro.md" />
+    <File Path="Docs/06_QueriesAndLinq/5_01_LinqIntro.md" />
     <File Path="Docs/06_QueriesAndLinq/5_10_SortingAndProjection.md" />
     <File Path="Docs/06_QueriesAndLinq/5_11_BulkExecuteUpdateDelete.md" />
-    <File Path="Docs/06_QueriesAndLinq/5_2_Filtering.md" />
-    <File Path="Docs/06_QueriesAndLinq/5_3_JoinAndGroupBy.md" />
-    <File Path="Docs/06_QueriesAndLinq/5_4_SetOperations.md" />
-    <File Path="Docs/06_QueriesAndLinq/5_5_Aggregates.md" />
-    <File Path="Docs/06_QueriesAndLinq/5_6_IEnumerableVsIQueryable.md" />
-    <File Path="Docs/06_QueriesAndLinq/5_7_TrackingAndAsNoTracking.md" />
-    <File Path="Docs/06_QueriesAndLinq/5_8_QueryExecution.md" />
-    <File Path="Docs/06_QueriesAndLinq/5_9_GlobalQueryFilters.md" />
+    <File Path="Docs/06_QueriesAndLinq/5_02_Filtering.md" />
+    <File Path="Docs/06_QueriesAndLinq/5_03_JoinAndGroupBy.md" />
+    <File Path="Docs/06_QueriesAndLinq/5_04_SetOperations.md" />
+    <File Path="Docs/06_QueriesAndLinq/5_05_Aggregates.md" />
+    <File Path="Docs/06_QueriesAndLinq/5_06_IEnumerableVsIQueryable.md" />
+    <File Path="Docs/06_QueriesAndLinq/5_07_TrackingAndAsNoTracking.md" />
+    <File Path="Docs/06_QueriesAndLinq/5_08_QueryExecution.md" />
+    <File Path="Docs/06_QueriesAndLinq/5_09_GlobalQueryFilters.md" />
   </Folder>
   <Folder Name="/Docs/07_SqlAndStoredProcedures/">
     <File Path="Docs/07_SqlAndStoredProcedures/Runs.md" />
-    <File Path="Docs/07_SqlAndStoredProcedures/6_1_RawSqlQueries.md" />
-    <File Path="Docs/07_SqlAndStoredProcedures/6_2_StoredFunctions.md" />
-    <File Path="Docs/07_SqlAndStoredProcedures/6_3_StoredProcedures.md" />
+    <File Path="Docs/07_SqlAndStoredProcedures/6_01_RawSqlQueries.md" />
+    <File Path="Docs/07_SqlAndStoredProcedures/6_02_StoredFunctions.md" />
+    <File Path="Docs/07_SqlAndStoredProcedures/6_03_StoredProcedures.md" />
   </Folder>
   <Folder Name="/Docs/08_AdvancedTopics/">
     <File Path="Docs/08_AdvancedTopics/Runs.md" />
     <File Path="Docs/08_AdvancedTopics/2_11_Concurrency.md" />
     <File Path="Docs/08_AdvancedTopics/2_12_LoggingProviders.md" />
-    <File Path="Docs/08_AdvancedTopics/8_1_CompiledQueries.md" />
-    <File Path="Docs/08_AdvancedTopics/8_2_DatabaseViews.md" />
-    <File Path="Docs/08_AdvancedTopics/8_3_ChangeHistory.md" />
+    <File Path="Docs/08_AdvancedTopics/8_01_CompiledQueries.md" />
+    <File Path="Docs/08_AdvancedTopics/8_02_DatabaseViews.md" />
+    <File Path="Docs/08_AdvancedTopics/8_03_ChangeHistory.md" />
   </Folder>
 </Solution>

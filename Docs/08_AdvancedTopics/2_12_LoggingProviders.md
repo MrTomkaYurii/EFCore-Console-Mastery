@@ -139,4 +139,4 @@ flowchart TD
 
 ---
 <!-- lesson-nav -->
-← [2.11. Паралелізм та оптимістичне блокування (Concurrency)](2_11_Concurrency.md) | [Шпаргалка глави (Runs.md)](Runs.md) | [Зміст курсу (README)](../../README.md) | [8.1. Скомпільовані запити (EF.CompileQuery / CompileAsyncQuery)](8_1_CompiledQueries.md) →
+← [2.11. Паралелізм та оптимістичне блокування (Concurrency)](2_11_Concurrency.md) | [Шпаргалка глави (Runs.md)](Runs.md) | [Зміст курсу (README)](../../README.md) | [8.1. Скомпільовані запити (EF.CompileQuery / CompileAsyncQuery)](8_01_CompiledQueries.md) →

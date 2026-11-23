@@ -118,4 +118,4 @@ WHERE "u"."Name" = 'Bob'
 
 ---
 <!-- lesson-nav -->
-← [5.9. Фільтри запитів рівня моделі (HasQueryFilter)](5_9_GlobalQueryFilters.md) | [Шпаргалка глави (Runs.md)](Runs.md) | [Зміст курсу (README)](../../README.md) | [6.1. Виконання SQL-запитів (FromSqlRaw, FromSqlInterpolated, SqlQuery, ExecuteSqlRaw)](../07_SqlAndStoredProcedures/6_1_RawSqlQueries.md) →
+← [5.9. Фільтри запитів рівня моделі (HasQueryFilter)](5_09_GlobalQueryFilters.md) | [Шпаргалка глави (Runs.md)](Runs.md) | [Зміст курсу (README)](../../README.md) | [6.1. Виконання SQL-запитів (FromSqlRaw, FromSqlInterpolated, SqlQuery, ExecuteSqlRaw)](../07_SqlAndStoredProcedures/6_01_RawSqlQueries.md) →

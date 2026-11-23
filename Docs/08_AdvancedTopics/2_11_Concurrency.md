@@ -221,4 +221,4 @@ public byte[]? Timestamp { get; set; }
 
 ---
 <!-- lesson-nav -->
-← [6.3. Збережені процедури (обмеження SQLite та параметризований SQL)](../07_SqlAndStoredProcedures/6_3_StoredProcedures.md) | [Шпаргалка глави (Runs.md)](Runs.md) | [Зміст курсу (README)](../../README.md) | [2.12. Провайдери логування (ILoggerFactory, Console Logger)](2_12_LoggingProviders.md) →
+← [6.3. Збережені процедури (обмеження SQLite та параметризований SQL)](../07_SqlAndStoredProcedures/6_03_StoredProcedures.md) | [Шпаргалка глави (Runs.md)](Runs.md) | [Зміст курсу (README)](../../README.md) | [2.12. Провайдери логування (ILoggerFactory, Console Logger)](2_12_LoggingProviders.md) →

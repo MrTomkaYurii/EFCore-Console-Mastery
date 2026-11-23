@@ -112,4 +112,4 @@ var sorted = db.Users
 
 ---
 <!-- lesson-nav -->
-← [5.2. Вибірка та фільтрація (Where, EF.Functions.Like, Find)](5_2_Filtering.md) | [Шпаргалка глави (Runs.md)](Runs.md) | [Зміст курсу (README)](../../README.md) | [5.3. З'єднання та групування таблиць (Join, GroupBy)](5_3_JoinAndGroupBy.md) →
+← [5.2. Вибірка та фільтрація (Where, EF.Functions.Like, Find)](5_02_Filtering.md) | [Шпаргалка глави (Runs.md)](Runs.md) | [Зміст курсу (README)](../../README.md) | [5.3. З'єднання та групування таблиць (Join, GroupBy)](5_03_JoinAndGroupBy.md) →

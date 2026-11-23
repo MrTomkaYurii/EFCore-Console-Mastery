@@ -136,4 +136,4 @@ flowchart TD
 
 ---
 <!-- lesson-nav -->
-← [2.6. Зіставлення таблиць і стовпців](2_6_TablesAndColumns.md) | [Шпаргалка глави (Runs.md)](Runs.md) | [Зміст курсу (README)](../../README.md) | [2.7. Налаштування ключів](2_7_Keys.md) →
+← [2.6. Зіставлення таблиць і стовпців](2_06_TablesAndColumns.md) | [Шпаргалка глави (Runs.md)](Runs.md) | [Зміст курсу (README)](../../README.md) | [2.7. Налаштування ключів](2_07_Keys.md) →

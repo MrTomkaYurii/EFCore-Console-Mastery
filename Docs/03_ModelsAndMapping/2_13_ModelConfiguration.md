@@ -139,4 +139,4 @@ flowchart TD
 
 ---
 <!-- lesson-nav -->
-← [2.9. Обмеження властивостей](2_9_PropertyConstraints.md) | [Шпаргалка глави (Runs.md)](Runs.md) | [Зміст курсу (README)](../../README.md) | [2.14. Ініціалізація бази даних початковими даними](2_14_DataSeeding.md) →
+← [2.9. Обмеження властивостей](2_09_PropertyConstraints.md) | [Шпаргалка глави (Runs.md)](Runs.md) | [Зміст курсу (README)](../../README.md) | [2.14. Ініціалізація бази даних початковими даними](2_14_DataSeeding.md) →

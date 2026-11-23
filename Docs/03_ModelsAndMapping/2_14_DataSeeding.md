@@ -111,4 +111,4 @@ flowchart TD
 
 ---
 <!-- lesson-nav -->
-← [2.13. Конфігурація моделей (IEntityTypeConfiguration)](2_13_ModelConfiguration.md) | [Шпаргалка глави (Runs.md)](Runs.md) | [Зміст курсу (README)](../../README.md) | [3.1. Зовнішні ключі та навігаційні властивості](../04_Relations/3_1_ForeignKeysAndNavigation.md) →
+← [2.13. Конфігурація моделей (IEntityTypeConfiguration)](2_13_ModelConfiguration.md) | [Шпаргалка глави (Runs.md)](Runs.md) | [Зміст курсу (README)](../../README.md) | [3.1. Зовнішні ключі та навігаційні властивості](../04_Relations/3_01_ForeignKeysAndNavigation.md) →

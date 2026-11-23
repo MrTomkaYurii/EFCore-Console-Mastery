@@ -146,4 +146,4 @@ using (var db = new AppContextL3_12())
 
 ---
 <!-- lesson-nav -->
-← [3.7. Власні типи (Owned Types)](3_7_OwnedTypes.md) | [Шпаргалка глави (Runs.md)](Runs.md) | [Зміст курсу (README)](../../README.md) | [3.11. Ієрархічні дані](3_11_HierarchicalData.md) →
+← [3.7. Власні типи (Owned Types)](3_07_OwnedTypes.md) | [Шпаргалка глави (Runs.md)](Runs.md) | [Зміст курсу (README)](../../README.md) | [3.11. Ієрархічні дані](3_11_HierarchicalData.md) →

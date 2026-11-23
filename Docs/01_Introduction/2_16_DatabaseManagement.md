@@ -110,4 +110,4 @@ bool canConnectAsync = await db.Database.CanConnectAsync();
 
 ---
 <!-- lesson-nav -->
-← [1.3. Підключення до існуючої бази даних](1_3_ExistingDatabase.md) | [Шпаргалка глави (Runs.md)](Runs.md) | [Зміст курсу (README)](../../README.md) | [1.4. Основні операції з даними. CRUD](1_4_CrudOperations.md) →
+← [1.3. Підключення до існуючої бази даних](1_03_ExistingDatabase.md) | [Шпаргалка глави (Runs.md)](Runs.md) | [Зміст курсу (README)](../../README.md) | [1.4. Основні операції з даними. CRUD](1_04_CrudOperations.md) →

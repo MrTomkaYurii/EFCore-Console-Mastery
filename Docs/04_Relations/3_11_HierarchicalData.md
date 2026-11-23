@@ -151,4 +151,4 @@ var fileMenu = db.MenuItems
 
 ---
 <!-- lesson-nav -->
-← [3.12. Комплексні типи (Complex Types)](3_12_ComplexTypes.md) | [Шпаргалка глави (Runs.md)](Runs.md) | [Зміст курсу (README)](../../README.md) | [4.1. Підхід TPH - Table Per Hierarchy](../05_Inheritance/4_1_TphInheritance.md) →
+← [3.12. Комплексні типи (Complex Types)](3_12_ComplexTypes.md) | [Шпаргалка глави (Runs.md)](Runs.md) | [Зміст курсу (README)](../../README.md) | [4.1. Підхід TPH - Table Per Hierarchy](../05_Inheritance/4_01_TphInheritance.md) →
