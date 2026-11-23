@@ -57,12 +57,17 @@ public class Lesson_3_11_PropertyConstraints : ILesson
         // Від'єднуємо невалідного Bob (очищаємо ChangeTracker), щоб наступний SaveChanges() не намагався зберегти його знову.
         db.ChangeTracker.Clear();
 
-        // 3. Демонстрація MaxLength у SQLite: SQLite ігнорує довжину TEXT і зберігає рядок > 10 символів
-        // (на відміну від MS SQL Server, де nvarchar(10) спричинив би помилку "String or binary data would be truncated").
-        var longName = "ДужеДовгеІм'яПонадДесятьСимволів";
-        db.Users.Add(new L2_9.User { Name = longName, Email = "long@example.com", Age = 25 });
-        db.SaveChanges();
-        Console.WriteLine($"\nУвага (особливість SQLite): рядок довжиною {longName.Length} символів збережено попри [MaxLength(10)]!");
+        // 3. Демонстрація [MaxLength(10)] у MS SQL Server: стовпець nvarchar(10) жорстко обмежує довжину рядка
+        try
+        {
+            var longName = "ДужеДовгеІм'яПонадДесятьСимволів";
+            db.Users.Add(new L2_9.User { Name = longName, Email = "long@example.com", Age = 25 });
+            db.SaveChanges();
+        }
+        catch (DbUpdateException ex)
+        {
+            Console.WriteLine($"\nОчікувана помилка при перевищенні [MaxLength(10)] у MS SQL Server:\n  {ex.InnerException?.Message}");
+        }
     }
 }
 

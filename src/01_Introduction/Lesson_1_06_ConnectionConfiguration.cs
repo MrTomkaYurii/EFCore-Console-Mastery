@@ -152,6 +152,11 @@ namespace EFCoreConsoleMastery.Topics.Ch01.L1_5
         {
             optionsBuilder.UseSqlServer(connectionString);
         }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.HasDefaultSchema("l1_06");
+        }
     }
 
     /// <summary>
@@ -164,5 +169,10 @@ namespace EFCoreConsoleMastery.Topics.Ch01.L1_5
         /// Таблиця користувачів у БД.
         /// </summary>
         public DbSet<User> Users => Set<User>();
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.HasDefaultSchema("l1_06");
+        }
     }
 }

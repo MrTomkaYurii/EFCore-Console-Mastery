@@ -128,16 +128,15 @@ namespace EFCoreConsoleMastery.Topics.Ch03.L2_8
                 .Property(u => u.Age)
                 .HasDefaultValue(18);
 
-            // SQL-вираз для значення за замовчуванням у SQLite (замість GETDATE() / SYSDATETIME() у MS SQL Server).
+            // SQL-вираз для значення за замовчуванням у MS SQL Server.
             modelBuilder.Entity<User>()
                 .Property(u => u.CreatedAt)
-                .HasDefaultValueSql("DATETIME('now')");
+                .HasDefaultValueSql("GETDATE()");
 
-            // Обчислюваний стовпець у синтаксисі SQLite (конкатенація через || замість + у T-SQL).
-            // За замовчуванням у SQLite 3.31+ створюється VIRTUAL-стовпець (обчислюється при читанні, не займає місце на диску).
+            // Обчислюваний стовпець у синтаксисі T-SQL (конкатенація через +).
             modelBuilder.Entity<User>()
                 .Property(u => u.FullName)
-                .HasComputedColumnSql("FirstName || ' ' || LastName");
+                .HasComputedColumnSql("[FirstName] + ' ' + [LastName]");
         }
     }
 

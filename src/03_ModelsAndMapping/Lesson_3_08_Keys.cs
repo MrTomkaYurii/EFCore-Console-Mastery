@@ -39,7 +39,7 @@ public class Lesson_3_08_Keys : ILesson
             Console.WriteLine("1) DDL таблиці Users (HasKey + HasName + HasAlternateKey):");
             Console.WriteLine(sql);
 
-            db.Users.Add(new L2_7.User { Ident = 1, Name = "Tom", Passport = "AB123456" });
+            db.Users.Add(new L2_7.User { Name = "Tom", Passport = "AB123456" });
             db.SaveChanges();
 
             // Очищаємо ChangeTracker, щоб перевірити саме обмеження UNIQUE на рівні БД
@@ -49,7 +49,7 @@ public class Lesson_3_08_Keys : ILesson
             // Перевірка унікальності альтернативного ключа Passport
             try
             {
-                db.Users.Add(new L2_7.User { Ident = 2, Name = "Bob", Passport = "AB123456" });
+                db.Users.Add(new L2_7.User { Name = "Bob", Passport = "AB123456" });
                 // SQLite відхилить INSERT через порушення UNIQUE constraint на стовпці Passport.
                 db.SaveChanges();
             }
