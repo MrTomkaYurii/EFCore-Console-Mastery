@@ -25,7 +25,7 @@ namespace EFCoreConsoleMastery.Topics.Ch04
         {
             using (var db = new AppContextL3_8())
             {
-                SqliteDbHelper.RecreateDatabase(db);
+                SqlServerDbHelper.RecreateSchema(db, "l4_05");
 
                 var microsoft = new Company { Name = "Microsoft" };
                 var google = new Company { Name = "Google" };
@@ -40,7 +40,7 @@ namespace EFCoreConsoleMastery.Topics.Ch04
                 db.SaveChanges();
             }
 
-            SqliteDbHelper.PrintSection("1. Явне завантаження через DbSet.Where(...).Load()");
+            SqlServerDbHelper.PrintSection("1. Явне завантаження через DbSet.Where(...).Load()");
             using (var db = new AppContextL3_8())
             {
                 var company = db.Companies.FirstOrDefault(c => c.Name == "Microsoft");
@@ -58,7 +58,7 @@ namespace EFCoreConsoleMastery.Topics.Ch04
                 }
             }
 
-            SqliteDbHelper.PrintSection("2. Метод Entry().Collection(...).Load() для колекцій");
+            SqlServerDbHelper.PrintSection("2. Метод Entry().Collection(...).Load() для колекцій");
             using (var db = new AppContextL3_8())
             {
                 var company = db.Companies.FirstOrDefault(c => c.Name == "Google");
@@ -79,7 +79,7 @@ namespace EFCoreConsoleMastery.Topics.Ch04
                 }
             }
 
-            SqliteDbHelper.PrintSection("3. Метод Entry().Reference(...).Load() для одиночної навігаційної властивості");
+            SqlServerDbHelper.PrintSection("3. Метод Entry().Reference(...).Load() для одиночної навігаційної властивості");
             using (var db = new AppContextL3_8())
             {
                 var user = db.Users.FirstOrDefault(u => u.Name == "Bob");
@@ -129,6 +129,7 @@ namespace EFCoreConsoleMastery.Topics.Ch04.L3_8
     /// <summary>Контекст бази даних для уроку 3.8 (SQLite).</summary>
     public class AppContextL3_8 : DbContext
     {
+        protected override void OnModelCreating(ModelBuilder modelBuilder) => modelBuilder.HasDefaultSchema("l4_05");
         /// <summary>Співробітники.</summary>
         public DbSet<User> Users { get; set; } = null!;
 
@@ -138,7 +139,7 @@ namespace EFCoreConsoleMastery.Topics.Ch04.L3_8
         /// <summary>Налаштовує підключення до SQLite.</summary>
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlite(SqliteDbHelper.GetConnectionString("ch04_l3_8"));
+            optionsBuilder.UseSqlServer(SqlServerDbHelper.ConnectionString);
         }
     }
 }

@@ -28,14 +28,14 @@ public class Lesson_5_01_TphInheritance : ILesson
     {
         using var db = new L4_1.TphContext();
         // Перестворюємо базу даних з нуля (EnsureDeleted + EnsureCreated), щоб гарантувати чистий стан без міграцій.
-        SqliteDbHelper.RecreateDatabase(db);
+        SqlServerDbHelper.RecreateSchema(db, "l5_01");
 
         // 1. Виводимо реальну схему таблиць SQLite з sqlite_master
-        SqliteDbHelper.PrintSection("1. Схема таблиць у SQLite (sqlite_master)");
-        PrintSqliteSchemas(db);
+        SqlServerDbHelper.PrintSection("1. Схема таблиць у MS SQL Server (DDL)");
+        Console.WriteLine(db.Database.GenerateCreateScript());
 
         // 2. Додаємо екземпляри базового та похідних класів
-        SqliteDbHelper.PrintSection("2. Додавання даних різних типів ієрархії");
+        SqlServerDbHelper.PrintSection("2. Додавання даних різних типів ієрархії");
         var user1 = new L4_1.User { Name = "Tom" };
         var user2 = new L4_1.User { Name = "Bob" };
         var employee = new L4_1.Employee { Name = "Sam", Salary = 500 };
@@ -52,7 +52,7 @@ public class Lesson_5_01_TphInheritance : ILesson
         Console.WriteLine("Додано: 2 User, 1 Employee, 1 Manager в одну таблицю Users.");
 
         // 3. Демонструємо згенерований SQL через ToQueryString()
-        SqliteDbHelper.PrintSection("3. Згенерований SQL (ToQueryString)");
+        SqlServerDbHelper.PrintSection("3. Згенерований SQL (ToQueryString)");
         Console.WriteLine("--- Запит db.Users ---");
         // ToQueryString() формує SQL-запит без його фактичного виконання в БД.
         // Для базового типу User фільтр за Discriminator не потрібен (якщо всі рядки належать до ієрархії User).
@@ -67,7 +67,7 @@ public class Lesson_5_01_TphInheritance : ILesson
         Console.WriteLine(db.Managers.ToQueryString());
 
         // 4. Вибірка та виведення результатів (включаючи значення Discriminator)
-        SqliteDbHelper.PrintSection("4. Результати вибірки");
+        SqlServerDbHelper.PrintSection("4. Результати вибірки");
         Console.WriteLine("Усі користувачі (db.Users):");
         // AsNoTracking() вимикає відстеження змін (Change Tracker) для підвищення продуктивності при читанні.
         // Попри це, EF Core все одно матеріалізує кожен рядок у точний похідний CLR-тип (User, Employee або Manager)
@@ -204,7 +204,7 @@ namespace EFCoreConsoleMastery.Topics.Ch05.L4_1
         /// </summary>
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlite(SqliteDbHelper.GetConnectionString("lesson_4_1_tph"));
+            optionsBuilder.UseSqlServer(SqlServerDbHelper.ConnectionString);
         }
 
         /// <summary>
@@ -212,6 +212,7 @@ namespace EFCoreConsoleMastery.Topics.Ch05.L4_1
         /// </summary>
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.HasDefaultSchema("l5_01");
             // TPH використовується за замовчуванням у EF Core, але з EF Core 7+ стратегію можна вказати явно.
             // Примітка щодо відмінностей від MS SQL Server: у SQL Server стовпець Discriminator створюється як nvarchar(max)
             // (або обмежений через HasMaxLength), а в SQLite — як TEXT NOT NULL.

@@ -107,7 +107,7 @@ flowchart TD
 
 - `Company` є головною сутністю з `Id`, `Name` та колекційною навігацією `List<User> Users`.
 - `User` є залежною сутністю з `Id`, `Name`, обов'язковим зовнішнім ключем `int CompanyId` та посилальною навігацією `Company? Company`.
-- Оскільки `CompanyId` має тип `int` (не nullable), при створенні бази даних `SqliteDbHelper.RecreateDatabase(db)` виконує `EnsureDeleted()` та `EnsureCreated()`, генеруючи в SQLite такий DDL:
+- Оскільки `CompanyId` має тип `int` (не nullable), при створенні бази даних `SqlServerDbHelper.RecreateSchema(db)` виконує `EnsureDeleted()` та `EnsureCreated()`, генеруючи в SQLite такий DDL:
 
 ```sql
 CREATE TABLE "Companies" (

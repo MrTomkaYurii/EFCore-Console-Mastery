@@ -103,7 +103,7 @@ sequenceDiagram
 ### 1. Підготовка даних
 
 У першому блоці `using (var db = new AppContextL3_3())`:
-- БД пересоздається через `SqliteDbHelper.RecreateDatabase(db)`.
+- БД пересоздається через `SqlServerDbHelper.RecreateSchema(db)`.
 - Створюються країни (`Ukraine`, `USA`), компанії (`KyivTech`, `Microsoft`), посади (`Developer`, `Manager`) та троє користувачів (`Taras`, `Olena`, `Tom`).
 - `db.SaveChanges()` зберігає весь граф. Потім контекст закривається (`Dispose`).
 

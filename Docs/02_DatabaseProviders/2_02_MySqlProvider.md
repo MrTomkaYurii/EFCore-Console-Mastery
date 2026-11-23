@@ -157,7 +157,7 @@ flowchart LR
 
 1. **Конфігурація зовнішніх `DbContextOptions`:**
    ```csharp
-   var connectionString = SqliteDbHelper.GetConnectionString("ch02_lesson_7_2");
+   var connectionString = SqlServerDbHelper.ConnectionString;
    var options = new DbContextOptionsBuilder<ApplicationContext>()
        .UseSqlite(connectionString)
        .Options;
@@ -165,7 +165,7 @@ flowchart LR
    Замість `UseMySql(...)` із `MySqlServerVersion`, що потребує запущеного сервера MySQL, урок передає `UseSqlite(connectionString)` у конструктор `ApplicationContext`.
 
 2. **Крок 1 — Перестворення БД та збереження об'єктів:**
-   - `SqliteDbHelper.RecreateDatabase(db)` гарантує чистий стан таблиці `"Users"`.
+   - `SqlServerDbHelper.RecreateSchema(db)` гарантує чистий стан таблиці `"Users"`.
    - Виводиться активний провайдер (`Microsoft.EntityFrameworkCore.Sqlite`) та пояснення еквівалентної конфігурації для `Pomelo.EntityFrameworkCore.MySql`.
    - Створюються два користувачі (`Tom`, `33` та `Alice`, `26`), додаються через `db.Users.AddRange(user1, user2)` і фіксуються у БД викликом `db.SaveChanges()`.
 

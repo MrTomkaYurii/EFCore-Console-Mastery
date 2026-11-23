@@ -26,12 +26,12 @@ public class Lesson_3_02_DefiningModels : ILesson
     /// </summary>
     public void Run()
     {
-        SqliteDbHelper.PrintSection("3.2. Визначення моделей");
+        SqlServerDbHelper.PrintSection("3.2. Визначення моделей");
 
         // Частина 1: Автоматичне включення через DbSet, навігаційні властивості та Entity<T>()
         using (var db = new L2_3.InclusionContext())
         {
-            SqliteDbHelper.RecreateDatabase(db);
+            SqlServerDbHelper.RecreateSchema(db, "l3_02");
 
             var company = new L2_3.Company { Name = "TechCorp" };
             var user = new L2_3.User { Name = "Tom", Age = 30, Company = company };
@@ -42,9 +42,7 @@ public class Lesson_3_02_DefiningModels : ILesson
             db.SaveChanges();
 
             // Запитуємо системну таблицю sqlite_master, виключаючи службові таблиці SQLite (напр., sqlite_sequence).
-            var tables = db.Database
-                .SqlQueryRaw<string>("SELECT name AS Value FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name")
-                .ToList();
+            var tables = db.Database.GenerateCreateScript();
 
             Console.WriteLine("Таблиці в InclusionContext (Users + Company через навігацію + Country через Entity<T>()):");
             foreach (var t in tables)
@@ -54,14 +52,12 @@ public class Lesson_3_02_DefiningModels : ILesson
         // Частина 2: Виключення сутностей через Ignore<T>() та [NotMapped]
         using (var db = new L2_3.ExclusionContext())
         {
-            SqliteDbHelper.RecreateDatabase(db);
+            SqlServerDbHelper.RecreateSchema(db, "l3_02");
 
             db.Users.Add(new L2_3.UserWithExcluded { Name = "Alice", Age = 25 });
             db.SaveChanges();
 
-            var tables = db.Database
-                .SqlQueryRaw<string>("SELECT name AS Value FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name")
-                .ToList();
+            var tables = db.Database.GenerateCreateScript();
 
             Console.WriteLine("\nТаблиці в ExclusionContext (тільки Users, бо TempBadge має [NotMapped], а AuditLog виключено через Ignore):");
             foreach (var t in tables)
@@ -138,11 +134,12 @@ namespace EFCoreConsoleMastery.Topics.Ch03.L2_3
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlite(SqliteDbHelper.GetConnectionString("ch03_l2_3_inc"));
+            optionsBuilder.UseSqlServer(SqlServerDbHelper.ConnectionString);
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.HasDefaultSchema("l3_02");
             // Явне включення сутності Country без оголошення DbSet<Country>.
             // Зручно, коли довідник потрібен у схемі БД, але до нього рідко звертаються напряму.
             modelBuilder.Entity<Country>();
@@ -213,11 +210,12 @@ namespace EFCoreConsoleMastery.Topics.Ch03.L2_3
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlite(SqliteDbHelper.GetConnectionString("ch03_l2_3_exc"));
+            optionsBuilder.UseSqlServer(SqlServerDbHelper.ConnectionString);
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.HasDefaultSchema("l3_02");
             // Виключаємо тип AuditLog із моделі на рівні Fluent API.
             // Це має вищий пріоритет і не вимагає модифікації коду самого класу AuditLog.
             modelBuilder.Ignore<AuditLog>();

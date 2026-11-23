@@ -25,16 +25,14 @@ public class Lesson_3_07_RequiredAndOptional : ILesson
     /// </summary>
     public void Run()
     {
-        SqliteDbHelper.PrintSection("3.7. Обов'язкові та необов'язкові властивості");
+        SqlServerDbHelper.PrintSection("3.7. Обов'язкові та необов'язкові властивості");
 
         using var db = new L2_15.ApplicationContext();
-        SqliteDbHelper.RecreateDatabase(db);
+        SqlServerDbHelper.RecreateSchema(db, "l3_07");
 
-        var sql = db.Database
-            .SqlQueryRaw<string>("SELECT sql AS Value FROM sqlite_master WHERE type='table' AND name='Users'")
-            .FirstOrDefault();
+        var sql = db.Database.GenerateCreateScript();
 
-        Console.WriteLine("DDL таблиці Users у SQLite:");
+        Console.WriteLine("DDL схеми в MS SQL Server:");
         Console.WriteLine(sql);
 
         // Коректне додавання користувача з усіма обов'язковими полями
@@ -120,11 +118,12 @@ namespace EFCoreConsoleMastery.Topics.Ch03.L2_15
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlite(SqliteDbHelper.GetConnectionString("ch03_l2_15"));
+            optionsBuilder.UseSqlServer(SqlServerDbHelper.ConnectionString);
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.HasDefaultSchema("l3_07");
             // Позначаємо Login як обов'язковий (NOT NULL) через Fluent API.
             // Зворотна дія (зробити не-nullable поле необов'язковим) виконується через IsRequired(false).
             modelBuilder.Entity<User>()

@@ -57,10 +57,10 @@ static void RunInteractiveMenu(List<ILesson> lessons)
         SafeClearConsole();
         Console.ForegroundColor = ConsoleColor.Green;
         Console.WriteLine("============================================================");
-        Console.WriteLine("   EFCore-Console-Mastery (SQLite + Metanit EF Core Guide)  ");
+        Console.WriteLine("  EFCore-Console-Mastery (MS SQL Server + Metanit EF Core)  ");
         Console.WriteLine("============================================================");
         Console.ResetColor();
-        Console.WriteLine($"Знайдено глав: {chapters.Count} | Усього уроків: {lessons.Count}");
+        Console.WriteLine($"Підключення: {SqlServerDbHelper.ActiveConnectionName} | Глав: {chapters.Count} | Уроків: {lessons.Count}");
         Console.WriteLine();
 
         foreach (var ch in chapters)

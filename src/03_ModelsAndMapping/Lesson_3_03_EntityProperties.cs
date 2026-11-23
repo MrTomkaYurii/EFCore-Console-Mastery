@@ -25,10 +25,10 @@ public class Lesson_3_03_EntityProperties : ILesson
     /// </summary>
     public void Run()
     {
-        SqliteDbHelper.PrintSection("3.3. Властивості сутності");
+        SqlServerDbHelper.PrintSection("3.3. Властивості сутності");
 
         using var db = new L2_4.ApplicationContext();
-        SqliteDbHelper.RecreateDatabase(db);
+        SqlServerDbHelper.RecreateSchema(db, "l3_03");
 
         var user = new L2_4.User
         {
@@ -42,9 +42,7 @@ public class Lesson_3_03_EntityProperties : ILesson
 
         // Перевіряємо, які стовпці реально створено в таблиці Users через системну таблицю SQLite.
         // У DDL мають бути лише Id, Age та Name (без Address, SessionToken та Summary).
-        var createSql = db.Database
-            .SqlQueryRaw<string>("SELECT sql AS Value FROM sqlite_master WHERE type='table' AND name='Users'")
-            .FirstOrDefault();
+        var createSql = db.Database.GenerateCreateScript();
 
         Console.WriteLine("DDL таблиці Users (без Address і SessionToken):");
         Console.WriteLine(createSql);
@@ -117,11 +115,12 @@ namespace EFCoreConsoleMastery.Topics.Ch03.L2_4
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlite(SqliteDbHelper.GetConnectionString("ch03_l2_4"));
+            optionsBuilder.UseSqlServer(SqlServerDbHelper.ConnectionString);
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.HasDefaultSchema("l3_03");
             // Виключаємо властивість Address із моделі.
             // Fluent API має перевагу перед [NotMapped], коли потрібно не засмічувати доменну модель атрибутами.
             modelBuilder.Entity<User>().Ignore(u => u.Address);

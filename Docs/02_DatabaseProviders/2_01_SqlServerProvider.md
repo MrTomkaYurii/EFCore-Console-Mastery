@@ -180,13 +180,13 @@ sequenceDiagram
 
 2. **Крок 1 — Створення `DbContextOptions`, перестворення БД та вставка даних:**
    ```csharp
-   var connectionString = SqliteDbHelper.GetConnectionString("ch02_lesson_7_1");
+   var connectionString = SqlServerDbHelper.ConnectionString;
    var options = new DbContextOptionsBuilder<ApplicationContext>()
-       .UseSqlite(connectionString)
+       .UseSqlServer(connectionString)
        .Options;
    ```
    У першому блоці `using (var db = new ApplicationContext(options))`:
-   - `SqliteDbHelper.RecreateDatabase(db)` викликає `EnsureDeleted()` та `EnsureCreated()`, гарантуючи чисту схему таблиці `"Users"`.
+   - `SqlServerDbHelper.RecreateSchema(db)` викликає `EnsureDeleted()` та `EnsureCreated()`, гарантуючи чисту схему таблиці `"Users"`.
    - Виводиться `db.Database.ProviderName` (`Microsoft.EntityFrameworkCore.Sqlite`) та довідкова інформація про еквівалент для MS SQL Server.
    - Додаються два об'єкти (`Tom`, `33` і `Alice`, `26`) через `db.Users.AddRange(user1, user2)` та зберігаються через `db.SaveChanges()`.
 

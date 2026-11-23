@@ -27,22 +27,22 @@ public class Lesson_1_07_Logging : ILesson
     /// </summary>
     public void Run()
     {
-        var connectionString = SqliteDbHelper.GetConnectionString("lesson_1_6");
+        var connectionString = SqlServerDbHelper.ConnectionString;
 
         // Спочатку створимо чисту БД без логування DDL (CREATE TABLE),
         // щоб не засмічувати вивід першого прикладу
         using (var initDb = new L1_6.PlainContext(connectionString))
         {
-            SqliteDbHelper.RecreateDatabase(initDb);
+            SqlServerDbHelper.RecreateSchema(initDb, "l1_07");
         }
 
         // 1. Фільтрація за рівнем LogLevel (LogLevel.Information)
         // LogTo приймає делегат Action<string> (тут — вивід у консоль; у реальних проєктах — у файл або ILogger).
         // Рівень Information показує виконані SQL-команди, час виконання та ініціалізацію контексту.
         // Примітка: значення параметрів SQL (@p0, @p1) за замовчуванням приховані (потрібен EnableSensitiveDataLogging() лише для dev!).
-        SqliteDbHelper.PrintSection("1. LogTo з мінімальним рівнем LogLevel.Information");
+        SqlServerDbHelper.PrintSection("1. LogTo з мінімальним рівнем LogLevel.Information");
         var infoOptions = new DbContextOptionsBuilder<L1_6.LoggedContext>()
-            .UseSqlite(connectionString)
+            .UseSqlServer(connectionString)
             .LogTo(msg => Console.WriteLine($"  [LOG] {msg}"), LogLevel.Information)
             .Options;
 
@@ -56,9 +56,9 @@ public class Lesson_1_07_Logging : ILesson
         // 2. Фільтрація за ідентифікатором події RelationalEventId.CommandExecuted
         // Це найзручніший спосіб бачити ТІЛЬКИ виконані SQL-запити та час їхнього виконання,
         // відкидаючи службові повідомлення про ініціалізацію моделі, з'єднання та транзакції.
-        SqliteDbHelper.PrintSection("2. Фільтрація за подією RelationalEventId.CommandExecuted");
+        SqlServerDbHelper.PrintSection("2. Фільтрація за подією RelationalEventId.CommandExecuted");
         var eventOptions = new DbContextOptionsBuilder<L1_6.LoggedContext>()
-            .UseSqlite(connectionString)
+            .UseSqlServer(connectionString)
             .LogTo(msg => Console.WriteLine($"  [SQL-EVENT] {msg}"), new[] { RelationalEventId.CommandExecuted })
             .Options;
 
@@ -72,9 +72,9 @@ public class Lesson_1_07_Logging : ILesson
         // 3. Фільтрація за категорією DbLoggerCategory.Database.Command
         // Категорія Database.Command охоплює події виконання команд (CommandExecuting, CommandExecuted, CommandError),
         // але відфільтровує категорії на кшталт ChangeTracking, Query або Infrastructure.
-        SqliteDbHelper.PrintSection("3. Фільтрація за категорією DbLoggerCategory.Database.Command");
+        SqlServerDbHelper.PrintSection("3. Фільтрація за категорією DbLoggerCategory.Database.Command");
         var categoryOptions = new DbContextOptionsBuilder<L1_6.LoggedContext>()
-            .UseSqlite(connectionString)
+            .UseSqlServer(connectionString)
             .LogTo(
                 msg => Console.WriteLine($"  [CATEGORY] {msg}"),
                 new[] { DbLoggerCategory.Database.Command.Name },
@@ -133,7 +133,7 @@ namespace EFCoreConsoleMastery.Topics.Ch01.L1_6
         /// </summary>
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlite(connectionString);
+            optionsBuilder.UseSqlServer(connectionString);
         }
     }
 

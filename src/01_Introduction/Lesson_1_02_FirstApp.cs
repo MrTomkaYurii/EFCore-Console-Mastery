@@ -23,16 +23,16 @@ public class Lesson_1_02_FirstApp : ILesson
     /// </summary>
     public void Run()
     {
-        var connectionString = SqliteDbHelper.GetConnectionString("lesson_1_2");
+        var connectionString = SqlServerDbHelper.ConnectionString;
 
         // Створюємо контекст даних у блоці using, щоб після завершення роботи
         // звільнити некеровані ресурси (з'єднання з файлом SQLite)
         using (var db = new L1_2.ApplicationContext(connectionString))
         {
             // Гарантуємо чисту БД для демонстрації: видаляє старий файл БД (якщо є) і створює таблицю Users
-            SqliteDbHelper.RecreateDatabase(db);
+            SqlServerDbHelper.RecreateSchema(db, "l1_02");
 
-            SqliteDbHelper.PrintSection("1. Створення та збереження об'єктів User");
+            SqlServerDbHelper.PrintSection("1. Створення та збереження об'єктів User");
             var tom = new L1_2.User { Name = "Tom", Age = 33 };
             var alice = new L1_2.User { Name = "Alice", Age = 26 };
 
@@ -47,7 +47,7 @@ public class Lesson_1_02_FirstApp : ILesson
             int affected = db.SaveChanges();
             Console.WriteLine($"Об'єкти успішно збережено (змінено рядків у БД: {affected}).");
 
-            SqliteDbHelper.PrintSection("2. Отримання об'єктів із БД");
+            SqlServerDbHelper.PrintSection("2. Отримання об'єктів із БД");
             // ToList() виконує SQL-запит SELECT "u"."Id", "u"."Age", "u"."Name" FROM "Users" AS "u"
             // та матеріалізує рядки таблиці у список C#-об'єктів.
             // Оскільки tom і alice вже відстежуються цим самим контекстом, Change Tracker (Identity Resolution)
@@ -92,6 +92,7 @@ namespace EFCoreConsoleMastery.Topics.Ch01.L1_2
     /// </summary>
     public class ApplicationContext : DbContext
     {
+        protected override void OnModelCreating(ModelBuilder modelBuilder) => modelBuilder.HasDefaultSchema("l1_02");
         private readonly string _connectionString;
 
         /// <summary>
@@ -114,7 +115,7 @@ namespace EFCoreConsoleMastery.Topics.Ch01.L1_2
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             // Для SQLite рядок підключення зазвичай має вигляд "Data Source=шлях_до_файлу.db"
-            optionsBuilder.UseSqlite(_connectionString);
+            optionsBuilder.UseSqlServer(_connectionString);
         }
     }
 }

@@ -39,7 +39,7 @@
    ```csharp
    db.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
    // Або в OnConfiguring / AddDbContext:
-   optionsBuilder.UseSqlite(...).UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
+   optionsBuilder.UseSqlServer(...).UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
    ```
 3. **Повторне увімкнення для окремого запиту (якщо глобально стоїть `NoTracking`):**
    ```csharp

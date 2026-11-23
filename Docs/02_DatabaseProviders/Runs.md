@@ -1,6 +1,6 @@
 # Шпаргалка лектора: Глава 2. Провайдери баз даних
 
-> **Важливо перед початком глави:** у цьому навчальному солушені всі приклади запускаються «з коробки» на **SQLite**, щоб не вимагати розгорнутих серверів SQL Server / MySQL / PostgreSQL. Оригінальні рядки підключення та методи `UseSqlServer` / `UseMySql` / `UseNpgsql` наведено в коментарях коду та в `.md`-конспектах.
+> **Підготовка перед главою:** усі 3 провайдери підключені по-справжньому (`Microsoft.EntityFrameworkCore.SqlServer`, `MySql.EntityFrameworkCore`, `Npgsql.EntityFrameworkCore.PostgreSQL`). Рядки підключення читаються з `src/EFCoreMastery.ConsoleApp/appsettings.json` (`SqlServerDocker` / `SqlServerLocal`, `MySql`, `PostgreSql`). Якщо контейнери MySQL/PostgreSQL зупинені, уроки `2.2` і `2.3` підкажуть команду `docker start` і покажуть згенерований SQL офлайн.
 
 ## План проведення та запуски
 

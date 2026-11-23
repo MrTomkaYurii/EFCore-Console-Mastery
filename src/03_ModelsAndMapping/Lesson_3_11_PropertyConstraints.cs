@@ -27,16 +27,14 @@ public class Lesson_3_11_PropertyConstraints : ILesson
     /// </summary>
     public void Run()
     {
-        SqliteDbHelper.PrintSection("3.11. Обмеження властивостей");
+        SqlServerDbHelper.PrintSection("3.11. Обмеження властивостей");
 
         using var db = new L2_9.ApplicationContext();
-        SqliteDbHelper.RecreateDatabase(db);
+        SqlServerDbHelper.RecreateSchema(db, "l3_11");
 
-        var sql = db.Database
-            .SqlQueryRaw<string>("SELECT sql AS Value FROM sqlite_master WHERE type='table' AND name='Users'")
-            .FirstOrDefault();
+        var sql = db.Database.GenerateCreateScript();
 
-        Console.WriteLine("DDL таблиці Users у SQLite:");
+        Console.WriteLine("DDL схеми в MS SQL Server:");
         Console.WriteLine(sql);
 
         // 1. Успішне додавання валідного користувача
@@ -109,11 +107,12 @@ namespace EFCoreConsoleMastery.Topics.Ch03.L2_9
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlite(SqliteDbHelper.GetConnectionString("ch03_l2_9"));
+            optionsBuilder.UseSqlServer(SqlServerDbHelper.ConnectionString);
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.HasDefaultSchema("l3_11");
             // Обмеження CHECK на рівні таблиці (працює і в SQLite, і в MS SQL Server).
             // Додає в DDL: CONSTRAINT "ValidAge" CHECK (Age > 0 AND Age < 120).
             modelBuilder.Entity<User>()

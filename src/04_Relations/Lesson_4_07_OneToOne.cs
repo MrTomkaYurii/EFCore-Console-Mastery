@@ -22,10 +22,10 @@ namespace EFCoreConsoleMastery.Topics.Ch04
         /// </summary>
         public void Run()
         {
-            SqliteDbHelper.PrintSection("1. Створення та читання зв'язку 1:1 (User <-> UserProfile)");
+            SqlServerDbHelper.PrintSection("1. Створення та читання зв'язку 1:1 (User <-> UserProfile)");
             using (var db = new AppContextL3_4())
             {
-                SqliteDbHelper.RecreateDatabase(db);
+                SqlServerDbHelper.RecreateSchema(db, "l4_07");
 
                 var user1 = new User { Login = "login1", Password = "pass1234" };
                 var user2 = new User { Login = "login2", Password = "5678word2" };
@@ -51,7 +51,7 @@ namespace EFCoreConsoleMastery.Topics.Ch04
                 }
             }
 
-            SqliteDbHelper.PrintSection("2. Оновлення та видалення у зв'язку 1:1");
+            SqlServerDbHelper.PrintSection("2. Оновлення та видалення у зв'язку 1:1");
             using (var db = new AppContextL3_4())
             {
                 var alice = db.Users.Include(u => u.Profile).First(u => u.Login == "login2");
@@ -121,6 +121,7 @@ namespace EFCoreConsoleMastery.Topics.Ch04.L3_4
     /// <summary>Контекст бази даних для уроку 3.4 (SQLite).</summary>
     public class AppContextL3_4 : DbContext
     {
+        protected override void OnModelCreating(ModelBuilder modelBuilder) => modelBuilder.HasDefaultSchema("l4_07");
         /// <summary>Облікові записи.</summary>
         public DbSet<User> Users { get; set; } = null!;
 
@@ -130,7 +131,7 @@ namespace EFCoreConsoleMastery.Topics.Ch04.L3_4
         /// <summary>Налаштовує підключення до SQLite.</summary>
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlite(SqliteDbHelper.GetConnectionString("ch04_l3_4"));
+            optionsBuilder.UseSqlServer(SqlServerDbHelper.ConnectionString);
         }
     }
 }

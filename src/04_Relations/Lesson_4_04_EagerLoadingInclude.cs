@@ -25,7 +25,7 @@ namespace EFCoreConsoleMastery.Topics.Ch04
         {
             using (var db = new AppContextL3_3())
             {
-                SqliteDbHelper.RecreateDatabase(db);
+                SqlServerDbHelper.RecreateSchema(db, "l4_04");
 
                 var ukraine = new Country { Name = "Ukraine" };
                 var usa = new Country { Name = "USA" };
@@ -47,7 +47,7 @@ namespace EFCoreConsoleMastery.Topics.Ch04
                 db.SaveChanges();
             }
 
-            SqliteDbHelper.PrintSection("1. Без Include навігаційні властивості дорівнюють null");
+            SqlServerDbHelper.PrintSection("1. Без Include навігаційні властивості дорівнюють null");
             using (var db = new AppContextL3_3())
             {
                 // За замовчуванням EF Core НЕ завантажує пов'язані сутності (виконується простий SELECT * FROM Users).
@@ -59,7 +59,7 @@ namespace EFCoreConsoleMastery.Topics.Ch04
                 }
             }
 
-            SqliteDbHelper.PrintSection("2. Жадне завантаження через Include + ThenInclude");
+            SqlServerDbHelper.PrintSection("2. Жадне завантаження через Include + ThenInclude");
             using (var db = new AppContextL3_3())
             {
                 // Include(u => u.Company) та Include(u => u.Position) підвантажують сутності першого рівня (через LEFT JOIN, бо FK nullable).
@@ -77,7 +77,7 @@ namespace EFCoreConsoleMastery.Topics.Ch04
                 }
             }
 
-            SqliteDbHelper.PrintSection("3. Зворотне завантаження колекцій (Company -> Users)");
+            SqlServerDbHelper.PrintSection("3. Зворотне завантаження колекцій (Company -> Users)");
             using (var db = new AppContextL3_3())
             {
                 // Include на колекційній властивості (Company.Users) генерує LEFT JOIN між Companies та Users.
@@ -168,6 +168,7 @@ namespace EFCoreConsoleMastery.Topics.Ch04.L3_3
     /// <summary>Контекст бази даних для уроку 3.3 (SQLite).</summary>
     public class AppContextL3_3 : DbContext
     {
+        protected override void OnModelCreating(ModelBuilder modelBuilder) => modelBuilder.HasDefaultSchema("l4_04");
         /// <summary>Користувачі.</summary>
         public DbSet<User> Users { get; set; } = null!;
 
@@ -183,7 +184,7 @@ namespace EFCoreConsoleMastery.Topics.Ch04.L3_3
         /// <summary>Налаштовує підключення до SQLite.</summary>
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlite(SqliteDbHelper.GetConnectionString("ch04_l3_3"));
+            optionsBuilder.UseSqlServer(SqlServerDbHelper.ConnectionString);
         }
     }
 }

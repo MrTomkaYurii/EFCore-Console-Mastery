@@ -31,16 +31,16 @@ public class Lesson_1_05_CrudOperations : ILesson
 
     private static async Task RunAsync()
     {
-        var connectionString = SqliteDbHelper.GetConnectionString("lesson_1_4");
+        var connectionString = SqlServerDbHelper.ConnectionString;
 
         // Початкове перестворення БД в окремому короткоживучому контексті
         using (var setupDb = new L1_4.CrudContext(connectionString))
         {
-            SqliteDbHelper.RecreateDatabase(setupDb);
+            SqlServerDbHelper.RecreateSchema(setupDb, "l1_05");
         }
 
         // 1. CREATE (Додавання: Add та AddRange)
-        SqliteDbHelper.PrintSection("1. Create — Add та AddRange");
+        SqlServerDbHelper.PrintSection("1. Create — Add та AddRange");
         using (var db = new L1_4.CrudContext(connectionString))
         {
             var tom = new L1_4.User { Name = "Tom", Age = 33 };
@@ -56,7 +56,7 @@ public class Lesson_1_05_CrudOperations : ILesson
         }
 
         // 2. READ (Отримання: ToList)
-        SqliteDbHelper.PrintSection("2. Read — Дані після додавання");
+        SqlServerDbHelper.PrintSection("2. Read — Дані після додавання");
         using (var db = new L1_4.CrudContext(connectionString))
         {
             // У новому контексті Change Tracker спочатку порожній; ToList() завантажує рядки з SQLite
@@ -65,7 +65,7 @@ public class Lesson_1_05_CrudOperations : ILesson
         }
 
         // 3. UPDATE (Редагування в межах одного контексту — відстеження змін)
-        SqliteDbHelper.PrintSection("3. Update — Редагування відстежуваного об'єкта");
+        SqlServerDbHelper.PrintSection("3. Update — Редагування відстежуваного об'єкта");
         using (var db = new L1_4.CrudContext(connectionString))
         {
             var user = db.Users.FirstOrDefault();
@@ -82,7 +82,7 @@ public class Lesson_1_05_CrudOperations : ILesson
         }
 
         // 4. UPDATE (Від'єднаний сценарій — об'єкт отримано в одному контексті, оновлюється в іншому)
-        SqliteDbHelper.PrintSection("4. Update — Від'єднаний сценарій (Disconnected Update)");
+        SqlServerDbHelper.PrintSection("4. Update — Від'єднаний сценарій (Disconnected Update)");
         L1_4.User? detachedUser;
         using (var db1 = new L1_4.CrudContext(connectionString))
         {
@@ -105,7 +105,7 @@ public class Lesson_1_05_CrudOperations : ILesson
         }
 
         // 5. DELETE (Видалення: Remove)
-        SqliteDbHelper.PrintSection("5. Delete — Видалення першого користувача");
+        SqlServerDbHelper.PrintSection("5. Delete — Видалення першого користувача");
         using (var db = new L1_4.CrudContext(connectionString))
         {
             var user = db.Users.FirstOrDefault();
@@ -123,7 +123,7 @@ public class Lesson_1_05_CrudOperations : ILesson
         // 6. ASYNC API (AddRangeAsync, ToListAsync, FirstOrDefaultAsync, SaveChangesAsync)
         // Примітка: у SQLite операції вводу-виводу фактично виконуються синхронно на рівні нативної бібліотеки e_sqlite3,
         // але використання Async API є обов'язковою практикою для сумісності з серверними БД (SQL Server, PostgreSQL)
-        SqliteDbHelper.PrintSection("6. Асинхронний CRUD API");
+        SqlServerDbHelper.PrintSection("6. Асинхронний CRUD API");
         using (var db = new L1_4.CrudContext(connectionString))
         {
             var sam = new L1_4.User { Name = "Sam", Age = 31 };
@@ -192,7 +192,7 @@ namespace EFCoreConsoleMastery.Topics.Ch01.L1_4
         /// </summary>
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlite(connectionString);
+            optionsBuilder.UseSqlServer(connectionString);
         }
     }
 }

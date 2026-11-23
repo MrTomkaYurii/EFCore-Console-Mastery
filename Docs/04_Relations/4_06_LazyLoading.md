@@ -25,7 +25,7 @@
    {
        optionsBuilder
            .UseLazyLoadingProxies()
-           .UseSqlite(SqliteDbHelper.GetConnectionString("ch04_l3_9"));
+           .UseSqlServer(SqlServerDbHelper.ConnectionString);
    }
    ```
 3. **Усі класи сутностей мають бути відкритими для наслідування** (`public` і без модифікатора `sealed`), оскільки провайдер проксі в runtime генерує похідні класи (наприклад, `Castle.Proxies.UserProxy : User`).
@@ -108,7 +108,7 @@ sequenceDiagram
 
 - Класи `Company` та `User` є `public` (не `sealed`).
 - Колекція `Company.Users` і посилання `User.Company` позначені як `public virtual`.
-- У `AppContextL3_9.OnConfiguring` викликано `.UseLazyLoadingProxies()` перед `.UseSqlite(...)`.
+- У `AppContextL3_9.OnConfiguring` викликано `.UseLazyLoadingProxies()` перед `.UseSqlServer(...)`.
 
 ### 2. Секція 1: Ліниве завантаження посилальної властивості `Company`
 

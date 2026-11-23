@@ -24,10 +24,10 @@ namespace EFCoreConsoleMastery.Topics.Ch04
         /// </summary>
         public void Run()
         {
-            SqliteDbHelper.PrintSection("1. Зовнішній ключ через [ForeignKey] та Fluent API");
+            SqlServerDbHelper.PrintSection("1. Зовнішній ключ через [ForeignKey] та Fluent API");
             using (var db = new AppContextL3_10())
             {
-                SqliteDbHelper.RecreateDatabase(db);
+                SqlServerDbHelper.RecreateSchema(db, "l4_02");
 
                 var google = new Company { Name = "Google" };
                 var microsoft = new Company { Name = "Microsoft" };
@@ -135,7 +135,7 @@ namespace EFCoreConsoleMastery.Topics.Ch04.L3_10
         /// <summary>Налаштовує підключення до SQLite.</summary>
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlite(SqliteDbHelper.GetConnectionString("ch04_l3_10"));
+            optionsBuilder.UseSqlServer(SqlServerDbHelper.ConnectionString);
         }
 
         /// <summary>
@@ -143,6 +143,7 @@ namespace EFCoreConsoleMastery.Topics.Ch04.L3_10
         /// </summary>
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.HasDefaultSchema("l4_02");
             // Явна конфігурація зовнішнього ключа через Fluent API (має пріоритет над атрибутами Data Annotations).
             modelBuilder.Entity<User>()
                 .HasOne(u => u.Company)

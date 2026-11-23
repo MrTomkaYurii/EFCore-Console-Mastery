@@ -25,7 +25,7 @@ public class Lesson_6_06_Aggregates : ILesson
     {
         using (var db = new AppDbContext())
         {
-            SqliteDbHelper.RecreateDatabase(db);
+            SqlServerDbHelper.RecreateSchema(db, "l6_06");
 
             Company microsoft = new() { Name = "Microsoft" };
             Company google = new() { Name = "Google" };
@@ -43,7 +43,7 @@ public class Lesson_6_06_Aggregates : ILesson
         using (var db = new AppDbContext())
         {
             // 1. Any та All — миттєве виконання (повертають bool одразу без .ToList())
-            SqliteDbHelper.PrintSection("1. Перевірка наявності та відповідності умові (Any / All)");
+            SqlServerDbHelper.PrintSection("1. Перевірка наявності та відповідності умові (Any / All)");
             // Any транслюється в SELECT EXISTS (SELECT 1 FROM "Users" ... WHERE ...) — зупиняється на першому збігу!
             // Це набагато швидше, ніж db.Users.Count(...) > 0, яке змушує БД рахувати всі рядки.
             bool hasGoogleUsers = db.Users.Any(u => u.Company!.Name == "Google");
@@ -54,7 +54,7 @@ public class Lesson_6_06_Aggregates : ILesson
             Console.WriteLine($"Чи всі працюють у Microsoft (All): {allMicrosoft}");
 
             // 2. Count — повертає int (або LongCount для long)
-            SqliteDbHelper.PrintSection("2. Кількість елементів (Count)");
+            SqlServerDbHelper.PrintSection("2. Кількість елементів (Count)");
             // Генерує SELECT COUNT(*) FROM "Users" — у пам'ять C# передається лише одне число.
             int totalUsers = db.Users.Count();
             int tomUsers = db.Users.Count(u => u.Name!.Contains("Tom"));
@@ -63,7 +63,7 @@ public class Lesson_6_06_Aggregates : ILesson
             Console.WriteLine($"Ім'я містить 'Tom': {tomUsers}");
 
             // 3. Min, Max, Average
-            SqliteDbHelper.PrintSection("3. Мінімум, максимум та середнє (Min, Max, Average)");
+            SqlServerDbHelper.PrintSection("3. Мінімум, максимум та середнє (Min, Max, Average)");
             // Важливий нюанс: якщо вибірка порожня, Min/Max/Average для non-nullable int/double викинуть InvalidOperationException,
             // оскільки SQL MIN/MAX/AVG повертають NULL для порожньої таблиці. Для безпечної обробки порожніх наборів
             // використовуйте приведення типу: db.Users.Min(u => (int?)u.Age).
@@ -78,7 +78,7 @@ public class Lesson_6_06_Aggregates : ILesson
             Console.WriteLine($"Середній вік у Microsoft: {avgMicrosoftAge:F1}");
 
             // 4. Sum
-            SqliteDbHelper.PrintSection("4. Сума значень (Sum)");
+            SqlServerDbHelper.PrintSection("4. Сума значень (Sum)");
             // На відміну від Min/Max/Average, SQL COALESCE(SUM(...), 0) у EF Core поверне 0, якщо рядків немає.
             // Примітка щодо SQLite: для decimal (який у SQLite зберігається як TEXT) агрегати Sum/Average/Min/Max
             // можуть мати обмеження або вимагати конвертації на клієнті, тоді як int/double працюють нативно в SQL.
@@ -131,6 +131,7 @@ namespace EFCoreConsoleMastery.Topics.Ch06.L5_5
     /// <summary>Контекст бази даних для уроку 5.5 (агрегатні функції).</summary>
     public class AppDbContext : DbContext
     {
+        protected override void OnModelCreating(ModelBuilder modelBuilder) => modelBuilder.HasDefaultSchema("l6_06");
         /// <summary>Таблиця користувачів.</summary>
         public DbSet<User> Users { get; set; } = null!;
 
@@ -140,7 +141,7 @@ namespace EFCoreConsoleMastery.Topics.Ch06.L5_5
         /// <summary>Підключення до локальної БД SQLite для уроку 5.5.</summary>
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlite(SqliteDbHelper.GetConnectionString("ch06_lesson_5_5"));
+            optionsBuilder.UseSqlServer(SqlServerDbHelper.ConnectionString);
         }
     }
 }

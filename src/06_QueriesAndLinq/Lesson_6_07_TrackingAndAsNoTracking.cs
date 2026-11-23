@@ -26,7 +26,7 @@ public class Lesson_6_07_TrackingAndAsNoTracking : ILesson
     {
         using (var db = new AppDbContext())
         {
-            SqliteDbHelper.RecreateDatabase(db);
+            SqlServerDbHelper.RecreateSchema(db, "l6_07");
 
             db.Users.AddRange(
                 new User { Name = "Tom", Age = 36 },
@@ -38,7 +38,7 @@ public class Lesson_6_07_TrackingAndAsNoTracking : ILesson
         }
 
         // 1. Стандартний відстежуваний запит (Tracking)
-        SqliteDbHelper.PrintSection("1. Відстежуваний запит (за замовчуванням)");
+        SqlServerDbHelper.PrintSection("1. Відстежуваний запит (за замовчуванням)");
         using (var db = new AppDbContext())
         {
             // За замовчуванням EF Core зберігає знімок (snapshot) початкових значень кожної завантаженої сутності у ChangeTracker.
@@ -56,7 +56,7 @@ public class Lesson_6_07_TrackingAndAsNoTracking : ILesson
         }
 
         // 2. Невідстежуваний запит із AsNoTracking()
-        SqliteDbHelper.PrintSection("2. Невідстежуваний запит через AsNoTracking()");
+        SqlServerDbHelper.PrintSection("2. Невідстежуваний запит через AsNoTracking()");
         using (var db = new AppDbContext())
         {
             // AsNoTracking() ідеально підходить для сценаріїв «тільки читання» (read-only: звіти, API GET-запити),
@@ -75,7 +75,7 @@ public class Lesson_6_07_TrackingAndAsNoTracking : ILesson
         }
 
         // 3. Вимкнення відстеження для всього контексту через ChangeTracker.QueryTrackingBehavior
-        SqliteDbHelper.PrintSection("3. Глобальне налаштування ChangeTracker.QueryTrackingBehavior = NoTracking");
+        SqlServerDbHelper.PrintSection("3. Глобальне налаштування ChangeTracker.QueryTrackingBehavior = NoTracking");
         using (var db = new AppDbContext())
         {
             // Корисно для read-only сервісів або CQRS Query-обробників;
@@ -117,13 +117,14 @@ namespace EFCoreConsoleMastery.Topics.Ch06.L5_7
     /// <summary>Контекст бази даних для уроку 5.7 (Tracking та AsNoTracking).</summary>
     public class AppDbContext : DbContext
     {
+        protected override void OnModelCreating(ModelBuilder modelBuilder) => modelBuilder.HasDefaultSchema("l6_07");
         /// <summary>Таблиця користувачів.</summary>
         public DbSet<User> Users { get; set; } = null!;
 
         /// <summary>Налаштовує підключення до локальної БД SQLite для уроку 5.7.</summary>
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlite(SqliteDbHelper.GetConnectionString("ch06_lesson_5_7"));
+            optionsBuilder.UseSqlServer(SqlServerDbHelper.ConnectionString);
         }
     }
 }

@@ -26,7 +26,7 @@ public class Lesson_6_11_BulkExecuteUpdateDelete : ILesson
     {
         using (var db = new AppDbContext())
         {
-            SqliteDbHelper.RecreateDatabase(db);
+            SqlServerDbHelper.RecreateSchema(db, "l6_11");
 
             db.Users.AddRange(
                 new User { Name = "Tom", Age = 36 },
@@ -38,7 +38,7 @@ public class Lesson_6_11_BulkExecuteUpdateDelete : ILesson
         }
 
         // 1. ExecuteUpdate — масове оновлення без завантаження сутностей
-        SqliteDbHelper.PrintSection("1. Масове оновлення через ExecuteUpdate");
+        SqlServerDbHelper.PrintSection("1. Масове оновлення через ExecuteUpdate");
         using (var db = new AppDbContext())
         {
             // ExecuteUpdate (з'явився в EF Core 7) виконує UPDATE "Users" SET "Age" = "Age" + 1
@@ -63,7 +63,7 @@ public class Lesson_6_11_BulkExecuteUpdateDelete : ILesson
         }
 
         // 2. Важливий нюанс: ChangeTracker не синхронізується автоматично!
-        SqliteDbHelper.PrintSection("2. Розсинхронізація з уже відстежуваними об'єктами");
+        SqlServerDbHelper.PrintSection("2. Розсинхронізація з уже відстежуваними об'єктами");
         using (var db = new AppDbContext())
         {
             var trackedAlice = db.Users.First(u => u.Name == "Alice");
@@ -83,7 +83,7 @@ public class Lesson_6_11_BulkExecuteUpdateDelete : ILesson
         }
 
         // 3. ExecuteDelete — масове видалення одним SQL-запитом DELETE
-        SqliteDbHelper.PrintSection("3. Масове видалення через ExecuteDelete");
+        SqlServerDbHelper.PrintSection("3. Масове видалення через ExecuteDelete");
         using (var db = new AppDbContext())
         {
             // Генерує DELETE FROM "Users" WHERE "Name" = 'Bob' без попереднього SELECT.
@@ -118,13 +118,14 @@ namespace EFCoreConsoleMastery.Topics.Ch06.L5_11
     /// <summary>Контекст бази даних для уроку 5.11 (ExecuteUpdate / ExecuteDelete).</summary>
     public class AppDbContext : DbContext
     {
+        protected override void OnModelCreating(ModelBuilder modelBuilder) => modelBuilder.HasDefaultSchema("l6_11");
         /// <summary>Таблиця користувачів.</summary>
         public DbSet<User> Users { get; set; } = null!;
 
         /// <summary>Налаштовує підключення до локальної БД SQLite для уроку 5.11.</summary>
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlite(SqliteDbHelper.GetConnectionString("ch06_lesson_5_11"));
+            optionsBuilder.UseSqlServer(SqlServerDbHelper.ConnectionString);
         }
     }
 }

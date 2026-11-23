@@ -69,7 +69,7 @@ flowchart LR
 У файлі [Lesson_6_01_LinqIntro.cs](../../src/06_QueriesAndLinq/Lesson_6_01_LinqIntro.cs) змодельовано зв'язок один-до-багатьох між `Company` (головна сутність) та `User` (залежна сутність із зовнішнім ключем `CompanyId`).
 
 ### Крок 1. Ініціалізація та наповнення бази даних
-Метод `SqliteDbHelper.RecreateDatabase(db)` гарантує чистий стан БД для кожного запуску уроку (`EnsureDeleted()` + `EnsureCreated()`). Далі створюються дві компанії (`Microsoft` з `Id = 1`, `Google` з `Id = 2`) та чотири користувачі (`Tom`, `Bob`, `Alice`, `Kate`), які зберігаються через `db.SaveChanges()`.
+Метод `SqlServerDbHelper.RecreateSchema(db)` гарантує чистий стан БД для кожного запуску уроку (`EnsureDeleted()` + `EnsureCreated()`). Далі створюються дві компанії (`Microsoft` з `Id = 1`, `Google` з `Id = 2`) та чотири користувачі (`Tom`, `Bob`, `Alice`, `Kate`), які зберігаються через `db.SaveChanges()`.
 
 ### Крок 2. Запит через Query Syntax та діагностика SQL
 ```csharp

@@ -28,14 +28,14 @@ public class Lesson_5_03_TpcInheritance : ILesson
     {
         using var db = new L4_3.TpcContext();
         // Перестворюємо базу даних з нуля (EnsureDeleted + EnsureCreated) для чистого старту.
-        SqliteDbHelper.RecreateDatabase(db);
+        SqlServerDbHelper.RecreateSchema(db, "l5_03");
 
         // 1. Виводимо реальну схему 3 незалежних таблиць SQLite з sqlite_master
-        SqliteDbHelper.PrintSection("1. Схема таблиць у SQLite (sqlite_master)");
-        PrintSqliteSchemas(db);
+        SqlServerDbHelper.PrintSection("1. Схема таблиць у MS SQL Server (DDL)");
+        Console.WriteLine(db.Database.GenerateCreateScript());
 
         // 2. Додаємо дані (унікальні GUID-ключі запобігають колізіям Id між таблицями)
-        SqliteDbHelper.PrintSection("2. Додавання даних у незалежні таблиці TPC");
+        SqlServerDbHelper.PrintSection("2. Додавання даних у незалежні таблиці TPC");
         var user1 = new L4_3.User { Name = "Tom" };
         var user2 = new L4_3.User { Name = "Bob" };
         var employee = new L4_3.Employee { Name = "Sam", Salary = 500 };
@@ -51,7 +51,7 @@ public class Lesson_5_03_TpcInheritance : ILesson
         Console.WriteLine("Додано: 2 User у Users, 1 Employee у Employees, 1 Manager у Managers.");
 
         // 3. Демонструємо згенерований SQL через ToQueryString()
-        SqliteDbHelper.PrintSection("3. Згенерований SQL (ToQueryString)");
+        SqlServerDbHelper.PrintSection("3. Згенерований SQL (ToQueryString)");
         Console.WriteLine("--- Запит db.Users (об'єднання таблиць через UNION ALL) ---");
         // При поліморфному запиті до базового типу EF Core об'єднує всі таблиці ієрархії через UNION ALL,
         // підставляючи NULL для відсутніх у конкретній таблиці стовпців і літерал ('User', 'Employee', 'Manager')
@@ -66,7 +66,7 @@ public class Lesson_5_03_TpcInheritance : ILesson
         Console.WriteLine(db.Managers.ToQueryString());
 
         // 4. Вибірка даних
-        SqliteDbHelper.PrintSection("4. Результати вибірки");
+        SqlServerDbHelper.PrintSection("4. Результати вибірки");
         Console.WriteLine("Усі користувачі (db.Users):");
         // AsNoTracking() вимикає Change Tracker для швидкого читання без накладних витрат на відстеження.
         // EF Core все одно матеріалізує кожен рядок у точний CLR-тип (User, Employee, Manager).
@@ -190,7 +190,7 @@ namespace EFCoreConsoleMastery.Topics.Ch05.L4_3
         /// </summary>
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlite(SqliteDbHelper.GetConnectionString("lesson_4_3_tpc"));
+            optionsBuilder.UseSqlServer(SqlServerDbHelper.ConnectionString);
         }
 
         /// <summary>
@@ -198,6 +198,7 @@ namespace EFCoreConsoleMastery.Topics.Ch05.L4_3
         /// </summary>
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.HasDefaultSchema("l5_03");
             // Вмикаємо стратегію TPC (Table Per Concrete Type), доступну з EF Core 7.0.
             // Примітка: якби базовий клас User був оголошений як abstract, EF Core не створював би таблицю Users взагалі —
             // існували б лише таблиці Employees та Managers.

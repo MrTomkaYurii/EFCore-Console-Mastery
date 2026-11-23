@@ -25,13 +25,13 @@ public class Lesson_3_13_DataSeeding : ILesson
     /// </summary>
     public void Run()
     {
-        SqliteDbHelper.PrintSection("3.13. Ініціалізація бази даних початковими даними");
+        SqlServerDbHelper.PrintSection("3.13. Ініціалізація бази даних початковими даними");
 
         using var db = new L2_14.ApplicationContext();
         // EnsureCreated() (всередині RecreateDatabase) не лише створює таблиці,
         // а й автоматично виконує INSERT для всіх записів, визначених у HasData().
         // При використанні міграцій (Add-Migration) ці дані потрапляють у метод Up() міграції.
-        SqliteDbHelper.RecreateDatabase(db);
+        SqlServerDbHelper.RecreateSchema(db, "l3_13");
 
         Console.WriteLine("Користувачі, автоматично додані через HasData() при створенні БД:");
         // Include(u => u.Company) завантажує зв'язану компанію одним SQL-запитом (LEFT JOIN),
@@ -106,11 +106,12 @@ namespace EFCoreConsoleMastery.Topics.Ch03.L2_14
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlite(SqliteDbHelper.GetConnectionString("ch03_l2_14"));
+            optionsBuilder.UseSqlServer(SqlServerDbHelper.ConnectionString);
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.HasDefaultSchema("l3_13");
             // Обов'язкова умова HasData(): первинний ключ (Id) має бути вказаний явно!
             // EF Core не генерує ключі під час HasData(), бо ці значення мають бути детермінованими для міграцій.
             var microsoft = new Company { Id = 1, Name = "Microsoft" };

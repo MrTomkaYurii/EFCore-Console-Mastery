@@ -25,7 +25,7 @@ public class Lesson_6_03_SortingAndProjection : ILesson
     {
         using (var db = new AppDbContext())
         {
-            SqliteDbHelper.RecreateDatabase(db);
+            SqlServerDbHelper.RecreateSchema(db, "l6_03");
 
             Company microsoft = new() { Name = "Microsoft" };
             Company google = new() { Name = "Google" };
@@ -41,7 +41,7 @@ public class Lesson_6_03_SortingAndProjection : ILesson
         }
 
         // 1. Проекція в анонімний тип за допомогою Select
-        SqliteDbHelper.PrintSection("1. Проекція в анонімний тип (Select)");
+        SqlServerDbHelper.PrintSection("1. Проекція в анонімний тип (Select)");
         using (var db = new AppDbContext())
         {
             // Select вибирає лише потрібні стовпці (зменшує трафік та пам'ять), автоматично генерує JOIN
@@ -65,7 +65,7 @@ public class Lesson_6_03_SortingAndProjection : ILesson
         }
 
         // 2. Проекція у власний DTO-клас UserModel
-        SqliteDbHelper.PrintSection("2. Проекція у визначений тип (UserModel)");
+        SqlServerDbHelper.PrintSection("2. Проекція у визначений тип (UserModel)");
         using (var db = new AppDbContext())
         {
             // Проекція в іменований DTO-клас (Data Transfer Object) дає змогу повертати результат
@@ -87,7 +87,7 @@ public class Lesson_6_03_SortingAndProjection : ILesson
         }
 
         // 3. Сортування: OrderBy, OrderByDescending, ThenBy, ThenByDescending
-        SqliteDbHelper.PrintSection("3. Сортування (OrderBy, OrderByDescending, ThenBy)");
+        SqlServerDbHelper.PrintSection("3. Сортування (OrderBy, OrderByDescending, ThenBy)");
         using (var db = new AppDbContext())
         {
             // OrderBy транслюється в SQL ORDER BY "u"."Name" ASC.
@@ -168,6 +168,7 @@ namespace EFCoreConsoleMastery.Topics.Ch06.L5_10
     /// <summary>Контекст бази даних для уроку 5.10 (сортування та проекція).</summary>
     public class AppDbContext : DbContext
     {
+        protected override void OnModelCreating(ModelBuilder modelBuilder) => modelBuilder.HasDefaultSchema("l6_03");
         /// <summary>Таблиця користувачів.</summary>
         public DbSet<User> Users { get; set; } = null!;
 
@@ -177,7 +178,7 @@ namespace EFCoreConsoleMastery.Topics.Ch06.L5_10
         /// <summary>Налаштовує підключення до локальної БД SQLite для уроку 5.10.</summary>
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlite(SqliteDbHelper.GetConnectionString("ch06_lesson_5_10"));
+            optionsBuilder.UseSqlServer(SqlServerDbHelper.ConnectionString);
         }
     }
 }

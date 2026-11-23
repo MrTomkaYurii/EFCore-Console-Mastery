@@ -22,7 +22,7 @@ public class ApplicationContext : DbContext
 {
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
-        optionsBuilder.UseSqlite("Data Source=helloapp.db");
+        optionsBuilder.UseSqlServer("Data Source=helloapp.db");
     }
 }
 ```
@@ -32,7 +32,7 @@ public class ApplicationContext(string connectionString) : DbContext
 {
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
-        optionsBuilder.UseSqlite(connectionString);
+        optionsBuilder.UseSqlServer(connectionString);
     }
 }
 ```
@@ -53,7 +53,7 @@ public class ApplicationContext : DbContext
 Створення об'єкта `options` відбувається через `DbContextOptionsBuilder<TContext>`:
 ```csharp
 var optionsBuilder = new DbContextOptionsBuilder<ApplicationContext>();
-var options = optionsBuilder.UseSqlite("Data Source=helloapp.db").Options;
+var options = optionsBuilder.UseSqlServer("Data Source=helloapp.db").Options;
 
 using var db = new ApplicationContext(options);
 ```
@@ -104,7 +104,7 @@ flowchart LR
     Json["appsettings.json або MemoryStream (JSON)"]
     Builder["ConfigurationBuilder (AddJsonFile / AddJsonStream)"]
     IConfig["IConfiguration (GetConnectionString)"]
-    OptBuilder["DbContextOptionsBuilder<OptionsContext>.UseSqlite()"]
+    OptBuilder["DbContextOptionsBuilder<OptionsContext>.UseSqlServer()"]
     Options["DbContextOptions<OptionsContext>"]
     Ctx["OptionsContext(options) : base(options)"]
     DB["База даних SQLite (.db)"]
@@ -129,7 +129,7 @@ public class OnConfiguringContext(string connectionString) : DbContext
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
-        optionsBuilder.UseSqlite(connectionString);
+        optionsBuilder.UseSqlServer(connectionString);
     }
 }
 ```
@@ -138,7 +138,7 @@ public class OnConfiguringContext(string connectionString) : DbContext
 ### Крок 2. Конфігурація через `DbContextOptions<OptionsContext>`
 ```csharp
 var optionsBuilder = new DbContextOptionsBuilder<L1_5.OptionsContext>();
-var options = optionsBuilder.UseSqlite(connStr2).Options;
+var options = optionsBuilder.UseSqlServer(connStr2).Options;
 
 using (var db2 = new L1_5.OptionsContext(options))
 ```
@@ -163,7 +163,7 @@ IConfiguration config = new ConfigurationBuilder()
 
 var resolvedConnStr = config.GetConnectionString("DefaultConnection");
 ```
-Зверніть увагу на `connStr3.Replace("\\", "\\\\")`: у JSON зворотний слеш `\` у Windows-шляхах обов'язково має бути екранований як `\\`. Отриманий `resolvedConnStr` передається в `DbContextOptionsBuilder<OptionsContext>.UseSqlite(...)`.
+Зверніть увагу на `connStr3.Replace("\\", "\\\\")`: у JSON зворотний слеш `\` у Windows-шляхах обов'язково має бути екранований як `\\`. Отриманий `resolvedConnStr` передається в `DbContextOptionsBuilder<OptionsContext>.UseSqlServer(...)`.
 
 ## Особливості роботи в SQLite
 
@@ -177,7 +177,7 @@ var resolvedConnStr = config.GetConnectionString("DefaultConnection");
    ```csharp
    if (!optionsBuilder.IsConfigured)
    {
-       optionsBuilder.UseSqlite("Data Source=fallback.db");
+       optionsBuilder.UseSqlServer("Data Source=fallback.db");
    }
    ```
 2. **Використання `Directory.GetCurrentDirectory()` замість `AppContext.BaseDirectory`:** Якщо консольний застосунок запущено з іншої робочої директорії (наприклад, через планувальник завдань або з кореня рішення), `Directory.GetCurrentDirectory()` вказуватиме не на папку з `.exe` та `appsettings.json`. Надійніше використовувати `AppContext.BaseDirectory`.

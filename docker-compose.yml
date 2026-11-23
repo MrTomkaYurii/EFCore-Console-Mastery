@@ -1,0 +1,46 @@
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: efcore-mastery-sqlserver
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "${SA_PASSWORD:-StrongPass123!}"
+      MSSQL_PID: "Developer"
+    ports:
+      - "1434:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+    restart: unless-stopped
+
+  # Опційні сервіси для уроків 2.2 (MySQL) та 2.3 (PostgreSQL):
+  # запуск: docker compose --profile all-providers up -d
+  mysql:
+    image: mysql:8.4
+    container_name: efcore-mastery-mysql
+    profiles: ["all-providers"]
+    environment:
+      MYSQL_ROOT_PASSWORD: "${MYSQL_PASSWORD:-StrongPass123!}"
+      MYSQL_DATABASE: "efcore_mastery"
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:17
+    container_name: efcore-mastery-postgres
+    profiles: ["all-providers"]
+    environment:
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:-StrongPass123!}"
+      POSTGRES_DB: "efcore_mastery"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  sqlserver_data:
+  mysql_data:
+  postgres_data:

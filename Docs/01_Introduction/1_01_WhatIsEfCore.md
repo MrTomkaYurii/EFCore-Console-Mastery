@@ -97,7 +97,7 @@ flowchart TD
 У файлі [`Lesson_1_01_WhatIsEfCore.cs`](../../src/01_Introduction/Lesson_1_01_WhatIsEfCore.cs) продемонстровано, як EF Core перетворює C#-класи на схему БД та транслює LINQ-запити.
 
 ### Крок 1. Визначення сутності та контексту (`L1_1`)
-Клас `Product` містить три властивості: `Id`, `Title`, `Price`. Оскільки властивість називається `Id`, EF Core за конвенцією автоматично робить її первинним ключем з автоінкрементом (`AUTOINCREMENT` / `ROWID`). Контекст `IntroContext` приймає рядок підключення через primary constructor і передає його в `optionsBuilder.UseSqlite(connectionString)`.
+Клас `Product` містить три властивості: `Id`, `Title`, `Price`. Оскільки властивість називається `Id`, EF Core за конвенцією автоматично робить її первинним ключем з автоінкрементом (`AUTOINCREMENT` / `ROWID`). Контекст `IntroContext` приймає рядок підключення через primary constructor і передає його в `optionsBuilder.UseSqlServer(connectionString)`.
 
 ### Крок 2. Перевірка активного провайдера БД
 ```csharp

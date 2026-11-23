@@ -23,10 +23,10 @@ namespace EFCoreConsoleMastery.Topics.Ch04
         /// </summary>
         public void Run()
         {
-            SqliteDbHelper.PrintSection("1. Обов'язковий зв'язок -> ON DELETE CASCADE");
+            SqlServerDbHelper.PrintSection("1. Обов'язковий зв'язок -> ON DELETE CASCADE");
             using (var db = new AppContextL3_2())
             {
-                SqliteDbHelper.RecreateDatabase(db);
+                SqlServerDbHelper.RecreateSchema(db, "l4_03");
 
                 var microsoft = new Company { Name = "Microsoft" };
                 var google = new Company { Name = "Google" };
@@ -150,7 +150,7 @@ namespace EFCoreConsoleMastery.Topics.Ch04.L3_2
         /// <summary>Налаштовує підключення до SQLite.</summary>
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlite(SqliteDbHelper.GetConnectionString("ch04_l3_2"));
+            optionsBuilder.UseSqlServer(SqlServerDbHelper.ConnectionString);
         }
 
         /// <summary>
@@ -158,6 +158,7 @@ namespace EFCoreConsoleMastery.Topics.Ch04.L3_2
         /// </summary>
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.HasDefaultSchema("l4_03");
             // Явно задаємо DeleteBehavior.SetNull для Contractor, щоб у DDL таблиці Contractors було ON DELETE SET NULL.
             // Примітка: у SQL Server множинні каскадні шляхи (multiple cascade paths) часто заборонені і викликають помилку,
             // тоді як у SQLite така конфігурація працює без обмежень на кількість шляхів.

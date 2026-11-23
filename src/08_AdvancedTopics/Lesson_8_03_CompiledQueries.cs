@@ -66,12 +66,12 @@ namespace EFCoreConsoleMastery.Topics.Ch08
         /// </summary>
         public void Run()
         {
-            var connStr = SqliteDbHelper.GetConnectionString("lesson_8_1_compiled_queries");
+            var connStr = SqlServerDbHelper.ConnectionString;
 
             // Ініціалізація чистої бази даних
             using (var setupDb = new CompiledQueriesContext(connStr))
             {
-                SqliteDbHelper.RecreateDatabase(setupDb);
+                SqlServerDbHelper.RecreateSchema(setupDb, "l8_03");
 
                 var microsoft = new Company { Name = "Microsoft" };
                 var google = new Company { Name = "Google" };
@@ -91,7 +91,7 @@ namespace EFCoreConsoleMastery.Topics.Ch08
             // -------------------------------------------------------------------------
             // 1. Виконання синхронних скомпільованих запитів (EF.CompileQuery)
             // -------------------------------------------------------------------------
-            SqliteDbHelper.PrintSection("1. Синхронні скомпільовані запити (EF.CompileQuery)");
+            SqlServerDbHelper.PrintSection("1. Синхронні скомпільовані запити (EF.CompileQuery)");
 
             using (var db = new CompiledQueriesContext(connStr))
             {
@@ -112,13 +112,13 @@ namespace EFCoreConsoleMastery.Topics.Ch08
             // -------------------------------------------------------------------------
             // 2. Виконання асинхронних скомпільованих запитів (EF.CompileAsyncQuery)
             // -------------------------------------------------------------------------
-            SqliteDbHelper.PrintSection("2. Асинхронні скомпільовані запити (EF.CompileAsyncQuery)");
+            SqlServerDbHelper.PrintSection("2. Асинхронні скомпільовані запити (EF.CompileAsyncQuery)");
             RunAsyncDemo(connStr).GetAwaiter().GetResult();
 
             // -------------------------------------------------------------------------
             // 3. Невеликий бенчмарк: 200 повторень звичайного vs скомпільованого запиту
             // -------------------------------------------------------------------------
-            SqliteDbHelper.PrintSection("3. Порівняння часу виконання (200 ітерацій у пам'яті / SQLite)");
+            SqlServerDbHelper.PrintSection("3. Порівняння часу виконання (200 ітерацій у пам'яті / SQLite)");
 
             using (var db = new CompiledQueriesContext(connStr))
             {
@@ -211,6 +211,7 @@ namespace EFCoreConsoleMastery.Topics.Ch08.L8_1
     /// </summary>
     public class CompiledQueriesContext : DbContext
     {
+        protected override void OnModelCreating(ModelBuilder modelBuilder) => modelBuilder.HasDefaultSchema("l8_03");
         private readonly string _connectionString;
 
         /// <summary>Таблиця користувачів.</summary>
@@ -229,7 +230,7 @@ namespace EFCoreConsoleMastery.Topics.Ch08.L8_1
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlite(_connectionString);
+            optionsBuilder.UseSqlServer(_connectionString);
         }
     }
 }

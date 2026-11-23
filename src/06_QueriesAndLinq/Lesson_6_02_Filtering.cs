@@ -26,7 +26,7 @@ public class Lesson_6_02_Filtering : ILesson
         // Початкове наповнення БД у окремому контексті
         using (var db = new AppDbContext())
         {
-            SqliteDbHelper.RecreateDatabase(db);
+            SqlServerDbHelper.RecreateSchema(db, "l6_02");
 
             Company microsoft = new() { Name = "Microsoft" };
             Company google = new() { Name = "Google" };
@@ -43,7 +43,7 @@ public class Lesson_6_02_Filtering : ILesson
         }
 
         // 1. Метод Where та оператор where
-        SqliteDbHelper.PrintSection("1. Фільтрація через Where та оператор where");
+        SqlServerDbHelper.PrintSection("1. Фільтрація через Where та оператор where");
         using (var db = new AppDbContext())
         {
             // Методи розширення: навіть без Include(u => u.Company) звернення до u.Company!.Name
@@ -68,7 +68,7 @@ public class Lesson_6_02_Filtering : ILesson
         }
 
         // 2. EF.Functions.Like — пошук за шаблоном SQL LIKE
-        SqliteDbHelper.PrintSection("2. Фільтрація через EF.Functions.Like");
+        SqlServerDbHelper.PrintSection("2. Фільтрація через EF.Functions.Like");
         using (var db = new AppDbContext())
         {
             // EF.Functions.Like транслюється напряму в SQL-оператор LIKE.
@@ -95,7 +95,7 @@ public class Lesson_6_02_Filtering : ILesson
         }
 
         // 3. Пошук одного об'єкта за первинним ключем: Find / FindAsync
-        SqliteDbHelper.PrintSection("3. Пошук за первинним ключем через Find та FindAsync");
+        SqlServerDbHelper.PrintSection("3. Пошук за первинним ключем через Find та FindAsync");
         using (var db = new AppDbContext())
         {
             // Find спочатку перевіряє локальний кеш контексту (ChangeTracker / db.Users.Local).
@@ -156,6 +156,7 @@ namespace EFCoreConsoleMastery.Topics.Ch06.L5_2
     /// <summary>Контекст бази даних для уроку 5.2 (фільтрація та пошук).</summary>
     public class AppDbContext : DbContext
     {
+        protected override void OnModelCreating(ModelBuilder modelBuilder) => modelBuilder.HasDefaultSchema("l6_02");
         /// <summary>Таблиця користувачів.</summary>
         public DbSet<User> Users { get; set; } = null!;
 
@@ -165,7 +166,7 @@ namespace EFCoreConsoleMastery.Topics.Ch06.L5_2
         /// <summary>Підключення до файлової БД SQLite для уроку 5.2.</summary>
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlite(SqliteDbHelper.GetConnectionString("ch06_lesson_5_2"));
+            optionsBuilder.UseSqlServer(SqlServerDbHelper.ConnectionString);
         }
     }
 }

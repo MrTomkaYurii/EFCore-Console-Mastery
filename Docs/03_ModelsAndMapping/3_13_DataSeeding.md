@@ -88,7 +88,7 @@ flowchart TD
    Зверніть увагу: спочатку в моделі вказано `Id` для всіх об'єктів, а зв'язок задано саме через `CompanyId = microsoft.Id`.
 
 3. **Виконання у `Run()`:**
-   - `SqliteDbHelper.RecreateDatabase(db)` видаляє стару БД і викликає `EnsureCreated()`, що автоматично виконує `INSERT INTO "Companies"` та `INSERT INTO "Users"`.
+   - `SqlServerDbHelper.RecreateSchema(db)` видаляє стару БД і викликає `EnsureCreated()`, що автоматично виконує `INSERT INTO "Companies"` та `INSERT INTO "Users"`.
    - Далі `db.Users.Include(u => u.Company).AsNoTracking().OrderBy(u => u.Id).ToList()` зчитує вже наявні в БД записи і виводить:
      - `[1] Tom (23 р.) — компанія: Microsoft`
      - `[2] Alice (26 р.) — компанія: Microsoft`

@@ -142,12 +142,12 @@ flowchart LR
 
 1. **Конфігурація та ініціалізація БД:**
    ```csharp
-   var connectionString = SqliteDbHelper.GetConnectionString("ch02_lesson_7_3");
+   var connectionString = SqlServerDbHelper.ConnectionString;
    var options = new DbContextOptionsBuilder<ApplicationContext>()
        .UseSqlite(connectionString)
        .Options;
    ```
-   У першому блоці `using` викликається `SqliteDbHelper.RecreateDatabase(db)`, виводиться `db.Database.ProviderName` (`Microsoft.EntityFrameworkCore.Sqlite`), а також додаються тестові користувачі `Tom` (33) та `Alice` (26) за допомогою `AddRange` і `SaveChanges()`.
+   У першому блоці `using` викликається `SqlServerDbHelper.RecreateSchema(db)`, виводиться `db.Database.ProviderName` (`Microsoft.EntityFrameworkCore.Sqlite`), а також додаються тестові користувачі `Tom` (33) та `Alice` (26) за допомогою `AddRange` і `SaveChanges()`.
 
 2. **Читання даних:**
    У другому блоці `using` виконується `db.Users.ToList()` і виводиться список:

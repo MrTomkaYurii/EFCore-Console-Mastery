@@ -26,10 +26,10 @@ namespace EFCoreConsoleMastery.Topics.Ch08
         /// </summary>
         public void Run()
         {
-            var connStr = SqliteDbHelper.GetConnectionString("lesson_2_12_logging");
-            var logFilePath = Path.Combine(
-                Path.GetDirectoryName(SqliteDbHelper.GetDbPath("lesson_2_12_logging"))!,
-                "lesson_2_12_efcore.log");
+            var connStr = SqlServerDbHelper.ConnectionString;
+            var logsDir = Path.Combine(AppContext.BaseDirectory, "Logs");
+            Directory.CreateDirectory(logsDir);
+            var logFilePath = Path.Combine(logsDir, "lesson_8_02_efcore.log");
 
             if (File.Exists(logFilePath))
             {
@@ -39,11 +39,11 @@ namespace EFCoreConsoleMastery.Topics.Ch08
             // -------------------------------------------------------------------------
             // 1. Локальне підключення власного ILoggerProvider через GetService<ILoggerFactory>()
             // -------------------------------------------------------------------------
-            SqliteDbHelper.PrintSection("1. Власний ILoggerProvider (локальне підключення до контексту)");
+            SqlServerDbHelper.PrintSection("1. Власний ILoggerProvider (локальне підключення до контексту)");
 
             using (var db = new LoggingContext(connStr))
             {
-                SqliteDbHelper.RecreateDatabase(db);
+                SqlServerDbHelper.RecreateSchema(db, "l8_02");
 
                 // GetService<ILoggerFactory>() отримує ILoggerFactory із внутрішнього DI-контейнера EF Core.
                 // Додавання провайдера тут не потребує переконфігурації OnConfiguring, але зачіпає
@@ -66,7 +66,7 @@ namespace EFCoreConsoleMastery.Topics.Ch08
             // -------------------------------------------------------------------------
             // 2. Глобальне налаштування ILoggerFactory з фільтрацією за категорією та LogLevel
             // -------------------------------------------------------------------------
-            SqliteDbHelper.PrintSection("2. Глобальний ILoggerFactory + фільтр DbLoggerCategory.Database.Command");
+            SqlServerDbHelper.PrintSection("2. Глобальний ILoggerFactory + фільтр DbLoggerCategory.Database.Command");
 
             // ВАЖЛИВО: У реальних застосунках ILoggerFactory потрібно оголошувати як static readonly
             // або отримувати з DI-контейнера. Якщо створювати новий LoggerFactory на кожен екземпляр DbContext,
@@ -94,7 +94,7 @@ namespace EFCoreConsoleMastery.Topics.Ch08
             // -------------------------------------------------------------------------
             // 3. Вбудований Console Logger (Microsoft.Extensions.Logging.Console)
             // -------------------------------------------------------------------------
-            SqliteDbHelper.PrintSection("3. Вбудований Console Logger (builder.AddConsole())");
+            SqlServerDbHelper.PrintSection("3. Вбудований Console Logger (builder.AddConsole())");
 
             // AddConsole() використовує фонову чергу для запису в консоль, а блок using
             // гарантує скидання (flush) буфера при завершенні роботи фабрики.
@@ -138,6 +138,7 @@ namespace EFCoreConsoleMastery.Topics.Ch08.L2_12
     /// </summary>
     public class LoggingContext : DbContext
     {
+        protected override void OnModelCreating(ModelBuilder modelBuilder) => modelBuilder.HasDefaultSchema("l8_02");
         private readonly string _connectionString;
         private readonly ILoggerFactory? _loggerFactory;
 
@@ -155,7 +156,7 @@ namespace EFCoreConsoleMastery.Topics.Ch08.L2_12
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlite(_connectionString);
+            optionsBuilder.UseSqlServer(_connectionString);
 
             if (_loggerFactory is not null)
             {

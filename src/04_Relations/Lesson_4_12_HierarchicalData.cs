@@ -25,7 +25,7 @@ namespace EFCoreConsoleMastery.Topics.Ch04
         {
             using (var db = new AppContextL3_11())
             {
-                SqliteDbHelper.RecreateDatabase(db);
+                SqlServerDbHelper.RecreateSchema(db, "l4_12");
 
                 var file = new MenuItem { Title = "File" };
                 var edit = new MenuItem { Title = "Edit" };
@@ -41,7 +41,7 @@ namespace EFCoreConsoleMastery.Topics.Ch04
                 db.SaveChanges();
             }
 
-            SqliteDbHelper.PrintSection("1. Завантаження всього дерева в контекст (Relationship Fix-up)");
+            SqlServerDbHelper.PrintSection("1. Завантаження всього дерева в контекст (Relationship Fix-up)");
             using (var db = new AppContextL3_11())
             {
                 // Для дерев довільної глибини один Include(m => m.Children) завантажить лише 1 рівень.
@@ -57,7 +57,7 @@ namespace EFCoreConsoleMastery.Topics.Ch04
                 }
             }
 
-            SqliteDbHelper.PrintSection("2. Вибіркове завантаження конкретного пункту з підменю через Include");
+            SqlServerDbHelper.PrintSection("2. Вибіркове завантаження конкретного пункту з підменю через Include");
             using (var db = new AppContextL3_11())
             {
                 // Include(m => m.Children) завантажує лише безпосередніх нащадків (1 рівень: Open, Save),
@@ -113,13 +113,14 @@ namespace EFCoreConsoleMastery.Topics.Ch04.L3_11
     /// <summary>Контекст бази даних для уроку 3.11 (SQLite).</summary>
     public class AppContextL3_11 : DbContext
     {
+        protected override void OnModelCreating(ModelBuilder modelBuilder) => modelBuilder.HasDefaultSchema("l4_12");
         /// <summary>Пункти меню (ієрархічна таблиця).</summary>
         public DbSet<MenuItem> MenuItems { get; set; } = null!;
 
         /// <summary>Налаштовує підключення до SQLite.</summary>
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlite(SqliteDbHelper.GetConnectionString("ch04_l3_11"));
+            optionsBuilder.UseSqlServer(SqlServerDbHelper.ConnectionString);
         }
     }
 }

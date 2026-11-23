@@ -22,11 +22,11 @@ namespace EFCoreConsoleMastery.Topics.Ch04
         /// </summary>
         public void Run()
         {
-            SqliteDbHelper.PrintSection("1. Встановлення зв'язку через навігаційну властивість");
+            SqlServerDbHelper.PrintSection("1. Встановлення зв'язку через навігаційну властивість");
             using (var db = new AppContextL3_1())
             {
                 // Перестворюємо БД: у SQLite зовнішні ключі (PRAGMA foreign_keys = ON) за замовчуванням вмикаються провайдером Microsoft.Data.Sqlite на рівні з'єднання.
-                SqliteDbHelper.RecreateDatabase(db);
+                SqlServerDbHelper.RecreateSchema(db, "l4_01");
 
                 var google = new Company { Name = "Google" };
                 var microsoft = new Company { Name = "Microsoft" };
@@ -49,7 +49,7 @@ namespace EFCoreConsoleMastery.Topics.Ch04
                 }
             }
 
-            SqliteDbHelper.PrintSection("2. Встановлення зв'язку через зовнішній ключ (CompanyId)");
+            SqlServerDbHelper.PrintSection("2. Встановлення зв'язку через зовнішній ключ (CompanyId)");
             using (var db = new AppContextL3_1())
             {
                 // Завантажуємо лише існуючу компанію, щоб отримати її Id (або можемо передати відомий Id без запиту до БД).
@@ -125,6 +125,7 @@ namespace EFCoreConsoleMastery.Topics.Ch04.L3_1
     /// </summary>
     public class AppContextL3_1 : DbContext
     {
+        protected override void OnModelCreating(ModelBuilder modelBuilder) => modelBuilder.HasDefaultSchema("l4_01");
         /// <summary>Набір сутностей користувачів (таблиця Users).</summary>
         public DbSet<User> Users { get; set; } = null!;
 
@@ -134,7 +135,7 @@ namespace EFCoreConsoleMastery.Topics.Ch04.L3_1
         /// <summary>Налаштовує підключення до локальної БД SQLite.</summary>
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlite(SqliteDbHelper.GetConnectionString("ch04_l3_1"));
+            optionsBuilder.UseSqlServer(SqlServerDbHelper.ConnectionString);
         }
     }
 }

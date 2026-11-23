@@ -26,12 +26,12 @@ public class Lesson_3_04_EntityConstructors : ILesson
     /// </summary>
     public void Run()
     {
-        SqliteDbHelper.PrintSection("3.4. Конструктори сутностей");
+        SqlServerDbHelper.PrintSection("3.4. Конструктори сутностей");
 
         // Крок 1: Створення та збереження даних у першому контексті
         using (var db = new L2_10.ApplicationContext())
         {
-            SqliteDbHelper.RecreateDatabase(db);
+            SqlServerDbHelper.RecreateSchema(db, "l3_04");
 
             var company = new L2_10.Company("JetBrains");
             var tom = new L2_10.User("Tom", 37) { Company = company };
@@ -133,6 +133,7 @@ namespace EFCoreConsoleMastery.Topics.Ch03.L2_10
     /// </summary>
     public class ApplicationContext : DbContext
     {
+        protected override void OnModelCreating(ModelBuilder modelBuilder) => modelBuilder.HasDefaultSchema("l3_04");
         /// <summary>Набір користувачів (таблиця "Users").</summary>
         public DbSet<User> Users => Set<User>();
 
@@ -141,7 +142,7 @@ namespace EFCoreConsoleMastery.Topics.Ch03.L2_10
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlite(SqliteDbHelper.GetConnectionString("ch03_l2_10"));
+            optionsBuilder.UseSqlServer(SqlServerDbHelper.ConnectionString);
         }
     }
 }

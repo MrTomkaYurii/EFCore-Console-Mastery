@@ -27,7 +27,7 @@ public class Lesson_6_10_GlobalQueryFilters : ILesson
         // 1. Наповнення бази даних
         using (var db = new AppDbContext())
         {
-            SqliteDbHelper.RecreateDatabase(db);
+            SqlServerDbHelper.RecreateSchema(db, "l6_10");
 
             Role userRole = new() { Name = "user" };   // Id = 1
             Role adminRole = new() { Name = "admin" }; // Id = 2
@@ -43,7 +43,7 @@ public class Lesson_6_10_GlobalQueryFilters : ILesson
         }
 
         // 2. Автоматичне застосування HasQueryFilter (Age > 17 && RoleId == CurrentRoleId)
-        SqliteDbHelper.PrintSection("1. Запит із активним HasQueryFilter (CurrentRoleId = 2)");
+        SqlServerDbHelper.PrintSection("1. Запит із активним HasQueryFilter (CurrentRoleId = 2)");
         // Прив'язка фільтра до властивості екземпляра DbContext (CurrentRoleId) є типовим прийомом для
         // реалізації Soft Delete (IsDeleted == false) або Multi-Tenancy (TenantId == _currentTenantId).
         // EF Core параметризує CurrentRoleId у SQLite як @__ef_filter__CurrentRoleId_0, тому план запиту кешується,
@@ -65,7 +65,7 @@ public class Lesson_6_10_GlobalQueryFilters : ILesson
         }
 
         // 3. Ігнорування глобального фільтра через IgnoreQueryFilters()
-        SqliteDbHelper.PrintSection("2. Відключення фільтра через IgnoreQueryFilters()");
+        SqlServerDbHelper.PrintSection("2. Відключення фільтра через IgnoreQueryFilters()");
         using (var db = new AppDbContext { CurrentRoleId = 2 })
         {
             // IgnoreQueryFilters() вимикає ВСІ глобальні фільтри для поточного запиту (корисно для адмін-панелей,
@@ -128,12 +128,13 @@ namespace EFCoreConsoleMastery.Topics.Ch06.L5_9
         /// <summary>Налаштовує підключення до локальної БД SQLite для уроку 5.9.</summary>
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlite(SqliteDbHelper.GetConnectionString("ch06_lesson_5_9"));
+            optionsBuilder.UseSqlServer(SqlServerDbHelper.ConnectionString);
         }
 
         /// <summary>Реєструє глобальний фільтр запитів для сутності <see cref="User"/>.</summary>
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.HasDefaultSchema("l6_10");
             // Фільтр рівня моделі застосовується до всіх LINQ-запитів до User.
             // Звернення до властивості екземпляра CurrentRoleId транслятор перетворює на SQL-параметр.
             modelBuilder.Entity<User>()

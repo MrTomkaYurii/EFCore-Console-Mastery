@@ -23,10 +23,10 @@ namespace EFCoreConsoleMastery.Topics.Ch04
         /// </summary>
         public void Run()
         {
-            SqliteDbHelper.PrintSection("1. Додавання даних у зв'язку 1:N (Company -> Users)");
+            SqlServerDbHelper.PrintSection("1. Додавання даних у зв'язку 1:N (Company -> Users)");
             using (var db = new AppContextL3_5())
             {
-                SqliteDbHelper.RecreateDatabase(db);
+                SqlServerDbHelper.RecreateSchema(db, "l4_08");
 
                 var microsoft = new Company { Name = "Microsoft" };
                 var google = new Company { Name = "Google" };
@@ -42,7 +42,7 @@ namespace EFCoreConsoleMastery.Topics.Ch04
                 db.SaveChanges();
             }
 
-            SqliteDbHelper.PrintSection("2. Читання з обох сторін зв'язку");
+            SqlServerDbHelper.PrintSection("2. Читання з обох сторін зв'язку");
             using (var db = new AppContextL3_5())
             {
                 // З боку залежної сутності (User -> Company): через обов'язковий FK генерується INNER JOIN.
@@ -59,7 +59,7 @@ namespace EFCoreConsoleMastery.Topics.Ch04
                 }
             }
 
-            SqliteDbHelper.PrintSection("3. Редагування (переведення співробітника в іншу компанію)");
+            SqlServerDbHelper.PrintSection("3. Редагування (переведення співробітника в іншу компанію)");
             using (var db = new AppContextL3_5())
             {
                 var google = db.Companies.First(c => c.Name == "Google");
@@ -74,7 +74,7 @@ namespace EFCoreConsoleMastery.Topics.Ch04
                 db.SaveChanges();
             }
 
-            SqliteDbHelper.PrintSection("4. Видалення та перевірка результату");
+            SqlServerDbHelper.PrintSection("4. Видалення та перевірка результату");
             using (var db = new AppContextL3_5())
             {
                 var tom = db.Users.First(u => u.Name == "Tom");
@@ -126,6 +126,7 @@ namespace EFCoreConsoleMastery.Topics.Ch04.L3_5
     /// <summary>Контекст бази даних для уроку 3.5 (SQLite).</summary>
     public class AppContextL3_5 : DbContext
     {
+        protected override void OnModelCreating(ModelBuilder modelBuilder) => modelBuilder.HasDefaultSchema("l4_08");
         /// <summary>Компанії.</summary>
         public DbSet<Company> Companies { get; set; } = null!;
 
@@ -135,7 +136,7 @@ namespace EFCoreConsoleMastery.Topics.Ch04.L3_5
         /// <summary>Налаштовує підключення до SQLite.</summary>
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlite(SqliteDbHelper.GetConnectionString("ch04_l3_5"));
+            optionsBuilder.UseSqlServer(SqlServerDbHelper.ConnectionString);
         }
     }
 }

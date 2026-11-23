@@ -24,10 +24,10 @@ namespace EFCoreConsoleMastery.Topics.Ch04
         /// </summary>
         public void Run()
         {
-            SqliteDbHelper.PrintSection("1. Спільне використання одного об'єкта ComplexType різними сутностями");
+            SqlServerDbHelper.PrintSection("1. Спільне використання одного об'єкта ComplexType різними сутностями");
             using (var db = new AppContextL3_12())
             {
-                SqliteDbHelper.RecreateDatabase(db);
+                SqlServerDbHelper.RecreateSchema(db, "l4_11");
 
                 // Один екземпляр комплексного типу може бути призначений кільком різним сутностям (навіть різних типів: User та Company).
                 // Для [Owned] таке спільне посилання викликало б конфлікт відстеження, бо Owned-тип має приховану ідентичність власника.
@@ -54,7 +54,7 @@ namespace EFCoreConsoleMastery.Topics.Ch04
                 db.SaveChanges();
             }
 
-            SqliteDbHelper.PrintSection("2. Читання з нового контексту після SaveChanges()");
+            SqlServerDbHelper.PrintSection("2. Читання з нового контексту після SaveChanges()");
             using (var db = new AppContextL3_12())
             {
                 // При читанні з нового контексту кожна сутність отримує власну копію Language зі значенням зі свого рядка таблиці.
@@ -110,6 +110,7 @@ namespace EFCoreConsoleMastery.Topics.Ch04.L3_12
     /// <summary>Контекст бази даних для уроку 3.12 (SQLite).</summary>
     public class AppContextL3_12 : DbContext
     {
+        protected override void OnModelCreating(ModelBuilder modelBuilder) => modelBuilder.HasDefaultSchema("l4_11");
         /// <summary>Компанії.</summary>
         public DbSet<Company> Companies { get; set; } = null!;
 
@@ -119,7 +120,7 @@ namespace EFCoreConsoleMastery.Topics.Ch04.L3_12
         /// <summary>Налаштовує підключення до SQLite.</summary>
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlite(SqliteDbHelper.GetConnectionString("ch04_l3_12"));
+            optionsBuilder.UseSqlServer(SqlServerDbHelper.ConnectionString);
         }
     }
 }

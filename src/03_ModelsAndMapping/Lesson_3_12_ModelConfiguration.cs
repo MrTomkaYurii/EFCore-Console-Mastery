@@ -26,20 +26,18 @@ public class Lesson_3_12_ModelConfiguration : ILesson
     /// </summary>
     public void Run()
     {
-        SqliteDbHelper.PrintSection("3.12. Конфігурація моделей (IEntityTypeConfiguration)");
+        SqlServerDbHelper.PrintSection("3.12. Конфігурація моделей (IEntityTypeConfiguration)");
 
         // Варіант 1: modelBuilder.ApplyConfiguration(...)
         using (var db = new L2_13.ApplyConfigContext())
         {
-            SqliteDbHelper.RecreateDatabase(db);
+            SqlServerDbHelper.RecreateSchema(db, "l3_12");
             db.Companies.Add(new L2_13.Company { Name = "SoftServe" });
             db.Users.Add(new L2_13.User { Name = "Tom", Age = 29 });
             db.SaveChanges();
 
             // Перевіряємо, що таблиці створені з новими іменами ("People" та "Enterprises"), заданими у конфігураціях.
-            var tables = db.Database
-                .SqlQueryRaw<string>("SELECT name AS Value FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name")
-                .ToList();
+            var tables = db.Database.GenerateCreateScript();
 
             Console.WriteLine("1) ApplyConfigContext (ApplyConfiguration) — створені таблиці:");
             foreach (var t in tables) Console.WriteLine($"  - {t}");
@@ -48,13 +46,11 @@ public class Lesson_3_12_ModelConfiguration : ILesson
         // Варіант 2: Атрибут [EntityTypeConfiguration(typeof(...))]
         using (var db = new L2_13.AttributeConfigContext())
         {
-            SqliteDbHelper.RecreateDatabase(db);
+            SqlServerDbHelper.RecreateSchema(db, "l3_12");
             db.Orders.Add(new L2_13.Order { Number = "ORD-2026-01" });
             db.SaveChanges();
 
-            var orderSql = db.Database
-                .SqlQueryRaw<string>("SELECT sql AS Value FROM sqlite_master WHERE type='table' AND name='CustomerOrders'")
-                .FirstOrDefault();
+            var orderSql = db.Database.GenerateCreateScript();
 
             Console.WriteLine("\n2) AttributeConfigContext ([EntityTypeConfiguration]) — DDL таблиці:");
             Console.WriteLine(orderSql);
@@ -130,11 +126,12 @@ namespace EFCoreConsoleMastery.Topics.Ch03.L2_13
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlite(SqliteDbHelper.GetConnectionString("ch03_l2_13_apply"));
+            optionsBuilder.UseSqlServer(SqlServerDbHelper.ConnectionString);
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.HasDefaultSchema("l3_12");
             // Підключення окремих класів конфігурації вручну
             modelBuilder.ApplyConfiguration(new UserConfiguration());
             modelBuilder.ApplyConfiguration(new CompanyConfiguration());
@@ -185,7 +182,7 @@ namespace EFCoreConsoleMastery.Topics.Ch03.L2_13
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlite(SqliteDbHelper.GetConnectionString("ch03_l2_13_attr"));
+            optionsBuilder.UseSqlServer(SqlServerDbHelper.ConnectionString);
         }
     }
 }

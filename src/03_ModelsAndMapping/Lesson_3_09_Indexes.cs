@@ -26,16 +26,14 @@ public class Lesson_3_09_Indexes : ILesson
     /// </summary>
     public void Run()
     {
-        SqliteDbHelper.PrintSection("3.9. Налаштування індексів");
+        SqlServerDbHelper.PrintSection("3.9. Налаштування індексів");
 
         using var db = new L2_17.ApplicationContext();
-        SqliteDbHelper.RecreateDatabase(db);
+        SqlServerDbHelper.RecreateSchema(db, "l3_09");
 
         // Переглядаємо всі створені індекси в SQLite через sqlite_master.
         // Умова sql IS NOT NULL відфільтровує автоматичні внутрішні індекси SQLite (sqlite_autoindex_*).
-        var indexes = db.Database
-            .SqlQueryRaw<string>("SELECT sql AS Value FROM sqlite_master WHERE type='index' AND sql IS NOT NULL ORDER BY name")
-            .ToList();
+        var indexes = db.Database.GenerateCreateScript();
 
         Console.WriteLine("Створені індекси в SQLite:");
         foreach (var idxSql in indexes)
@@ -105,11 +103,12 @@ namespace EFCoreConsoleMastery.Topics.Ch03.L2_17
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlite(SqliteDbHelper.GetConnectionString("ch03_l2_17"));
+            optionsBuilder.UseSqlServer(SqlServerDbHelper.ConnectionString);
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.HasDefaultSchema("l3_09");
             // Унікальний індекс на Passport через Fluent API.
             // Генерує: CREATE UNIQUE INDEX "IX_Users_Passport_Unique" ON "Users" ("Passport").
             modelBuilder.Entity<User>()
@@ -125,7 +124,7 @@ namespace EFCoreConsoleMastery.Topics.Ch03.L2_17
                 .HasIndex(u => u.PhoneNumber)
                 .IsUnique()
                 .HasDatabaseName("IX_Users_Phone_NotNull")
-                .HasFilter("\"PhoneNumber\" IS NOT NULL");
+                .HasFilter("[PhoneNumber] IS NOT NULL");
         }
     }
 }

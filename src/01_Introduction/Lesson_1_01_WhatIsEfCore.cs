@@ -24,15 +24,15 @@ public class Lesson_1_01_WhatIsEfCore : ILesson
     public void Run()
     {
         // Формуємо рядок підключення до локального файлу SQLite (Data Source=...)
-        var connectionString = SqliteDbHelper.GetConnectionString("lesson_1_1");
+        var connectionString = SqlServerDbHelper.ConnectionString;
 
         // Використовуємо using var, щоб DbContext гарантовано звільнив з'єднання з БД та Change Tracker
         using var db = new L1_1.IntroContext(connectionString);
         // Перестворюємо БД (EnsureDeleted + EnsureCreated), щоб кожен запуск починався з чистої схеми
-        SqliteDbHelper.RecreateDatabase(db);
+        SqlServerDbHelper.RecreateSchema(db, "l1_01");
 
         // 1. Інформація про провайдер БД
-        SqliteDbHelper.PrintSection("1. Провайдер бази даних");
+        SqlServerDbHelper.PrintSection("1. Провайдер бази даних");
         // ProviderName показує активний NuGet-провайдер (Microsoft.EntityFrameworkCore.Sqlite),
         // який відповідає за діалект SQL, типи стовпців та трансляцію LINQ у SQL
         Console.WriteLine($"Поточний провайдер: {db.Database.ProviderName}");
@@ -40,7 +40,7 @@ public class Lesson_1_01_WhatIsEfCore : ILesson
 
         // 2. Інспекція метаданих моделі EF Core (як C#-класи відображаються на таблиці SQLite)
         // EF Core будує внутрішню модель IModel один раз при першому зверненні до контексту
-        SqliteDbHelper.PrintSection("2. Інспекція метаданих моделі (IModel)");
+        SqlServerDbHelper.PrintSection("2. Інспекція метаданих моделі (IModel)");
         foreach (var entityType in db.Model.GetEntityTypes())
         {
             Console.WriteLine($"Сутність (CLR-тип): {entityType.ClrType.Name}");
@@ -65,7 +65,7 @@ public class Lesson_1_01_WhatIsEfCore : ILesson
         }
 
         // 3. Робота з об'єктами замість ручного SQL (ORM + LINQ)
-        SqliteDbHelper.PrintSection("3. Додавання та LINQ-вибірка сутностей");
+        SqlServerDbHelper.PrintSection("3. Додавання та LINQ-вибірка сутностей");
         // AddRange переводить усі передані об'єкти у стан EntityState.Added у Change Tracker.
         // На цьому етапі SQL-запити до БД ще НЕ надсилаються.
         db.Products.AddRange(
@@ -139,7 +139,7 @@ namespace EFCoreConsoleMastery.Topics.Ch01.L1_1
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             // Підключаємо провайдер SQLite; для MS SQL Server тут був би виклик UseSqlServer(...)
-            optionsBuilder.UseSqlite(connectionString);
+            optionsBuilder.UseSqlServer(connectionString);
         }
     }
 }

@@ -25,19 +25,17 @@ public class Lesson_3_06_TablesAndColumns : ILesson
     /// </summary>
     public void Run()
     {
-        SqliteDbHelper.PrintSection("3.6. Зіставлення таблиць і стовпців");
+        SqlServerDbHelper.PrintSection("3.6. Зіставлення таблиць і стовпців");
 
         // Приклад 1: Анотації даних [Table] та [Column]
         using (var db = new L2_6.AnnotationsContext())
         {
-            SqliteDbHelper.RecreateDatabase(db);
+            SqlServerDbHelper.RecreateSchema(db, "l3_06");
             db.Users.Add(new L2_6.UserAnnotated { Name = "Tom" });
             db.SaveChanges();
 
             // Читаємо DDL з sqlite_master саме для таблиці 'People', а не 'Users'
-            var sql = db.Database
-                .SqlQueryRaw<string>("SELECT sql AS Value FROM sqlite_master WHERE type='table' AND name='People'")
-                .FirstOrDefault();
+            var sql = db.Database.GenerateCreateScript();
 
             Console.WriteLine("1) Анотації [Table(\"People\")] і [Column(\"user_id\")]:");
             Console.WriteLine(sql);
@@ -46,13 +44,11 @@ public class Lesson_3_06_TablesAndColumns : ILesson
         // Приклад 2: Fluent API ToTable та HasColumnName
         using (var db = new L2_6.FluentContext())
         {
-            SqliteDbHelper.RecreateDatabase(db);
+            SqlServerDbHelper.RecreateSchema(db, "l3_06");
             db.Users.Add(new L2_6.UserFluent { Name = "Alice" });
             db.SaveChanges();
 
-            var sql = db.Database
-                .SqlQueryRaw<string>("SELECT sql AS Value FROM sqlite_master WHERE type='table' AND name='Employees'")
-                .FirstOrDefault();
+            var sql = db.Database.GenerateCreateScript();
 
             Console.WriteLine("\n2) Fluent API ToTable(\"Employees\", schema: \"userstore\") і HasColumnName(\"employee_id\"):");
             Console.WriteLine(sql);
@@ -95,7 +91,7 @@ namespace EFCoreConsoleMastery.Topics.Ch03.L2_6
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlite(SqliteDbHelper.GetConnectionString("ch03_l2_6_ann"));
+            optionsBuilder.UseSqlServer(SqlServerDbHelper.ConnectionString);
         }
     }
 
@@ -121,11 +117,12 @@ namespace EFCoreConsoleMastery.Topics.Ch03.L2_6
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlite(SqliteDbHelper.GetConnectionString("ch03_l2_6_fl"));
+            optionsBuilder.UseSqlServer(SqlServerDbHelper.ConnectionString);
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.HasDefaultSchema("l3_06");
             // ToTable("Employees", schema: "userstore") вказує ім'я таблиці та схему.
             // У MS SQL Server / PostgreSQL створилася б таблиця [userstore].[Employees],
             // але SQLite не має поняття схем (schemas), тому провайдер ігнорує параметр schema.

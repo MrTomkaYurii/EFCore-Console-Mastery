@@ -25,7 +25,7 @@ public class Lesson_6_05_SetOperations : ILesson
     {
         using (var db = new AppDbContext())
         {
-            SqliteDbHelper.RecreateDatabase(db);
+            SqlServerDbHelper.RecreateSchema(db, "l6_05");
 
             Company microsoft = new() { Name = "Microsoft" };
             Company google = new() { Name = "Google" };
@@ -41,7 +41,7 @@ public class Lesson_6_05_SetOperations : ILesson
         }
 
         // 1. Об'єднання (Union) — усуває дублікати
-        SqliteDbHelper.PrintSection("1. Об'єднання вибірок (Union)");
+        SqlServerDbHelper.PrintSection("1. Об'єднання вибірок (Union)");
         using (var db = new AppDbContext())
         {
             // Union транслюється в SQL UNION (який автоматично видаляє дублікати рядків, на відміну від Concat -> UNION ALL).
@@ -68,7 +68,7 @@ public class Lesson_6_05_SetOperations : ILesson
         }
 
         // 2. Перетин (Intersect) — елементи, присутні в обох вибірках
-        SqliteDbHelper.PrintSection("2. Перетин вибірок (Intersect)");
+        SqlServerDbHelper.PrintSection("2. Перетин вибірок (Intersect)");
         using (var db = new AppDbContext())
         {
             // SQLite нативно підтримує оператор INTERSECT (як і MS SQL Server).
@@ -82,7 +82,7 @@ public class Lesson_6_05_SetOperations : ILesson
         }
 
         // 3. Різниця (Except) — елементи першої вибірки, яких немає у другій
-        SqliteDbHelper.PrintSection("3. Різниця вибірок (Except)");
+        SqlServerDbHelper.PrintSection("3. Різниця вибірок (Except)");
         using (var db = new AppDbContext())
         {
             // Транслюється в SQL EXCEPT (у SQLite та MS SQL Server; у деяких інших СУБД, наприклад старіших версіях MySQL,
@@ -135,6 +135,7 @@ namespace EFCoreConsoleMastery.Topics.Ch06.L5_4
     /// <summary>Контекст бази даних для уроку 5.4 (операції з множинами).</summary>
     public class AppDbContext : DbContext
     {
+        protected override void OnModelCreating(ModelBuilder modelBuilder) => modelBuilder.HasDefaultSchema("l6_05");
         /// <summary>Таблиця користувачів.</summary>
         public DbSet<User> Users { get; set; } = null!;
 
@@ -144,7 +145,7 @@ namespace EFCoreConsoleMastery.Topics.Ch06.L5_4
         /// <summary>Підключення до локальної БД SQLite для уроку 5.4.</summary>
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlite(SqliteDbHelper.GetConnectionString("ch06_lesson_5_4"));
+            optionsBuilder.UseSqlServer(SqlServerDbHelper.ConnectionString);
         }
     }
 }

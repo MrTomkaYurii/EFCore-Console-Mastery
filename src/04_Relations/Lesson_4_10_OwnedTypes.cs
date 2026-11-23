@@ -23,10 +23,10 @@ namespace EFCoreConsoleMastery.Topics.Ch04
         /// </summary>
         public void Run()
         {
-            SqliteDbHelper.PrintSection("1. Збереження Owned Types в одній таблиці з власником");
+            SqlServerDbHelper.PrintSection("1. Збереження Owned Types в одній таблиці з власником");
             using (var db = new AppContextL3_7())
             {
-                SqliteDbHelper.RecreateDatabase(db);
+                SqlServerDbHelper.RecreateSchema(db, "l4_10");
 
                 // У SQLite створюється лише одна таблиця "Users" зі стовпцями:
                 // Id, Login, Password, Profile_Name, Profile_Age, Address_City, Address_Street.
@@ -50,7 +50,7 @@ namespace EFCoreConsoleMastery.Topics.Ch04
                 db.SaveChanges();
             }
 
-            SqliteDbHelper.PrintSection("2. Читання без Include (дані лежать у тій самій таблиці Users)");
+            SqlServerDbHelper.PrintSection("2. Читання без Include (дані лежать у тій самій таблиці Users)");
             using (var db = new AppContextL3_7())
             {
                 // На відміну від звичайних навігаційних властивостей, Owned-типи завантажуються АВТОМАТИЧНО без Include(),
@@ -122,7 +122,7 @@ namespace EFCoreConsoleMastery.Topics.Ch04.L3_7
         /// <summary>Налаштовує підключення до SQLite.</summary>
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlite(SqliteDbHelper.GetConnectionString("ch04_l3_7"));
+            optionsBuilder.UseSqlServer(SqlServerDbHelper.ConnectionString);
         }
 
         /// <summary>
@@ -130,6 +130,7 @@ namespace EFCoreConsoleMastery.Topics.Ch04.L3_7
         /// </summary>
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.HasDefaultSchema("l4_10");
             // OwnsOne вбудовує властивості Address у таблицю Users зі стовпцями Address_City, Address_Street.
             // При потребі можна викликати .ToTable("UserAddresses"), щоб винести Owned-тип в окрему таблицю зі спільним PK,
             // або .OwnsMany(...) для колекції власних об'єктів (які завжди виносяться в окрему таблицю або JSON).

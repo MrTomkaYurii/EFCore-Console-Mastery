@@ -27,16 +27,14 @@ public class Lesson_3_08_Keys : ILesson
     /// </summary>
     public void Run()
     {
-        SqliteDbHelper.PrintSection("3.8. Налаштування ключів");
+        SqlServerDbHelper.PrintSection("3.8. Налаштування ключів");
 
         // 1. Первинний ключ через Fluent API (HasKey + HasName) та альтернативний ключ (HasAlternateKey)
         using (var db = new L2_7.SingleAndAlternateKeyContext())
         {
-            SqliteDbHelper.RecreateDatabase(db);
+            SqlServerDbHelper.RecreateSchema(db, "l3_08");
 
-            var sql = db.Database
-                .SqlQueryRaw<string>("SELECT sql AS Value FROM sqlite_master WHERE type='table' AND name='Users'")
-                .FirstOrDefault();
+            var sql = db.Database.GenerateCreateScript();
 
             Console.WriteLine("1) DDL таблиці Users (HasKey + HasName + HasAlternateKey):");
             Console.WriteLine(sql);
@@ -64,11 +62,9 @@ public class Lesson_3_08_Keys : ILesson
         // 2. Складений первинний ключ (лише через Fluent API)
         using (var db = new L2_7.CompositeKeyContext())
         {
-            SqliteDbHelper.RecreateDatabase(db);
+            SqlServerDbHelper.RecreateSchema(db, "l3_08");
 
-            var sql = db.Database
-                .SqlQueryRaw<string>("SELECT sql AS Value FROM sqlite_master WHERE type='table' AND name='Citizens'")
-                .FirstOrDefault();
+            var sql = db.Database.GenerateCreateScript();
 
             Console.WriteLine("\n2) DDL таблиці Citizens (складений первинний ключ):");
             Console.WriteLine(sql);
@@ -144,11 +140,12 @@ namespace EFCoreConsoleMastery.Topics.Ch03.L2_7
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlite(SqliteDbHelper.GetConnectionString("ch03_l2_7_single"));
+            optionsBuilder.UseSqlServer(SqlServerDbHelper.ConnectionString);
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.HasDefaultSchema("l3_08");
             // Вказуємо Ident як первинний ключ і задаємо власне ім'я обмеження PRIMARY KEY ("UsersPrimaryKey")
             // замість стандартного "PK_Users".
             modelBuilder.Entity<User>()
@@ -187,11 +184,12 @@ namespace EFCoreConsoleMastery.Topics.Ch03.L2_7
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlite(SqliteDbHelper.GetConnectionString("ch03_l2_7_comp"));
+            optionsBuilder.UseSqlServer(SqlServerDbHelper.ConnectionString);
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.HasDefaultSchema("l3_08");
             // Складений первинний ключ можна задати тільки через Fluent API (анонімний тип у HasKey).
             // Примітка: у новіших версіях EF Core існує атрибут [PrimaryKey(nameof(...), nameof(...))],
             // але класичний підхід — саме Fluent API. Для складеного ключа автогенерація не працює.

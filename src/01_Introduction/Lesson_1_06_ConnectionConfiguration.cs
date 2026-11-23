@@ -32,11 +32,11 @@ public class Lesson_1_06_ConnectionConfiguration : ILesson
     {
         // Спосіб 1: Конфігурація через OnConfiguring з передачею рядка підключення в конструктор.
         // Зручно для простих консольних програм, але жорстко прив'язує контекст до виклику UseSqlite().
-        SqliteDbHelper.PrintSection("1. Конфігурація через OnConfiguring");
-        var connStr1 = SqliteDbHelper.GetConnectionString("lesson_1_5_onconfiguring");
+        SqlServerDbHelper.PrintSection("1. Конфігурація через OnConfiguring");
+        var connStr1 = SqlServerDbHelper.ConnectionString;
         using (var db1 = new L1_5.OnConfiguringContext(connStr1))
         {
-            SqliteDbHelper.RecreateDatabase(db1);
+            SqlServerDbHelper.RecreateSchema(db1, "l1_06");
             db1.Users.Add(new L1_5.User { Name = "Tom", Age = 33 });
             db1.SaveChanges();
 
@@ -47,14 +47,14 @@ public class Lesson_1_06_ConnectionConfiguration : ILesson
         // Спосіб 2: Передача DbContextOptions<T> у конструктор базового класу.
         // Це стандартний підхід для ASP.NET Core та DI-контейнера (AddDbContext<T>), оскільки дозволяє
         // підміняти провайдер ззовні (наприклад, SQLite у тестах і SQL Server/PostgreSQL у продакшені).
-        SqliteDbHelper.PrintSection("2. Конфігурація через DbContextOptions<T>");
-        var connStr2 = SqliteDbHelper.GetConnectionString("lesson_1_5_options");
+        SqlServerDbHelper.PrintSection("2. Конфігурація через DbContextOptions<T>");
+        var connStr2 = SqlServerDbHelper.ConnectionString;
         var optionsBuilder = new DbContextOptionsBuilder<L1_5.OptionsContext>();
-        var options = optionsBuilder.UseSqlite(connStr2).Options;
+        var options = optionsBuilder.UseSqlServer(connStr2).Options;
 
         using (var db2 = new L1_5.OptionsContext(options))
         {
-            SqliteDbHelper.RecreateDatabase(db2);
+            SqlServerDbHelper.RecreateSchema(db2, "l1_06");
             db2.Users.Add(new L1_5.User { Name = "Alice", Age = 26 });
             db2.SaveChanges();
 
@@ -67,8 +67,8 @@ public class Lesson_1_06_ConnectionConfiguration : ILesson
         // Спосіб 3: Завантаження рядка підключення з JSON-конфігурації (IConfiguration).
         // У реальних застосунках рядки підключення не хардкодять у C#-коді, а виносять у appsettings.json,
         // змінні середовища або Secret Manager.
-        SqliteDbHelper.PrintSection("3. ConfigurationBuilder + JSON-конфігурація");
-        var connStr3 = SqliteDbHelper.GetConnectionString("lesson_1_5_json");
+        SqlServerDbHelper.PrintSection("3. ConfigurationBuilder + JSON-конфігурація");
+        var connStr3 = SqlServerDbHelper.ConnectionString;
 
         // Імітуємо файл appsettings.json у пам'яті, щоб не засмічувати робочий каталог.
         // Екрануємо зворотні слеші (\) у шляху Windows, щоб JSON залишався валідним.
@@ -92,12 +92,12 @@ public class Lesson_1_06_ConnectionConfiguration : ILesson
         Console.WriteLine($"Отриманий рядок підключення з конфігурації: {resolvedConnStr}");
 
         var jsonOptions = new DbContextOptionsBuilder<L1_5.OptionsContext>()
-            .UseSqlite(resolvedConnStr)
+            .UseSqlServer(resolvedConnStr)
             .Options;
 
         using (var db3 = new L1_5.OptionsContext(jsonOptions))
         {
-            SqliteDbHelper.RecreateDatabase(db3);
+            SqlServerDbHelper.RecreateSchema(db3, "l1_06");
             db3.Users.Add(new L1_5.User { Name = "Bob", Age = 40 });
             db3.SaveChanges();
 
@@ -150,7 +150,7 @@ namespace EFCoreConsoleMastery.Topics.Ch01.L1_5
         /// </summary>
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlite(connectionString);
+            optionsBuilder.UseSqlServer(connectionString);
         }
     }
 

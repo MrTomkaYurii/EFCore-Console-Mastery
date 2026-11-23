@@ -25,7 +25,7 @@ namespace EFCoreConsoleMastery.Topics.Ch04
         {
             using (var db = new AppContextL3_9())
             {
-                SqliteDbHelper.RecreateDatabase(db);
+                SqlServerDbHelper.RecreateSchema(db, "l4_06");
 
                 var microsoft = new Company { Name = "Microsoft" };
                 var google = new Company { Name = "Google" };
@@ -40,7 +40,7 @@ namespace EFCoreConsoleMastery.Topics.Ch04
                 db.SaveChanges();
             }
 
-            SqliteDbHelper.PrintSection("1. Ліниве завантаження при зверненні до virtual-властивості Company");
+            SqlServerDbHelper.PrintSection("1. Ліниве завантаження при зверненні до virtual-властивості Company");
             using (var db = new AppContextL3_9())
             {
                 // Без Include! Перший SQL-запит витягує лише таблицю Users (SELECT Id, CompanyId, Name FROM Users).
@@ -56,7 +56,7 @@ namespace EFCoreConsoleMastery.Topics.Ch04
                 }
             }
 
-            SqliteDbHelper.PrintSection("2. Ліниве завантаження колекції virtual Users у Company");
+            SqlServerDbHelper.PrintSection("2. Ліниве завантаження колекції virtual Users у Company");
             using (var db = new AppContextL3_9())
             {
                 var companies = db.Companies.ToList();
@@ -114,6 +114,7 @@ namespace EFCoreConsoleMastery.Topics.Ch04.L3_9
     /// <summary>Контекст бази даних для уроку 3.9 (SQLite з увімкненим Lazy Loading).</summary>
     public class AppContextL3_9 : DbContext
     {
+        protected override void OnModelCreating(ModelBuilder modelBuilder) => modelBuilder.HasDefaultSchema("l4_06");
         /// <summary>Користувачі.</summary>
         public DbSet<User> Users { get; set; } = null!;
 
@@ -129,7 +130,7 @@ namespace EFCoreConsoleMastery.Topics.Ch04.L3_9
             // Альтернатива без проксі — ін'єкція ILazyLoader у конструктор сутності.
             optionsBuilder
                 .UseLazyLoadingProxies()
-                .UseSqlite(SqliteDbHelper.GetConnectionString("ch04_l3_9"));
+                .UseSqlServer(SqlServerDbHelper.ConnectionString);
         }
     }
 }

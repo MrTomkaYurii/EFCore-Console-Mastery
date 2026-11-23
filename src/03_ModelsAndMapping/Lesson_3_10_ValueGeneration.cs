@@ -26,16 +26,14 @@ public class Lesson_3_10_ValueGeneration : ILesson
     /// </summary>
     public void Run()
     {
-        SqliteDbHelper.PrintSection("3.10. Генерація значень властивостей і стовпців");
+        SqlServerDbHelper.PrintSection("3.10. Генерація значень властивостей і стовпців");
 
         // Частина 1: HasDefaultValue, HasDefaultValueSql("DATETIME('now')") та HasComputedColumnSql
         using (var db = new L2_8.DefaultsAndComputedContext())
         {
-            SqliteDbHelper.RecreateDatabase(db);
+            SqlServerDbHelper.RecreateSchema(db, "l3_10");
 
-            var sql = db.Database
-                .SqlQueryRaw<string>("SELECT sql AS Value FROM sqlite_master WHERE type='table' AND name='Users'")
-                .FirstOrDefault();
+            var sql = db.Database.GenerateCreateScript();
 
             Console.WriteLine("1) DDL таблиці Users (DEFAULT 18, DEFAULT DATETIME('now'), GENERATED ALWAYS AS):");
             Console.WriteLine(sql);
@@ -60,7 +58,7 @@ public class Lesson_3_10_ValueGeneration : ILesson
         // Частина 2: Відключення автогенерації ключа через ValueGeneratedNever() та [DatabaseGenerated(None)]
         using (var db = new L2_8.ManualKeyContext())
         {
-            SqliteDbHelper.RecreateDatabase(db);
+            SqlServerDbHelper.RecreateSchema(db, "l3_10");
 
             // Оскільки автогенерацію вимкнено, ми зобов'язані передати унікальні Id вручну.
             db.ManualUsers.AddRange(
@@ -119,11 +117,12 @@ namespace EFCoreConsoleMastery.Topics.Ch03.L2_8
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlite(SqliteDbHelper.GetConnectionString("ch03_l2_8_def"));
+            optionsBuilder.UseSqlServer(SqlServerDbHelper.ConnectionString);
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.HasDefaultSchema("l3_10");
             // Фіксоване значення за замовчуванням: у DDL створює DEFAULT 18.
             modelBuilder.Entity<User>()
                 .Property(u => u.Age)
@@ -169,11 +168,12 @@ namespace EFCoreConsoleMastery.Topics.Ch03.L2_8
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlite(SqliteDbHelper.GetConnectionString("ch03_l2_8_man"));
+            optionsBuilder.UseSqlServer(SqlServerDbHelper.ConnectionString);
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.HasDefaultSchema("l3_10");
             // Дублюємо через Fluent API (ValueGeneratedNever) для наочності:
             // Fluent API має вищий пріоритет за Data Annotations і є еквівалентом [DatabaseGenerated(None)].
             modelBuilder.Entity<ManualUser>()

@@ -25,11 +25,11 @@ public class Lesson_3_05_EntityFields : ILesson
     /// </summary>
     public void Run()
     {
-        SqliteDbHelper.PrintSection("3.5. Використання полів сутності");
+        SqlServerDbHelper.PrintSection("3.5. Використання полів сутності");
 
         using (var db = new L2_5.ApplicationContext())
         {
-            SqliteDbHelper.RecreateDatabase(db);
+            SqlServerDbHelper.RecreateSchema(db, "l3_05");
 
             var bob = new L2_5.User("Bob", 30);
             var kate = new L2_5.User("Kate", 29);
@@ -108,11 +108,12 @@ namespace EFCoreConsoleMastery.Topics.Ch03.L2_5
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlite(SqliteDbHelper.GetConnectionString("ch03_l2_5"));
+            optionsBuilder.UseSqlServer(SqlServerDbHelper.ConnectionString);
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.HasDefaultSchema("l3_05");
             // Прив'язуємо властивості лише для читання (без set-аксесора) до їхніх приватних полів.
             // Без HasField(...) EF Core проігнорував би Id та Age, бо вони не мають setter'а.
             // У SQLite для Id все одно буде створено INTEGER PRIMARY KEY AUTOINCREMENT.

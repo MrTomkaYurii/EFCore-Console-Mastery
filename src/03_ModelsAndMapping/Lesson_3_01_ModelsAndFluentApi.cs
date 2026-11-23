@@ -25,12 +25,12 @@ public class Lesson_3_01_ModelsAndFluentApi : ILesson
     /// </summary>
     public void Run()
     {
-        SqliteDbHelper.PrintSection("3.1. Моделі, Fluent API та анотації даних");
+        SqlServerDbHelper.PrintSection("3.1. Моделі, Fluent API та анотації даних");
 
         using var db = new L2_1.ApplicationContext();
         // RecreateDatabase перестворює чисту БД SQLite (EnsureDeleted + EnsureCreated),
         // щоб демонстрація щоразу починалася з порожньої схеми без міграцій.
-        SqliteDbHelper.RecreateDatabase(db);
+        SqlServerDbHelper.RecreateSchema(db, "l3_01");
 
         // Додаємо користувачів: для Id спрацьовує автогенерація (PRIMARY KEY AUTOINCREMENT у SQLite),
         // а відображення на стовпець таблиці налаштоване через [Column("user_id")].
@@ -43,11 +43,9 @@ public class Lesson_3_01_ModelsAndFluentApi : ILesson
 
         // Перевіряємо згенеровану схему таблиці Users безпосередньо в системній таблиці SQLite (sqlite_master).
         // Псевдонім AS Value потрібен для SqlQueryRaw<string>, щоб EF Core зіставив єдиний стовпець зі скаляром.
-        var createSql = db.Database
-            .SqlQueryRaw<string>("SELECT sql AS Value FROM sqlite_master WHERE type='table' AND name='Users'")
-            .FirstOrDefault();
+        var createSql = db.Database.GenerateCreateScript();
 
-        Console.WriteLine("DDL таблиці Users у SQLite:");
+        Console.WriteLine("DDL схеми в MS SQL Server:");
         Console.WriteLine(createSql);
 
         Console.WriteLine("\nЗбережені користувачі:");
@@ -103,11 +101,12 @@ namespace EFCoreConsoleMastery.Topics.Ch03.L2_1
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             // Налаштовуємо провайдер SQLite з окремим файлом БД для цього уроку.
-            optionsBuilder.UseSqlite(SqliteDbHelper.GetConnectionString("ch03_l2_1"));
+            optionsBuilder.UseSqlServer(SqlServerDbHelper.ConnectionString);
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.HasDefaultSchema("l3_01");
             // Точка входу для Fluent API: тут можна перевизначити угоди та анотації даних.
             // HasDefaultValue("Anonymous") додає в DDL SQLite клаузулу DEFAULT 'Anonymous'
             // (на відміну від MS SQL Server, де може генеруватися іменоване DEFAULT-обмеження DF_...).

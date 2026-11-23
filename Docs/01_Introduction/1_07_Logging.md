@@ -34,7 +34,7 @@
 
        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
        {
-           optionsBuilder.UseSqlite("Data Source=helloapp.db");
+           optionsBuilder.UseSqlServer("Data Source=helloapp.db");
            optionsBuilder.LogTo(_logStream.WriteLine);
        }
 
@@ -140,12 +140,12 @@ flowchart LR
 У файлі [`Lesson_1_07_Logging.cs`](../../src/01_Introduction/Lesson_1_07_Logging.cs) продемонстровано три рівні деталізації логів на прикладі `LoggedContext(DbContextOptions<LoggedContext> options)`:
 
 ### Підготовка
-Спочатку через `PlainContext` (без логування) викликається `SqliteDbHelper.RecreateDatabase(initDb)`, щоб DDL-команди створення таблиці не засмічували консоль перед демонстрацією фільтрів.
+Спочатку через `PlainContext` (без логування) викликається `SqlServerDbHelper.RecreateSchema(initDb)`, щоб DDL-команди створення таблиці не засмічували консоль перед демонстрацією фільтрів.
 
 ### Крок 1. `LogTo` з `LogLevel.Information`
 ```csharp
 var infoOptions = new DbContextOptionsBuilder<L1_6.LoggedContext>()
-    .UseSqlite(connectionString)
+    .UseSqlServer(connectionString)
     .LogTo(msg => Console.WriteLine($"  [LOG] {msg}"), LogLevel.Information)
     .Options;
 ```
@@ -154,7 +154,7 @@ var infoOptions = new DbContextOptionsBuilder<L1_6.LoggedContext>()
 ### Крок 2. Фільтрація за `RelationalEventId.CommandExecuted`
 ```csharp
 var eventOptions = new DbContextOptionsBuilder<L1_6.LoggedContext>()
-    .UseSqlite(connectionString)
+    .UseSqlServer(connectionString)
     .LogTo(msg => Console.WriteLine($"  [SQL-EVENT] {msg}"), new[] { RelationalEventId.CommandExecuted })
     .Options;
 ```
@@ -163,7 +163,7 @@ var eventOptions = new DbContextOptionsBuilder<L1_6.LoggedContext>()
 ### Крок 3. Фільтрація за категорією `DbLoggerCategory.Database.Command`
 ```csharp
 var categoryOptions = new DbContextOptionsBuilder<L1_6.LoggedContext>()
-    .UseSqlite(connectionString)
+    .UseSqlServer(connectionString)
     .LogTo(
         msg => Console.WriteLine($"  [CATEGORY] {msg}"),
         new[] { DbLoggerCategory.Database.Command.Name },

@@ -23,10 +23,10 @@ namespace EFCoreConsoleMastery.Topics.Ch04
         /// </summary>
         public void Run()
         {
-            SqliteDbHelper.PrintSection("1. Створення зв'язку M:N без явного проміжного класу");
+            SqlServerDbHelper.PrintSection("1. Створення зв'язку M:N без явного проміжного класу");
             using (var db = new AppContextL3_6())
             {
-                SqliteDbHelper.RecreateDatabase(db);
+                SqlServerDbHelper.RecreateSchema(db, "l4_09");
 
                 var tom = new Student { Name = "Tom" };
                 var alice = new Student { Name = "Alice" };
@@ -46,7 +46,7 @@ namespace EFCoreConsoleMastery.Topics.Ch04
                 db.SaveChanges();
             }
 
-            SqliteDbHelper.PrintSection("2. Читання курсів та записаних студентів");
+            SqlServerDbHelper.PrintSection("2. Читання курсів та записаних студентів");
             using (var db = new AppContextL3_6())
             {
                 // Include(c => c.Students) генерує подвійний LEFT JOIN: Courses -> Enrollments -> Students.
@@ -57,7 +57,7 @@ namespace EFCoreConsoleMastery.Topics.Ch04
                 }
             }
 
-            SqliteDbHelper.PrintSection("3. Оновлення зв'язків (відписка та підписка на курс)");
+            SqlServerDbHelper.PrintSection("3. Оновлення зв'язків (відписка та підписка на курс)");
             using (var db = new AppContextL3_6())
             {
                 // Важливо: щоб Remove() / Add() у колекції M:N коректно відстежилися Change Tracker'ом,
@@ -125,7 +125,7 @@ namespace EFCoreConsoleMastery.Topics.Ch04.L3_6
         /// <summary>Налаштовує підключення до SQLite.</summary>
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlite(SqliteDbHelper.GetConnectionString("ch04_l3_6"));
+            optionsBuilder.UseSqlServer(SqlServerDbHelper.ConnectionString);
         }
 
         /// <summary>
@@ -133,6 +133,7 @@ namespace EFCoreConsoleMastery.Topics.Ch04.L3_6
         /// </summary>
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.HasDefaultSchema("l4_09");
             // Без UsingEntity EF Core назвав би проміжну таблицю "CourseStudent" (за алфавітом назв класів).
             // UsingEntity(j => j.ToTable("Enrollments")) змінює лише ім'я таблиці в SQLite, залишаючи її без окремого C#-класу
             // (під капотом використовується Dictionary<string, object> — property bag).

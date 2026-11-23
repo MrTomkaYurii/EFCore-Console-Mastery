@@ -72,7 +72,7 @@ Metanit наводить два способи елегантного виріш
 ```csharp
 protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 {
-    optionsBuilder.UseSqlite("Data Source=helloapp.db");
+    optionsBuilder.UseSqlServer("Data Source=helloapp.db");
 }
 ```
 Параметр `Data Source=helloapp.db` вказує ім'я (або шлях) локального файлу SQLite.
@@ -125,7 +125,7 @@ sequenceDiagram
 ```csharp
 using (var db = new L1_2.ApplicationContext(connectionString))
 {
-    SqliteDbHelper.RecreateDatabase(db);
+    SqlServerDbHelper.RecreateSchema(db);
     ...
 }
 ```

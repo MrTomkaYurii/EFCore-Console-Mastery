@@ -92,7 +92,7 @@ erDiagram
    - Клас `CompanyProductsGroup` не має `Id` і містить три властивості: `CompanyName`, `ProductCount`, `TotalSum`.
    - У `ViewsContext` оголошено `public DbSet<CompanyProductsGroup> ProductsByCompany { get; set; } = null!;`, а в `OnModelCreating` задано `pc.HasNoKey()` та `pc.ToView("View_ProductsByCompany")`.
 2. **Створення `VIEW` у базі даних:**
-   - Після `SqliteDbHelper.RecreateDatabase(setupDb)` (який створює лише таблиці `Companies` і `Products`) виконується `ExecuteSqlRaw` із командою:
+   - Після `SqlServerDbHelper.RecreateSchema(setupDb)` (який створює лише таблиці `Companies` і `Products`) виконується `ExecuteSqlRaw` із командою:
      ```sql
      CREATE VIEW IF NOT EXISTS View_ProductsByCompany AS
      SELECT

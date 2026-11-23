@@ -25,7 +25,7 @@ public class Lesson_6_04_JoinAndGroupBy : ILesson
     {
         using (var db = new AppDbContext())
         {
-            SqliteDbHelper.RecreateDatabase(db);
+            SqlServerDbHelper.RecreateSchema(db, "l6_04");
 
             Country usa = new() { Name = "USA" };
             Country ukraine = new() { Name = "Ukraine" };
@@ -49,7 +49,7 @@ public class Lesson_6_04_JoinAndGroupBy : ILesson
         // 1. З'єднання двох таблиць методом Join
         // На відміну від Include (який підтягує повні сутності з відстеженням у ChangeTracker),
         // Join зазвичай використовують для проекції лише потрібних колонок в анонімний тип або DTO (без tracking).
-        SqliteDbHelper.PrintSection("1. З'єднання двох таблиць (Join)");
+        SqlServerDbHelper.PrintSection("1. З'єднання двох таблиць (Join)");
         using (var db = new AppDbContext())
         {
             // Join транслюється у SQL INNER JOIN "Companies" AS "c" ON "u"."CompanyId" = "c"."Id"
@@ -74,7 +74,7 @@ public class Lesson_6_04_JoinAndGroupBy : ILesson
 
         // 2. З'єднання трьох таблиць через оператори LINQ (join ... equals)
         // Для об'єднання 3+ таблиць Query Syntax часто читається простіше, ніж вкладені виклики .Join().Join().
-        SqliteDbHelper.PrintSection("2. З'єднання трьох таблиць (Query Syntax)");
+        SqlServerDbHelper.PrintSection("2. З'єднання трьох таблиць (Query Syntax)");
         using (var db = new AppDbContext())
         {
             // У SQLite це перетворюється на два послідовні INNER JOIN: Users -> Companies -> Countries.
@@ -96,7 +96,7 @@ public class Lesson_6_04_JoinAndGroupBy : ILesson
         }
 
         // 3. Групування даних (GroupBy та group ... by ... into)
-        SqliteDbHelper.PrintSection("3. Групування (GroupBy)");
+        SqlServerDbHelper.PrintSection("3. Групування (GroupBy)");
         using (var db = new AppDbContext())
         {
             // EF Core транслює GroupBy + Select з агрегатами (Count, Average, Sum, Min, Max)
@@ -179,6 +179,7 @@ namespace EFCoreConsoleMastery.Topics.Ch06.L5_3
     /// <summary>Контекст бази даних для уроку 5.3 (Join та GroupBy).</summary>
     public class AppDbContext : DbContext
     {
+        protected override void OnModelCreating(ModelBuilder modelBuilder) => modelBuilder.HasDefaultSchema("l6_04");
         /// <summary>Таблиця країн.</summary>
         public DbSet<Country> Countries { get; set; } = null!;
 
@@ -191,7 +192,7 @@ namespace EFCoreConsoleMastery.Topics.Ch06.L5_3
         /// <summary>Налаштовує підключення до локальної БД SQLite для уроку 5.3.</summary>
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlite(SqliteDbHelper.GetConnectionString("ch06_lesson_5_3"));
+            optionsBuilder.UseSqlServer(SqlServerDbHelper.ConnectionString);
         }
     }
 }

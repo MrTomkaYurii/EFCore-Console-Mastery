@@ -76,7 +76,7 @@ public class SampleContextFactory : IDesignTimeDbContextFactory<ApplicationConte
             .Build();
 
         var optionsBuilder = new DbContextOptionsBuilder<ApplicationContext>();
-        optionsBuilder.UseSqlite(config.GetConnectionString("DefaultConnection"));
+        optionsBuilder.UseSqlServer(config.GetConnectionString("DefaultConnection"));
 
         return new ApplicationContext(optionsBuilder.Options);
     }
@@ -126,7 +126,7 @@ var pendingMigrations = db.Database.GetPendingMigrations().ToList();
 - `GetAppliedMigrations()` робить запит до таблиці `__EFMigrationsHistory` у БД і повертає вже застосовані міграції.
 - `GetPendingMigrations()` повертає різницю (міграції, які є в коді, але ще не застосовані в БД).
 
-Оскільки в навчальному уроці БД створюється через `SqliteDbHelper.RecreateDatabase(db)` (який використовує `EnsureCreated()`), усі три списки дорівнюють `0`.
+Оскільки в навчальному уроці БД створюється через `SqlServerDbHelper.RecreateSchema(db)` (який використовує `EnsureCreated()`), усі три списки дорівнюють `0`.
 
 ### Крок 2. Генерація DDL-скрипта поточної схеми (`GenerateCreateScript`)
 ```csharp

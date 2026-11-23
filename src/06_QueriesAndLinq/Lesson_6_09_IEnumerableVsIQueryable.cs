@@ -26,11 +26,11 @@ public class Lesson_6_09_IEnumerableVsIQueryable : ILesson
     {
         using (var db = new AppDbContext())
         {
-            SqliteDbHelper.RecreateDatabase(db);
+            SqlServerDbHelper.RecreateSchema(db, "l6_09");
         }
 
         // 1. IEnumerable<User>: завантажує всю таблицю, фільтрує у пам'яті клієнта
-        SqliteDbHelper.PrintSection("1. IEnumerable<User> — фільтрація на стороні клієнта");
+        SqlServerDbHelper.PrintSection("1. IEnumerable<User> — фільтрація на стороні клієнта");
         using (var db = new AppDbContext())
         {
             // Неявне приведення DbSet<User> (який реалізує IQueryable<User>) до IEnumerable<User>
@@ -49,7 +49,7 @@ public class Lesson_6_09_IEnumerableVsIQueryable : ILesson
         }
 
         // 2. IQueryable<User>: фільтрація транслюється у SQL WHERE
-        SqliteDbHelper.PrintSection("2. IQueryable<User> — фільтрація на стороні БД (SQL WHERE)");
+        SqlServerDbHelper.PrintSection("2. IQueryable<User> — фільтрація на стороні БД (SQL WHERE)");
         using (var db = new AppDbContext())
         {
             IQueryable<User> userIQuer = db.Users;
@@ -67,7 +67,7 @@ public class Lesson_6_09_IEnumerableVsIQueryable : ILesson
         }
 
         // 3. Динамічне нашарування умов на IQueryable
-        SqliteDbHelper.PrintSection("3. Динамічна побудова запиту через IQueryable");
+        SqlServerDbHelper.PrintSection("3. Динамічна побудова запиту через IQueryable");
         using (var db = new AppDbContext())
         {
             // Зручний патерн для фільтрів пошуку (наприклад, в API або UI):
@@ -109,12 +109,13 @@ namespace EFCoreConsoleMastery.Topics.Ch06.L5_6
         /// <summary>Налаштовує підключення до локальної БД SQLite для уроку 5.6.</summary>
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlite(SqliteDbHelper.GetConnectionString("ch06_lesson_5_6"));
+            optionsBuilder.UseSqlServer(SqlServerDbHelper.ConnectionString);
         }
 
         /// <summary>Налаштовує модель та додає початкові дані (Data Seeding) через HasData.</summary>
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.HasDefaultSchema("l6_09");
             // HasData вимагає явного задання первинного ключа Id; при EnsureCreated() / міграціях
             // ці записи автоматично вставляються в таблицю Users.
             modelBuilder.Entity<User>().HasData(

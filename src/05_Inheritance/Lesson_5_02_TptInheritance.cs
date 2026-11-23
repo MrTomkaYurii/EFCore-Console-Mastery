@@ -29,14 +29,14 @@ public class Lesson_5_02_TptInheritance : ILesson
     {
         using var db = new L4_2.TptContext();
         // Перестворюємо базу даних з нуля (EnsureDeleted + EnsureCreated) для чистого старту без міграцій.
-        SqliteDbHelper.RecreateDatabase(db);
+        SqlServerDbHelper.RecreateSchema(db, "l5_02");
 
         // 1. Виводимо реальну схему 3 таблиць SQLite з sqlite_master
-        SqliteDbHelper.PrintSection("1. Схема таблиць у SQLite (sqlite_master)");
-        PrintSqliteSchemas(db);
+        SqlServerDbHelper.PrintSection("1. Схема таблиць у MS SQL Server (DDL)");
+        Console.WriteLine(db.Database.GenerateCreateScript());
 
         // 2. Додаємо дані різних типів ієрархії
-        SqliteDbHelper.PrintSection("2. Додавання даних у нормалізовані таблиці TPT");
+        SqlServerDbHelper.PrintSection("2. Додавання даних у нормалізовані таблиці TPT");
         var user1 = new L4_2.User { Name = "Tom" };
         var user2 = new L4_2.User { Name = "Bob" };
         var employee = new L4_2.Employee { Name = "Sam", Salary = 500 };
@@ -54,7 +54,7 @@ public class Lesson_5_02_TptInheritance : ILesson
         Console.WriteLine("Додано: 2 User, 1 Employee (Users + Employees), 1 Manager (Users + Managers).");
 
         // 3. Демонструємо згенерований SQL через ToQueryString()
-        SqliteDbHelper.PrintSection("3. Згенерований SQL (ToQueryString)");
+        SqlServerDbHelper.PrintSection("3. Згенерований SQL (ToQueryString)");
         Console.WriteLine("--- Запит db.Users (LEFT JOIN усіх таблиць похідних типів) ---");
         // При поліморфному запиті до базового типу EF Core об'єднує Users з усіма таблицями-нащадками через LEFT JOIN
         // і формує обчислюваний вираз CASE WHEN ... IS NOT NULL THEN 'Employee' ..., щоб визначити реальний CLR-тип.
@@ -70,7 +70,7 @@ public class Lesson_5_02_TptInheritance : ILesson
         Console.WriteLine(db.Managers.ToQueryString());
 
         // 4. Вибірка даних
-        SqliteDbHelper.PrintSection("4. Результати вибірки");
+        SqlServerDbHelper.PrintSection("4. Результати вибірки");
         Console.WriteLine("Усі користувачі (db.Users):");
         // AsNoTracking() вимикає Change Tracker (не створює знімки сутностей), що прискорює читання.
         // EF Core все одно матеріалізує правильні похідні типи (User, Employee, Manager) за результатами LEFT JOIN.
@@ -197,7 +197,7 @@ namespace EFCoreConsoleMastery.Topics.Ch05.L4_2
         /// </summary>
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlite(SqliteDbHelper.GetConnectionString("lesson_4_2_tpt"));
+            optionsBuilder.UseSqlServer(SqlServerDbHelper.ConnectionString);
         }
 
         /// <summary>
@@ -205,6 +205,7 @@ namespace EFCoreConsoleMastery.Topics.Ch05.L4_2
         /// </summary>
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.HasDefaultSchema("l5_02");
             // У EF Core 7+ стратегію TPT можна задати одним викликом для базової сутності:
             // це автоматично створює окремі таблиці для всіх типів ієрархії без потреби дублювати ToTable().
             modelBuilder.Entity<User>().UseTptMappingStrategy();

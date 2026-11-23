@@ -5,3 +5,5 @@ Databases/
 *.db-shm
 *.db-wal
 .vs/
+
+appsettings.Development.json

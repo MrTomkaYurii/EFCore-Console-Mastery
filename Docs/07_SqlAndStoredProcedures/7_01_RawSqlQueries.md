@@ -132,7 +132,7 @@ flowchart LR
 
 ### Крок 1. Моделі, DTO та початкове наповнення БД
 - Визначено сутності `Company` (`Id`, `Name`, `Users`) та `User` (`Id`, `Name`, `Age`, `CompanyId`, `Company`), а також окремий клас `CompanyStatDto` (`CompanyName`, `UserCount`, `AverageAge`), якого **немає** в `ApplicationContext` як `DbSet`.
-- Метод `SqliteDbHelper.RecreateDatabase(db)` перестворює базу, після чого додаються дві компанії (`Microsoft`, `Google`) і 6 користувачів (`Tom`, `Bob`, `Alice`, `Kate`, `Tomas`, `Tomek`).
+- Метод `SqlServerDbHelper.RecreateSchema(db)` перестворює базу, після чого додаються дві компанії (`Microsoft`, `Google`) і 6 користувачів (`Tom`, `Bob`, `Alice`, `Kate`, `Tomas`, `Tomek`).
 
 ### Крок 2. `FromSqlRaw` у поєднанні з `OrderBy` та `Include`
 ```csharp

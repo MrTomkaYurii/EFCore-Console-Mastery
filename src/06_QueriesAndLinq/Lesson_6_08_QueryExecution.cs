@@ -26,11 +26,11 @@ public class Lesson_6_08_QueryExecution : ILesson
     {
         using (var db = new AppDbContext())
         {
-            SqliteDbHelper.RecreateDatabase(db);
+            SqlServerDbHelper.RecreateSchema(db, "l6_08");
         }
 
         // 1. Відкладене (Deferred) vs Негайне (Immediate) виконання
-        SqliteDbHelper.PrintSection("1. Відкладене та негайне виконання запитів");
+        SqlServerDbHelper.PrintSection("1. Відкладене та негайне виконання запитів");
         using (var db = new AppDbContext())
         {
             // Відкладене виконання: тут лише будується дерево виразів IQueryable<User>,
@@ -46,7 +46,7 @@ public class Lesson_6_08_QueryExecution : ILesson
         }
 
         // 2. Identity Resolution для відстежуваних запитів
-        SqliteDbHelper.PrintSection("2. Два відстежувані запити повертають одне й те саме посилання");
+        SqlServerDbHelper.PrintSection("2. Два відстежувані запити повертають одне й те саме посилання");
         using (var db = new AppDbContext())
         {
             // Кожен FirstOrDefault() виконує SQL SELECT ... LIMIT 1, але при матеріалізації EF Core перевіряє,
@@ -66,7 +66,7 @@ public class Lesson_6_08_QueryExecution : ILesson
         }
 
         // 3. Відстежуваний запит + AsNoTracking()
-        SqliteDbHelper.PrintSection("3. Відстежуваний запит та AsNoTracking() створюють різні об'єкти");
+        SqlServerDbHelper.PrintSection("3. Відстежуваний запит та AsNoTracking() створюють різні об'єкти");
         using (var db = new AppDbContext())
         {
             var user1 = db.Users.FirstOrDefault();
@@ -109,12 +109,13 @@ namespace EFCoreConsoleMastery.Topics.Ch06.L5_8
         /// <summary>Налаштовує підключення до локальної БД SQLite для уроку 5.8.</summary>
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlite(SqliteDbHelper.GetConnectionString("ch06_lesson_5_8"));
+            optionsBuilder.UseSqlServer(SqlServerDbHelper.ConnectionString);
         }
 
         /// <summary>Додає початковий рядок User(Id = 1, Name = "Tom") під час створення БД.</summary>
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.HasDefaultSchema("l6_08");
             modelBuilder.Entity<User>().HasData(new User { Id = 1, Name = "Tom" });
         }
     }

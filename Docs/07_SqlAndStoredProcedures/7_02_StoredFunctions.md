@@ -160,7 +160,7 @@ connection.CreateFunction<string, int, string>(
     (name, age) => $"{name} [{age} р.]",
     isDeterministic: true);
 ```
-Це відкрите з'єднання передається в конструктор `ApplicationContext(connection)`, а в `OnConfiguring` використовується `optionsBuilder.UseSqlite(_connection)`.
+Це відкрите з'єднання передається в конструктор `ApplicationContext(connection)`, а в `OnConfiguring` використовується `optionsBuilder.UseSqlServer(_connection)`.
 
 ### Крок 2. Оголошення C#-заглушок і конфігурація `HasDbFunction`
 У `ApplicationContext` оголошені три статичні методи:

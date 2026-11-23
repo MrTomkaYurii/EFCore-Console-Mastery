@@ -1,6 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
     <ProjectReference Include="..\EFCoreMastery.Core\EFCoreMastery.Core.csproj" />
+    <PackageReference Include="MySql.EntityFrameworkCore" Version="11.0.0-preview" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="11.0.0" />
   </ItemGroup>
   <PropertyGroup>
     <TargetFramework>net11.0</TargetFramework>

@@ -29,7 +29,7 @@ public class Lesson_6_01_LinqIntro : ILesson
         // щоб уникнути повернення закешованих у пам'яті об'єктів при наступних запитах.
         using (var db = new AppDbContext())
         {
-            SqliteDbHelper.RecreateDatabase(db);
+            SqlServerDbHelper.RecreateSchema(db, "l6_01");
 
             Company microsoft = new() { Name = "Microsoft" };
             Company google = new() { Name = "Google" };
@@ -49,7 +49,7 @@ public class Lesson_6_01_LinqIntro : ILesson
 
         // 2. Спосіб 1: Оператори LINQ (Query Syntax) — декларативний SQL-подібний синтаксис.
         // Компілятор C# перетворює цей синтаксис у ланцюжок методів розширення (Method Syntax) на етапі компіляції.
-        SqliteDbHelper.PrintSection("1. Запит через оператори LINQ (Query Syntax)");
+        SqlServerDbHelper.PrintSection("1. Запит через оператори LINQ (Query Syntax)");
         using (var db = new AppDbContext())
         {
             // Include(u => u.Company) виконує Eager Loading (жадібне завантаження):
@@ -76,7 +76,7 @@ public class Lesson_6_01_LinqIntro : ILesson
 
         // 3. Спосіб 2: Методи розширення LINQ (Method Syntax / Fluent Syntax).
         // Зручніший для динамічного додавання умов, Include, AsNoTracking, Skip/Take тощо.
-        SqliteDbHelper.PrintSection("2. Запит через методи розширення (Method Syntax)");
+        SqlServerDbHelper.PrintSection("2. Запит через методи розширення (Method Syntax)");
         using (var db = new AppDbContext())
         {
             // Where приймає Expression<Func<User, bool>> (дерево виразів), а не звичайний делегат Func<User, bool>.
@@ -133,6 +133,7 @@ namespace EFCoreConsoleMastery.Topics.Ch06.L5_1
     /// <summary>Контекст бази даних для уроку 5.1, який керує підключенням до SQLite та мапінгом моделей.</summary>
     public class AppDbContext : DbContext
     {
+        protected override void OnModelCreating(ModelBuilder modelBuilder) => modelBuilder.HasDefaultSchema("l6_01");
         /// <summary>Набір сутностей Users (відображається на таблицю "Users").</summary>
         public DbSet<User> Users { get; set; } = null!;
 
@@ -142,7 +143,7 @@ namespace EFCoreConsoleMastery.Topics.Ch06.L5_1
         /// <summary>Налаштовує провайдер SQLite та рядок підключення до локального файлу БД.</summary>
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlite(SqliteDbHelper.GetConnectionString("ch06_lesson_5_1"));
+            optionsBuilder.UseSqlServer(SqlServerDbHelper.ConnectionString);
         }
     }
 }

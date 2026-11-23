@@ -151,7 +151,7 @@ protected override void OnModelCreating(ModelBuilder modelBuilder)
 ### Крок 3. Створення БД, додавання даних та перевірка DDL
 
 У методі `Run()`:
-1. `SqliteDbHelper.RecreateDatabase(db)` гарантує чисту БД перед уроком (`EnsureDeleted()` + `EnsureCreated()`).
+1. `SqlServerDbHelper.RecreateSchema(db)` гарантує чисту БД перед уроком (`EnsureDeleted()` + `EnsureCreated()`).
 2. `db.Users.AddRange(...)` додає двох користувачів (`Tom`, `Alice`), а `db.SaveChanges()` виконує `INSERT INTO "Users" ("Age", "Name") VALUES ... RETURNING "user_id"`.
 3. Запит до системної таблиці `sqlite_master`:
    ```sql
