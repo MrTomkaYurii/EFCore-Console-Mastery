@@ -1,8 +1,10 @@
-﻿# 2.4. Властивості сутності
+# 2.4. Властивості сутності
 
 - **Глава:** 03. Створення моделей в EF Core
 - **Джерело Metanit:** [https://metanit.com/sharp/efcore/2.4.php](https://metanit.com/sharp/efcore/2.4.php)
 - **Код прикладу:** [`Lesson_2_4_EntityProperties.cs`](../../src/03_ModelsAndMapping/Lesson_2_4_EntityProperties.cs)
+- **Запуск уроку:** `dotnet run --project src/EFCoreMastery.ConsoleApp -- 2.4`
+- **Шпаргалка глави:** [Runs.md](Runs.md)
 
 ---
 
@@ -111,3 +113,7 @@ flowchart TD
 1. **Використання виключеної властивості в LINQ-запиті.** Якщо написати `db.Users.Where(u => u.Address == "Kyiv").ToList()`, EF Core викине виняток `InvalidOperationException` під час виконання, оскільки властивість `Address` відсутня в моделі й не може бути трансльована в SQL. Те саме стосується обчислюваних властивостей на кшталт `Summary`.
 2. **Зміна стану в `set` при матеріалізації з БД.** Якщо у блоці `set` властивості є побічні ефекти (наприклад, генерується подія, змінюється інша властивість або кидається виняток), пам'ятайте, що EF Core викликатиме цей `set` під час читання рядків із БД (якщо не налаштовано доступ напряму до backing field через `PropertyAccessMode.Field`).
 3. **Кешування `ChangeTracker` при тестуванні `[NotMapped]`.** Якщо зберегти об'єкт із заповненим `SessionToken` і одразу прочитати його з того ж контексту без `AsNoTracking()`, `ChangeTracker` поверне той самий екземпляр із пам'яті, де `SessionToken` все ще буде заповнений! Завжди перевіряйте читання через новий `DbContext` або `AsNoTracking()`.
+
+---
+<!-- lesson-nav -->
+← [2.3. Визначення моделей](2_3_DefiningModels.md) | [Шпаргалка глави (Runs.md)](Runs.md) | [Зміст курсу (README)](../../README.md) | [2.10. Конструктори сутностей](2_10_EntityConstructors.md) →

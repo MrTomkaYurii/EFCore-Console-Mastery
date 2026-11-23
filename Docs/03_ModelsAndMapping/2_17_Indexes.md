@@ -1,8 +1,10 @@
-﻿# 2.17. Налаштування індексів
+# 2.17. Налаштування індексів
 
 - **Глава:** 03. Створення моделей в EF Core
 - **Джерело Metanit:** [https://metanit.com/sharp/efcore/2.17.php](https://metanit.com/sharp/efcore/2.17.php)
 - **Код прикладу:** [`Lesson_2_17_Indexes.cs`](../../src/03_ModelsAndMapping/Lesson_2_17_Indexes.cs)
+- **Запуск уроку:** `dotnet run --project src/EFCoreMastery.ConsoleApp -- 2.17`
+- **Шпаргалка глави:** [Runs.md](Runs.md)
 
 ---
 
@@ -124,3 +126,7 @@ flowchart LR
 2. **Порядок стовпців у складеному індексі.** Індекс `(PhoneNumber, Passport)` прискорює пошук за `PhoneNumber` або за парою `(PhoneNumber, Passport)`, але **не** прискорює пошук лише за `Passport`. Ставте найбільш селективний або найчастіше використовуваний у `WHERE` стовпець на перше місце.
 3. **Занадто багато індексів.** Кожен індекс прискорює `SELECT`, але сповільнює `INSERT`, `UPDATE` і `DELETE`, оскільки БД мусить оновлювати всі індекси при кожній зміні даних.
 4. **Простір імен для `[Index]`.** На відміну від `[Key]` або `[Table]`, атрибут `[Index]` знаходиться безпосередньо в `Microsoft.EntityFrameworkCore`, а не в `System.ComponentModel.DataAnnotations`.
+
+---
+<!-- lesson-nav -->
+← [2.7. Налаштування ключів](2_7_Keys.md) | [Шпаргалка глави (Runs.md)](Runs.md) | [Зміст курсу (README)](../../README.md) | [2.8. Генерація значень властивостей і стовпців](2_8_ValueGeneration.md) →

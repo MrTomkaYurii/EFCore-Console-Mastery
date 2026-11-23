@@ -1,8 +1,10 @@
-﻿# 5.4. Операції з множинами: Union, Intersect, Except
+# 5.4. Операції з множинами: Union, Intersect, Except
 
 - **Глава:** 06. Запити та LINQ to Entities
 - **Джерело Metanit:** [Операции с множествами](https://metanit.com/sharp/efcore/5.4.php)
 - **Код прикладу:** [Lesson_5_4_SetOperations.cs](../../src/06_QueriesAndLinq/Lesson_5_4_SetOperations.cs)
+- **Запуск уроку:** `dotnet run --project src/EFCoreMastery.ConsoleApp -- 5.4`
+- **Шпаргалка глави:** [Runs.md](Runs.md)
 
 ## Мета уроку
 
@@ -95,3 +97,7 @@ var exceptQuery = selector1.Except(selector2);
 - **`Union` vs `Concat` (продуктивність):** `Union`, `Intersect` і `Except` змушують БД виконувати дедуплікацію (додаткове сортування або хешування). Якщо ви точно знаєте, що вибірки не перетинаються (або дублікати допустимі), використовуйте `Concat` (`UNION ALL`) — він працює значно швидше.
 - **Сортування до об'єднання:** Виклик `db.Users.Where(...).OrderBy(u => u.Name).Union(...)` може не зберегти порядок або спричинити помилку/попередження. Завжди застосовуйте `.OrderBy(...)` **після** операції над множинами.
 - **Збереження `Id` у проекції:** Якщо в `Union` із різних таблиць включити лише `{ Name }`, а у двох різних таблицях є однакове ім'я (наприклад, користувач `Google` і компанія `Google`), `Union` об'єднає їх в один рядок. Якщо потрібно розрізняти походження запису, додайте поле-маркер: `new { Type = "User", u.Name }`.
+
+---
+<!-- lesson-nav -->
+← [5.3. З'єднання та групування таблиць (Join, GroupBy)](5_3_JoinAndGroupBy.md) | [Шпаргалка глави (Runs.md)](Runs.md) | [Зміст курсу (README)](../../README.md) | [5.5. Агрегатні операції (Any, All, Count, Sum, Min, Max, Average)](5_5_Aggregates.md) →

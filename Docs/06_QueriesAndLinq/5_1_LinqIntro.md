@@ -1,8 +1,10 @@
-﻿# 5.1. Вступ до LINQ to Entities
+# 5.1. Вступ до LINQ to Entities
 
 - **Глава:** 06. Запити та LINQ to Entities
 - **Джерело Metanit:** [Введение в LINQ to Entities](https://metanit.com/sharp/efcore/5.1.php)
 - **Код прикладу:** [Lesson_5_1_LinqIntro.cs](../../src/06_QueriesAndLinq/Lesson_5_1_LinqIntro.cs)
+- **Запуск уроку:** `dotnet run --project src/EFCoreMastery.ConsoleApp -- 5.1`
+- **Шпаргалка глави:** [Runs.md](Runs.md)
 
 ## Мета уроку
 
@@ -115,3 +117,7 @@ var users = query.ToList();
 2. **Плутанина між моментом створення запиту і моментом його виконання.** `var query = db.Users.Where(...)` лише описує запит. Реальне звернення до SQLite відбувається під час `ToList()`, `FirstOrDefault()`, `Count()` або перебору в `foreach`.
 3. **Використовуйте `ToQueryString()` під час розробки.** Це допомагає вчасно помітити зайві `JOIN`, відсутність `WHERE` або небажані підзапити.
 4. **Віддавайте перевагу асинхронним методам (`ToListAsync`, `FirstOrDefaultAsync`) у реальних веб- і десктопних застосунках**, щоб не блокувати потік на час очікування відповіді від БД.
+
+---
+<!-- lesson-nav -->
+← [4.3. Підхід TPC - Table Per Class](../05_Inheritance/4_3_TpcInheritance.md) | [Шпаргалка глави (Runs.md)](Runs.md) | [Зміст курсу (README)](../../README.md) | [5.2. Вибірка та фільтрація (Where, EF.Functions.Like, Find)](5_2_Filtering.md) →

@@ -1,8 +1,10 @@
-﻿# 5.11. Масове оновлення та видалення. ExecuteUpdate і ExecuteDelete
+# 5.11. Масове оновлення та видалення. ExecuteUpdate і ExecuteDelete
 
 - **Глава:** 06. Запити та LINQ to Entities
 - **Джерело Metanit:** [Массовое обновление и удаление. ExecuteUpdate и ExecuteDelete](https://metanit.com/sharp/efcore/5.11.php)
 - **Код прикладу:** [Lesson_5_11_BulkExecuteUpdateDelete.cs](../../src/06_QueriesAndLinq/Lesson_5_11_BulkExecuteUpdateDelete.cs)
+- **Запуск уроку:** `dotnet run --project src/EFCoreMastery.ConsoleApp -- 5.11`
+- **Шпаргалка глави:** [Runs.md](Runs.md)
 
 ## Мета уроку
 
@@ -113,3 +115,7 @@ WHERE "u"."Name" = 'Bob'
 - **Застарілі дані в `ChangeTracker`:** Ніколи не поєднуйте в одному методі завантаження сутностей із подальшим `ExecuteUpdate`/`ExecuteDelete` по тій самій таблиці без `Reload()` або `ChangeTracker.Clear()`, інакше при подальшому `SaveChanges()` ви можете випадково перезаписати нові дані в БД старими значеннями з пам'яті.
 - **Оптимістичне блокування (`ConcurrencyCheck` / `RowVersion`) та аудит-інтерцептори:** Оскільки `ExecuteUpdate` і `ExecuteDelete` обходять `ChangeTracker` і `SaveChanges()`, інтерцептори `SaveChangesInterceptor` (які часто використовують для автоматичного заповнення `UpdatedAt` або Soft Delete) **не спрацюють**! Поля аудиту в `ExecuteUpdate` потрібно оновлювати явно через `.SetProperty(...)`.
 - **Оновлення лише однієї таблиці:** Не можна в одному `ExecuteUpdate` змінити поля і `User`, і `Company`. Для кожної таблиці виконується окремий виклик.
+
+---
+<!-- lesson-nav -->
+← [5.9. Фільтри запитів рівня моделі (HasQueryFilter)](5_9_GlobalQueryFilters.md) | [Шпаргалка глави (Runs.md)](Runs.md) | [Зміст курсу (README)](../../README.md) | [6.1. Виконання SQL-запитів (FromSqlRaw, FromSqlInterpolated, SqlQuery, ExecuteSqlRaw)](../07_SqlAndStoredProcedures/6_1_RawSqlQueries.md) →

@@ -1,8 +1,10 @@
-﻿# 2.2. Управління схемою БД та міграції
+# 2.2. Управління схемою БД та міграції
 
 - **Глава:** 01. Вступ до Entity Framework Core
 - **Джерело Metanit:** [https://metanit.com/sharp/efcore/2.2.php](https://metanit.com/sharp/efcore/2.2.php)
 - **Код прикладу:** [`Lesson_2_2_Migrations.cs`](../../src/01_Introduction/Lesson_2_2_Migrations.cs)
+- **Запуск уроку:** `dotnet run --project src/EFCoreMastery.ConsoleApp -- 2.2`
+- **Шпаргалка глави:** [Runs.md](Runs.md)
 
 ## Мета уроку
 
@@ -161,3 +163,7 @@ CREATE TABLE "Users" (
    dotnet ef migrations add InitialCreate --context ApplicationContext
    ```
 4. **Рев'ю згенерованих міграцій перед застосуванням:** Інструмент міграцій може не розпізнати перейменування стовпця і згенерувати `DropColumn` + `AddColumn` (що призведе до втрати даних у цьому стовпці!) замість `RenameColumn`. Завжди переглядайте методи `Up()` та `Down()` перед запуском `Update-Database`.
+
+---
+<!-- lesson-nav -->
+← [1.6. Логування операцій](1_6_Logging.md) | [Шпаргалка глави (Runs.md)](Runs.md) | [Зміст курсу (README)](../../README.md) | [7.1. Провайдер MS SQL Server (та адаптація під SQLite)](../02_DatabaseProviders/7_1_SqlServerProvider.md) →

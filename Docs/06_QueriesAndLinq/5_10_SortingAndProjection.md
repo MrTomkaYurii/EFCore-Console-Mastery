@@ -1,8 +1,10 @@
-﻿# 5.10. Сортування та проекція з бази даних
+# 5.10. Сортування та проекція з бази даних
 
 - **Глава:** 06. Запити та LINQ to Entities
 - **Джерело Metanit:** [Сортировка и проекция из базы данных](https://metanit.com/sharp/efcore/5.10.php)
 - **Код прикладу:** [Lesson_5_10_SortingAndProjection.cs](../../src/06_QueriesAndLinq/Lesson_5_10_SortingAndProjection.cs)
+- **Запуск уроку:** `dotnet run --project src/EFCoreMastery.ConsoleApp -- 5.10`
+- **Шпаргалка глави:** [Runs.md](Runs.md)
 
 ## Мета уроку
 
@@ -107,3 +109,7 @@ var sorted = db.Users
 - **Виклик `Include` разом із `Select`:** Якщо ви використовуєте `Select` і проектуєте дані в DTO або анонімний тип, виклик `.Include(...)` зазвичай **ігнорується** (або є зайвим), оскільки формування результуючих стовпців повністю контролюється виразом `Select`.
 - **Порядок `OrderBy` і `Select`:** Якщо ви спочатку викликали `Select(u => new UserModel { Name = u.Name })`, то далі можна сортувати лише за полями `UserModel` (`Name`), а не за `u.Age` (бо `Age` вже не існує в проекції). Сортуйте за полями сутності **до** `Select`, або включайте потрібне поле в DTO.
 - **Сортування перед пагінацією (`Skip`/`Take`):** У SQLite та інших реляційних БД порядок рядків без `ORDER BY` не гарантований. Перед `Skip`/`Take` завжди додавайте детерміноване сортування (наприклад, `.OrderBy(u => u.Name).ThenBy(u => u.Id)`).
+
+---
+<!-- lesson-nav -->
+← [5.2. Вибірка та фільтрація (Where, EF.Functions.Like, Find)](5_2_Filtering.md) | [Шпаргалка глави (Runs.md)](Runs.md) | [Зміст курсу (README)](../../README.md) | [5.3. З'єднання та групування таблиць (Join, GroupBy)](5_3_JoinAndGroupBy.md) →

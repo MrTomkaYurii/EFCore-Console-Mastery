@@ -1,8 +1,10 @@
-﻿# 6.1. Виконання SQL-запитів (FromSqlRaw, FromSqlInterpolated, SqlQuery, ExecuteSqlRaw)
+# 6.1. Виконання SQL-запитів (FromSqlRaw, FromSqlInterpolated, SqlQuery, ExecuteSqlRaw)
 
 - **Глава:** 07. SQL в Entity Framework Core
 - **Джерело Metanit:** [https://metanit.com/sharp/efcore/6.1.php](https://metanit.com/sharp/efcore/6.1.php)
 - **Код прикладу:** [Lesson_6_1_RawSqlQueries.cs](../../src/07_SqlAndStoredProcedures/Lesson_6_1_RawSqlQueries.cs)
+- **Запуск уроку:** `dotnet run --project src/EFCoreMastery.ConsoleApp -- 6.1`
+- **Шпаргалка глави:** [Runs.md](Runs.md)
 
 ---
 
@@ -251,3 +253,7 @@ SELECT * FROM Users WHERE Name LIKE @p0 AND Age > @p1
 
 4. **Неповний набір стовпців у `FromSql*`:**
    - Якщо таблиця `Users` має обов'язкові стовпці (`Id`, `Age`, `CompanyId`), то `SELECT Name FROM Users` у `db.Users.FromSqlRaw(...)` завершиться помилкою матеріалізації. Для вибірки окремих полів використовуйте `.Select(...)` після `FromSql*` або `db.Database.SqlQuery<T>`.
+
+---
+<!-- lesson-nav -->
+← [5.11. Масове оновлення та видалення. ExecuteUpdate і ExecuteDelete](../06_QueriesAndLinq/5_11_BulkExecuteUpdateDelete.md) | [Шпаргалка глави (Runs.md)](Runs.md) | [Зміст курсу (README)](../../README.md) | [6.2. Збережені функції (SQLite UDF / HasDbFunction адаптація)](6_2_StoredFunctions.md) →

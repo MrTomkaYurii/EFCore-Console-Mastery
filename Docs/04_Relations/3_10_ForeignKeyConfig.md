@@ -1,8 +1,10 @@
-﻿# 3.10. Налаштування зовнішнього ключа через анотації та Fluent API
+# 3.10. Налаштування зовнішнього ключа через анотації та Fluent API
 
 - **Глава:** 04. Відносини між моделями
 - **Оригінал на Metanit:** [https://metanit.com/sharp/efcore/3.10.php](https://metanit.com/sharp/efcore/3.10.php)
 - **Код прикладу:** [Lesson_3_10_ForeignKeyConfig.cs](../../src/04_Relations/Lesson_3_10_ForeignKeyConfig.cs)
+- **Запуск уроку:** `dotnet run --project src/EFCoreMastery.ConsoleApp -- 3.10`
+- **Шпаргалка глави:** [Runs.md](Runs.md)
 
 ## Мета уроку
 
@@ -152,3 +154,7 @@ CREATE TABLE "Employees" (
 - **Дублікатні значення в `PrincipalKey`:** якщо ви прив'язали `HasPrincipalKey(c => c.Name)`, то всі компанії в таблиці `Companies` **мусять** мати унікальні непорожні значення `Name`. Спроба вставити дві компанії з назвою `"Google"` призведе до `DbUpdateException` (`UNIQUE constraint failed`).
 - **Спроба змінити значення `PrincipalKey` після створення:** альтернативний ключ у моделі EF Core (як і первинний ключ) за замовчуванням вважається незмінним після додавання сутності. Спроба оновити `company.Name` у відстежуваній сутності викличе виняток у Change Tracker (`The property 'Company.Name' is part of a key and so cannot be modified`). Якщо бізнес-логіка передбачає перейменування компанії, краще посилатися на незмінний сурогатний ключ `Id`, а на `Name` просто повісити звичайний унікальний індекс (`HasIndex(c => c.Name).IsUnique()`).
 - **Best Practice:** використовуйте `nameof(...)` у `[ForeignKey(nameof(CompanyInfoKey))]` замість магічних рядків `"CompanyInfoKey"`, щоб захистити код від помилок під час рефакторингу.
+
+---
+<!-- lesson-nav -->
+← [3.1. Зовнішні ключі та навігаційні властивості](3_1_ForeignKeysAndNavigation.md) | [Шпаргалка глави (Runs.md)](Runs.md) | [Зміст курсу (README)](../../README.md) | [3.2. Каскадне видалення](3_2_CascadeDelete.md) →

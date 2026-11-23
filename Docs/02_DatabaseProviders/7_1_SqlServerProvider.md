@@ -1,8 +1,10 @@
-﻿# 7.1. Провайдер MS SQL Server (та адаптація під SQLite)
+# 7.1. Провайдер MS SQL Server (та адаптація під SQLite)
 
 - **Глава:** 02. Провайдери баз даних
 - **Джерело Metanit:** [https://metanit.com/sharp/efcore/7.1.php](https://metanit.com/sharp/efcore/7.1.php)
 - **Код прикладу:** [Lesson_7_1_SqlServerProvider.cs](../../src/02_DatabaseProviders/Lesson_7_1_SqlServerProvider.cs)
+- **Запуск уроку:** `dotnet run --project src/EFCoreMastery.ConsoleApp -- 7.1`
+- **Шпаргалка глави:** [Runs.md](Runs.md)
 
 ---
 
@@ -272,3 +274,7 @@ sequenceDiagram
 
 4. **Перевірка згенерованого SQL перед релізом:**
    Навіть якщо бізнес-код працює на SQLite, перед деплоєм на MS SQL Server обов'язково тестуйте міграції та складні LINQ-запити (особливо `decimal`, `DateTimeOffset`, `GroupBy`, `StringComparison`) саме на реальному екземплярі SQL Server, оскільки діалекти й точність типів відрізняються.
+
+---
+<!-- lesson-nav -->
+← [2.2. Управління схемою БД та міграції](../01_Introduction/2_2_Migrations.md) | [Шпаргалка глави (Runs.md)](Runs.md) | [Зміст курсу (README)](../../README.md) | [7.2. Провайдер MySQL (та адаптація під SQLite)](7_2_MySqlProvider.md) →

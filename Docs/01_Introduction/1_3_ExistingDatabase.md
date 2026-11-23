@@ -1,8 +1,10 @@
-﻿# 1.3. Підключення до існуючої бази даних
+# 1.3. Підключення до існуючої бази даних
 
 - **Глава:** 01. Вступ до Entity Framework Core
 - **Джерело Metanit:** [https://metanit.com/sharp/efcore/1.3.php](https://metanit.com/sharp/efcore/1.3.php)
 - **Код прикладу:** [`Lesson_1_3_ExistingDatabase.cs`](../../src/01_Introduction/Lesson_1_3_ExistingDatabase.cs)
+- **Запуск уроку:** `dotnet run --project src/EFCoreMastery.ConsoleApp -- 1.3`
+- **Шпаргалка глави:** [Runs.md](Runs.md)
 
 ## Мета уроку
 
@@ -151,3 +153,7 @@ EF Core успішно підключається до існуючої табл
 2. **Рядок підключення у згенерованому `OnConfiguring`:** Скафолдер вставляє рядок підключення прямо в код і додає директиви `#warning To protect potentially sensitive information in your connection string...`. Обов'язково видаліть захардкоджений рядок підключення та передавайте його через конфігурацію (`IConfiguration`) або DI.
 3. **Втрата ручних правок при повторному скафолдингу:** Якщо ви відредагуєте згенеровані файли напряму, а потім запустите `dotnet ef dbcontext scaffold ... --force`, ваші зміни зникнуть. Використовуйте механізм `partial`-класів і `partial void OnModelCreatingPartial(...)` в окремих файлах.
 4. **Невідповідність типів даних:** Якщо ви пишете модель вручну для існуючої БД SQLite, пам'ятайте про сумісність типів (наприклад, `INTEGER` у SQLite безпечно читається і в `int`, і в `long`, але якщо значення перевищить `int.MaxValue`, читання в `int` спричинить переповнення).
+
+---
+<!-- lesson-nav -->
+← [1.2. Перший застосунок на EF Core](1_2_FirstApp.md) | [Шпаргалка глави (Runs.md)](Runs.md) | [Зміст курсу (README)](../../README.md) | [2.16. Управління базою даних](2_16_DatabaseManagement.md) →

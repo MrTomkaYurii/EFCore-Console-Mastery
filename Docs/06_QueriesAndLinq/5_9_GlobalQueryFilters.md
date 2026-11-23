@@ -1,8 +1,10 @@
-﻿# 5.9. Фільтри запитів рівня моделі (HasQueryFilter)
+# 5.9. Фільтри запитів рівня моделі (HasQueryFilter)
 
 - **Глава:** 06. Запити та LINQ to Entities
 - **Джерело Metanit:** [Фильтры запросов уровня модели](https://metanit.com/sharp/efcore/5.9.php)
 - **Код прикладу:** [Lesson_5_9_GlobalQueryFilters.cs](../../src/06_QueriesAndLinq/Lesson_5_9_GlobalQueryFilters.cs)
+- **Запуск уроку:** `dotnet run --project src/EFCoreMastery.ConsoleApp -- 5.9`
+- **Шпаргалка глави:** [Runs.md](Runs.md)
 
 ## Мета уроку
 
@@ -25,13 +27,19 @@
 
 Глобальний фільтр може посилатися на властивості самого класу `DbContext` (наприклад, `CurrentRoleId` або `TenantId`). EF Core не «зашиває» це значення назавжди при першій побудові моделі — натомість він компілює вираз як параметр запиту (`@__ef_filter__CurrentRoleId_0`), значення якого береться з поточного екземпляра `DbContext` під час кожного виконання запиту.
 
-### 3. Тимчасове відключення фільтра (`IgnoreQueryFilters`)
+### 3. Тимчасове відключення фільтра (`IgnoreQueryFilters`) та Named Query Filters (EF Core 10+)
 
 Коли в окремому сценарії (наприклад, панель адміністратора, аудит, міграція даних) потрібно отримати **всі** записи, включно з прихованими фільтром, до запиту додають метод розширення `.IgnoreQueryFilters()`:
 ```csharp
 var allUsers = db.Users.IgnoreQueryFilters().ToList();
 ```
 Цей метод вимикає **всі** глобальні фільтри моделі для поточного запиту (включно з фільтрами на зв'язаних сутностях, завантажених через `Include`).
+
+| Механізм | Синтаксис | Коли використовувати |
+| :--- | :--- | :--- |
+| **Звичайний фільтр** | `HasQueryFilter(u => !u.IsDeleted && u.TenantId == TenantId)` | Один комбінований фільтр для сутності (працює в усіх версіях EF Core) |
+| **Вимкнення всіх фільтрів** | `db.Users.IgnoreQueryFilters()` | Адмін-панель, міграції, звіти, де потрібні абсолютно всі рядки |
+| **Іменовані фільтри (EF Core 10+)** | `HasQueryFilter("SoftDelete", u => !u.IsDeleted)` + `IgnoreQueryFilters(["SoftDelete"])` | Коли на одній сутності кілька незалежних фільтрів (Soft Delete + Multi-Tenancy) і потрібно вимкнути лише один із них |
 
 ## Діаграма / Архітектура процесу
 
@@ -92,3 +100,7 @@ using (var db = new AppDbContext { CurrentRoleId = 2 })
 - **Перезапис фільтра:** У класичному API виклик другого `HasQueryFilter(...)` для тієї самої сутності **перезапише** попередній. Завжди об'єднуйте кілька умов в одному виразі через `&&` (наприклад, `!u.IsDeleted && u.TenantId == CurrentTenantId`).
 - **Пастка обов'язкового зв'язку (`INNER JOIN` + `HasQueryFilter`):** Якщо у `Order` є обов'язковий зв'язок (`int UserId`) на `User`, а на `User` накладено фільтр Soft Delete (`!u.IsDeleted`), то при запиті до `db.Orders.Include(o => o.User)` замовлення видалених користувачів можуть зникнути через `INNER JOIN`! Рішення: або накласти аналогічний фільтр на `Order` (`o => !o.User!.IsDeleted`), або зробити зовнішній ключ опціональним (`int? UserId`).
 - **Сирі SQL-запити (`FromSqlRaw`):** Глобальні фільтри моделі застосовуються до LINQ-композиції поверх `FromSql`, але **не** додаються всередину вашого сирого SQL-рядка, якщо ви не використовуєте подальшу LINQ-фільтрацію.
+
+---
+<!-- lesson-nav -->
+← [5.6. IEnumerable та IQueryable](5_6_IEnumerableVsIQueryable.md) | [Шпаргалка глави (Runs.md)](Runs.md) | [Зміст курсу (README)](../../README.md) | [5.11. Масове оновлення та видалення. ExecuteUpdate і ExecuteDelete](5_11_BulkExecuteUpdateDelete.md) →

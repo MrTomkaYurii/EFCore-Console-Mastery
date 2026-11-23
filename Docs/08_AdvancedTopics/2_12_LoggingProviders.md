@@ -1,8 +1,10 @@
-﻿# 2.12. Провайдери логування (ILoggerFactory, Console Logger)
+# 2.12. Провайдери логування (ILoggerFactory, Console Logger)
 
 - **Глава:** 08. Додаткові теми
 - **Джерело Metanit:** [https://metanit.com/sharp/efcore/2.12.php](https://metanit.com/sharp/efcore/2.12.php)
 - **Код прикладу:** [Lesson_2_12_LoggingProviders.cs](../../src/08_AdvancedTopics/Lesson_2_12_LoggingProviders.cs)
+- **Запуск уроку:** `dotnet run --project src/EFCoreMastery.ConsoleApp -- 2.12`
+- **Шпаргалка глави:** [Runs.md](Runs.md)
 
 ---
 
@@ -134,3 +136,7 @@ flowchart TD
 - **Приховування чутливих даних:** за замовчуванням EF Core не виводить у логи значення SQL-параметрів (паролі, персональні дані). Щоб бачити параметри під час локального налагодження, потрібно явно додати `.EnableSensitiveDataLogging()` у `OnConfiguring` (але вимикати в Production!).
 - **NuGet-пакет для `AddConsole()`:** метод розширення `AddConsole()` не входить до базового `Microsoft.Extensions.Logging` — необхідно встановити пакет `Microsoft.Extensions.Logging.Console`.
 - **Потокобезпечність власного провайдера:** метод `ILogger.Log` може викликатися одночасно з різних потоків. У реальних проєктах для запису у файл слід використовувати `lock` або асинхронну чергу замість прямого `File.AppendAllText`.
+
+---
+<!-- lesson-nav -->
+← [2.11. Паралелізм та оптимістичне блокування (Concurrency)](2_11_Concurrency.md) | [Шпаргалка глави (Runs.md)](Runs.md) | [Зміст курсу (README)](../../README.md) | [8.1. Скомпільовані запити (EF.CompileQuery / CompileAsyncQuery)](8_1_CompiledQueries.md) →

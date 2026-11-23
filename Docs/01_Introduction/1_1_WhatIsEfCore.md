@@ -1,8 +1,10 @@
-﻿# 1.1. Що таке Entity Framework Core
+# 1.1. Що таке Entity Framework Core
 
 - **Глава:** 01. Вступ до Entity Framework Core
 - **Джерело Metanit:** [https://metanit.com/sharp/efcore/1.1.php](https://metanit.com/sharp/efcore/1.1.php)
 - **Код прикладу:** [`Lesson_1_1_WhatIsEfCore.cs`](../../src/01_Introduction/Lesson_1_1_WhatIsEfCore.cs)
+- **Запуск уроку:** `dotnet run --project src/EFCoreMastery.ConsoleApp -- 1.1`
+- **Шпаргалка глави:** [Runs.md](Runs.md)
 
 ## Мета уроку
 
@@ -152,3 +154,7 @@ ORDER BY "p"."Price" DESC
 2. **Не використовуйте `InMemory` для тестування реляційної логіки:** Провайдер `Microsoft.EntityFrameworkCore.InMemory` не перевіряє зовнішні ключі, унікальні індекси та обмеження `NOT NULL`, і не підтримує транзакції. Для реалістичних інтеграційних тестів краще використовувати SQLite у режимі в пам'яті (`Data Source=:memory:`).
 3. **Не забувайте про згенерований SQL:** Хоча EF Core дозволяє не писати SQL вручну, завжди перевіряйте згенеровані запити (через логування або `ToQueryString()`), щоб уникнути проблеми `N+1` запитів або завантаження зайвих даних у пам'ять (*Client Evaluation*).
 4. **Додавайте тільки потрібний провайдер:** Не потрібно встановлювати `Microsoft.EntityFrameworkCore` окремо, якщо ви вже встановлюєте `Microsoft.EntityFrameworkCore.Sqlite` — базове ядро та `Relational` підтягнуться автоматично.
+
+---
+<!-- lesson-nav -->
+[Шпаргалка глави (Runs.md)](Runs.md) | [Зміст курсу (README)](../../README.md) | [1.2. Перший застосунок на EF Core](1_2_FirstApp.md) →

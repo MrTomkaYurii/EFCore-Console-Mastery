@@ -1,8 +1,10 @@
-﻿# 8.1. Скомпільовані запити (EF.CompileQuery / CompileAsyncQuery)
+# 8.1. Скомпільовані запити (EF.CompileQuery / CompileAsyncQuery)
 
 - **Глава:** 08. Додаткові теми
 - **Джерело Metanit:** [https://metanit.com/sharp/efcore/8.1.php](https://metanit.com/sharp/efcore/8.1.php)
 - **Код прикладу:** [Lesson_8_1_CompiledQueries.cs](../../src/08_AdvancedTopics/Lesson_8_1_CompiledQueries.cs)
+- **Запуск уроку:** `dotnet run --project src/EFCoreMastery.ConsoleApp -- 8.1`
+- **Шпаргалка глави:** [Runs.md](Runs.md)
 
 ---
 
@@ -79,22 +81,54 @@ flowchart LR
 У файлі [Lesson_8_1_CompiledQueries.cs](../../src/08_AdvancedTopics/Lesson_8_1_CompiledQueries.cs) оголошено чотири `static readonly` делегати та міні-бенчмарк:
 
 1. **`UserByIdQuery` (`EF.CompileQuery`, один об'єкт):**
-   - Приймає `(CompiledQueriesContext db, int id)` та повертає `User?`.
-   - Завантажує користувача разом із пов'язаною компанією (`.Include(u => u.Company)`).
-   - Генерує SQLite-запит із `LEFT JOIN "Companies"` та `LIMIT 1`.
+   ```csharp
+   private static readonly Func<CompiledQueriesContext, int, User?> UserByIdQuery =
+       EF.CompileQuery((CompiledQueriesContext db, int id) =>
+           db.Users.Include(u => u.Company).FirstOrDefault(u => u.Id == id));
+   ```
+   Приймає `(CompiledQueriesContext db, int id)`, повертає `User?` та генерує SQLite-запит із `LEFT JOIN` і `LIMIT 1`:
+   ```sql
+   SELECT "u"."Id", "u"."Age", "u"."CompanyId", "u"."Name", "c"."Id", "c"."Name"
+   FROM "Users" AS "u"
+   LEFT JOIN "Companies" AS "c" ON "u"."CompanyId" = "c"."Id"
+   WHERE "u"."Id" = @__id_0
+   LIMIT 1
+   ```
 
 2. **`UsersByNameAndAgeQuery` (`EF.CompileQuery`, колекція):**
-   - Приймає `(CompiledQueriesContext db, string namePattern, int minAge)` і повертає `IEnumerable<User>`.
+   ```csharp
+   private static readonly Func<CompiledQueriesContext, string, int, IEnumerable<User>> UsersByNameAndAgeQuery =
+       EF.CompileQuery((CompiledQueriesContext db, string namePattern, int minAge) =>
+           db.Users.Where(u => EF.Functions.Like(u.Name!, namePattern) && u.Age > minAge));
+   ```
    - Використовує `EF.Functions.Like(u.Name!, namePattern)` для пошуку за шаблоном `"%Tom%"` (знайде `"Tom"` і `"Tomek"`, чий вік `> 30`; `"Tomas"` з віком `30` буде відфільтрований).
    - Виклик `.ToList()` відбувається вже **після** виклику делегата: `UsersByNameAndAgeQuery(db, "%Tom%", 30).ToList()`.
 
 3. **`UserByIdAsyncQuery` (`EF.CompileAsyncQuery`, `Task<User?>`):**
-   - Всередині лямбди викликається `.FirstOrDefault(u => u.Id == id)`, а сам делегат має тип `Func<CompiledQueriesContext, int, Task<User?>>`.
-   - Викликається через `await UserByIdAsyncQuery(db, 2)`.
+   ```csharp
+   private static readonly Func<CompiledQueriesContext, int, Task<User?>> UserByIdAsyncQuery =
+       EF.CompileAsyncQuery((CompiledQueriesContext db, int id) =>
+           db.Users.Include(u => u.Company).FirstOrDefault(u => u.Id == id));
+
+   var user = await UserByIdAsyncQuery(db, 2);
+   ```
+   Всередині лямбди викликається синхронний `.FirstOrDefault(...)`, а сам делегат повертає `Task<User?>`.
 
 4. **`UsersByCompanyAsyncQuery` (`EF.CompileAsyncQuery`, `IAsyncEnumerable<User>`):**
-   - Повертає потік користувачів компанії `"Microsoft"`, відсортованих за `Name`.
-   - Читається без проміжної матеріалізації всього списку за допомогою `await foreach (var u in UsersByCompanyAsyncQuery(db, "Microsoft"))`.
+   ```csharp
+   private static readonly Func<CompiledQueriesContext, string, IAsyncEnumerable<User>> UsersByCompanyAsyncQuery =
+       EF.CompileAsyncQuery((CompiledQueriesContext db, string companyName) =>
+           db.Users
+               .Include(u => u.Company)
+               .Where(u => u.Company != null && u.Company.Name == companyName)
+               .OrderBy(u => u.Name));
+
+   await foreach (var u in UsersByCompanyAsyncQuery(db, "Microsoft"))
+   {
+       Console.WriteLine($"{u.Name} ({u.Age})");
+   }
+   ```
+   Повертає потік користувачів компанії `"Microsoft"`, що читається без проміжної матеріалізації всього списку.
 
 5. **Бенчмарк (200 ітерацій):**
    - Спочатку виконується «прогрів» (один звичайний та один скомпільований запит), щоб виключити час першої компіляції та відкриття з'єднання.
@@ -116,3 +150,7 @@ flowchart LR
 - **Помилка: виклик `.ToList()` всередині лямбди `CompileQuery`.** Для запитів, що повертають колекцію, лямбда має повертати `IQueryable<T>` (без `ToList()`). Якщо викликати `ToList()` всередині, EF Core або видасть помилку, або не зможе оптимізувати потокове читання.
 - **Захоплення зовнішніх змінних (Closures):** не використовуйте всередині скомпільованої лямбди локальні змінні чи поля класу напряму — усі динамічні значення мають передаватися як параметри делегата.
 - **Обмеження функціоналу:** деякі динамічні конструкції (наприклад, умовна побудова `Where` через `if` залежно від параметрів) не підтримуються в одному скомпільованому запиті — для різних комбінацій фільтрів доведеться створити окремі делегати або використовувати звичайний LINQ.
+
+---
+<!-- lesson-nav -->
+← [2.12. Провайдери логування (ILoggerFactory, Console Logger)](2_12_LoggingProviders.md) | [Шпаргалка глави (Runs.md)](Runs.md) | [Зміст курсу (README)](../../README.md) | [8.2. Проєкція запитів на представлення (Views / ToView)](8_2_DatabaseViews.md) →

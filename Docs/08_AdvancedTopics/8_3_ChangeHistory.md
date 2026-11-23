@@ -1,8 +1,10 @@
-﻿# 8.3. Зберігання історії змін (Temporal Tables / SQLite Audit)
+# 8.3. Зберігання історії змін (Temporal Tables / SQLite Audit)
 
 - **Глава:** 08. Додаткові теми
 - **Джерело Metanit:** [https://metanit.com/sharp/efcore/8.3.php](https://metanit.com/sharp/efcore/8.3.php)
 - **Код прикладу:** [Lesson_8_3_ChangeHistory.cs](../../src/08_AdvancedTopics/Lesson_8_3_ChangeHistory.cs)
+- **Запуск уроку:** `dotnet run --project src/EFCoreMastery.ConsoleApp -- 8.3`
+- **Шпаргалка глави:** [Runs.md](Runs.md)
 
 ---
 
@@ -169,3 +171,7 @@ erDiagram
 - **Потокобезпечність `SaveChangesInterceptor`:** у нашому навчальному прикладі кожен екземпляр `AuditHistoryContext` створює власний `_auditInterceptor`, тому поля `_pendingLogs` і `_isSavingAudit` безпечні. Якщо ви реєструєте один singleton-інтерсептор у DI для багатьох контекстів, зберігайте тимчасовий стан у `AsyncLocal<T>` або `ConditionalWeakTable<DbContext, ...>`.
 - **Завжди використовуйте UTC:** для систем аудиту та темпоральних таблиць зберігайте час виключно в `DateTime.UtcNow`, щоб уникнути дублювання чи зсуву годин при переході на літній/зимовий час.
 - **Відсутність відстеження для `Temporal*`:** у SQL Server усі методи `TemporalAll()`, `TemporalAsOf()` тощо повертають сутності в режимі `AsNoTracking` — щоб відновити або змінити такий об'єкт, його потрібно явно приєднати через `Add` або `Update`.
+
+---
+<!-- lesson-nav -->
+← [8.2. Проєкція запитів на представлення (Views / ToView)](8_2_DatabaseViews.md) | [Шпаргалка глави (Runs.md)](Runs.md) | [Зміст курсу (README)](../../README.md)

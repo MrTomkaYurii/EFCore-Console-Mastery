@@ -1,8 +1,10 @@
-﻿# 1.2. Перший застосунок на EF Core
+# 1.2. Перший застосунок на EF Core
 
 - **Глава:** 01. Вступ до Entity Framework Core
 - **Джерело Metanit:** [https://metanit.com/sharp/efcore/1.2.php](https://metanit.com/sharp/efcore/1.2.php)
 - **Код прикладу:** [`Lesson_1_2_FirstApp.cs`](../../src/01_Introduction/Lesson_1_2_FirstApp.cs)
+- **Запуск уроку:** `dotnet run --project src/EFCoreMastery.ConsoleApp -- 1.2`
+- **Шпаргалка глави:** [Runs.md](Runs.md)
 
 ## Мета уроку
 
@@ -176,3 +178,7 @@ FROM "Users" AS "u"
 1. **Забутий виклик `SaveChanges()`:** Новачки часто викликають `db.Users.Add(tom)`, але забувають `db.SaveChanges()`. У результаті дані залишаються лише в пам'яті й зникають після завершення програми.
 2. **Використання `EnsureCreated()` разом із міграціями:** Якщо ви викликаєте `Database.EnsureCreated()` у конструкторі контексту, EF Core створює таблиці напряму без таблиці історії міграцій (`__EFMigrationsHistory`). Надалі команда `dotnet ef database update` завершиться помилкою, що таблиці вже існують. Використовуйте `EnsureCreated()` лише для швидких прототипів або тестів.
 3. **Занадто довгий час життя `DbContext`:** Не створюйте один глобальний екземпляр `DbContext` на весь час роботи застосунку (особливо у веб-застосунках або багатопотоковому коді). `DbContext` не є потокобезпечним (*not thread-safe*), а його `ChangeTracker` накопичує всі прочитані об'єкти, що призводить до витоку пам'яті. Створюйте короткоживучі екземпляри на одну бізнес-операцію (одиниця роботи — *Unit of Work*).
+
+---
+<!-- lesson-nav -->
+← [1.1. Що таке Entity Framework Core](1_1_WhatIsEfCore.md) | [Шпаргалка глави (Runs.md)](Runs.md) | [Зміст курсу (README)](../../README.md) | [1.3. Підключення до існуючої бази даних](1_3_ExistingDatabase.md) →

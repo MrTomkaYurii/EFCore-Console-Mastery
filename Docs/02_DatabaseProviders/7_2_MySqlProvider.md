@@ -1,8 +1,10 @@
-﻿# 7.2. Провайдер MySQL (та адаптація під SQLite)
+# 7.2. Провайдер MySQL (та адаптація під SQLite)
 
 - **Глава:** 02. Провайдери баз даних
 - **Джерело Metanit:** [https://metanit.com/sharp/efcore/7.2.php](https://metanit.com/sharp/efcore/7.2.php)
 - **Код прикладу:** [Lesson_7_2_MySqlProvider.cs](../../src/02_DatabaseProviders/Lesson_7_2_MySqlProvider.cs)
+- **Запуск уроку:** `dotnet run --project src/EFCoreMastery.ConsoleApp -- 7.2`
+- **Шпаргалка глави:** [Runs.md](Runs.md)
 
 ---
 
@@ -241,3 +243,7 @@ flowchart LR
 
 4. **Нечутливість до регістру в MySQL vs SQLite:**
    Запити на кшталт `.Where(u => u.Name == "tom")` у MySQL за замовчуванням знайдуть `"Tom"`, а в SQLite — ні. Якщо потрібна однакова поведінка незалежно від провайдера, використовуйте явне порівняння або нормалізацію даних.
+
+---
+<!-- lesson-nav -->
+← [7.1. Провайдер MS SQL Server (та адаптація під SQLite)](7_1_SqlServerProvider.md) | [Шпаргалка глави (Runs.md)](Runs.md) | [Зміст курсу (README)](../../README.md) | [7.3. Провайдер PostgreSQL (та адаптація під SQLite)](7_3_PostgreSqlProvider.md) →

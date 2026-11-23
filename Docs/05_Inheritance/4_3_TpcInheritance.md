@@ -1,8 +1,10 @@
-﻿# 4.3. Підхід TPC — Table Per Class
+# 4.3. Підхід TPC — Table Per Class
 
 - **Глава:** 05. Спадкування
 - **Оригінал на Metanit:** [https://metanit.com/sharp/efcore/4.3.php](https://metanit.com/sharp/efcore/4.3.php)
 - **Код прикладу:** [Lesson_4_3_TpcInheritance.cs](../../src/05_Inheritance/Lesson_4_3_TpcInheritance.cs)
+- **Запуск уроку:** `dotnet run --project src/EFCoreMastery.ConsoleApp -- 4.3`
+- **Шпаргалка глави:** [Runs.md](Runs.md)
 
 ---
 
@@ -260,3 +262,7 @@ FROM "Managers" AS "m"
   - **TPH** — вибір за замовчуванням (найпростіше, найшвидше, але nullable-стовпці нащадків).
   - **TPC** — коли потрібні окремі таблиці без `JOIN` і з `NOT NULL` полями (особливо при `abstract` базовому класі).
   - **TPT** — лише коли сувора нормалізація БД є жорсткою вимогою, а продуктивність запитів вторинна.
+
+---
+<!-- lesson-nav -->
+← [4.2. Підхід TPT - Table Per Type](4_2_TptInheritance.md) | [Шпаргалка глави (Runs.md)](Runs.md) | [Зміст курсу (README)](../../README.md) | [5.1. Вступ до LINQ to Entities](../06_QueriesAndLinq/5_1_LinqIntro.md) →

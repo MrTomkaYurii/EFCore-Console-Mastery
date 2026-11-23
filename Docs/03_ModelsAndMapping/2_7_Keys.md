@@ -1,8 +1,10 @@
-﻿# 2.7. Налаштування ключів
+# 2.7. Налаштування ключів
 
 - **Глава:** 03. Створення моделей в EF Core
 - **Джерело Metanit:** [https://metanit.com/sharp/efcore/2.7.php](https://metanit.com/sharp/efcore/2.7.php)
 - **Код прикладу:** [`Lesson_2_7_Keys.cs`](../../src/03_ModelsAndMapping/Lesson_2_7_Keys.cs)
+- **Запуск уроку:** `dotnet run --project src/EFCoreMastery.ConsoleApp -- 2.7`
+- **Шпаргалка глави:** [Runs.md](Runs.md)
 
 ---
 
@@ -157,3 +159,7 @@ erDiagram
 1. **Плутанина між `HasAlternateKey` та `HasIndex(...).IsUnique()`.** Використовуйте `HasAlternateKey` лише тоді, коли на це поле буде посилатися зовнішній ключ (`FOREIGN KEY`) іншої таблиці або це справжній незмінний природний ключ. Якщо вам просто потрібна унікальність (наприклад, `Email` або `PhoneNumber`, які користувач може змінювати або залишати `NULL`), використовуйте **унікальний індекс** (`HasIndex().IsUnique()`).
 2. **Порядок властивостей у складеному ключі.** При пошуку через `db.Citizens.Find(seria, number)` порядок аргументів у `Find()` має **точно відповідати** порядку властивостей в анонімному об'єкті `new { c.PassportSeria, c.PassportNumber }`.
 3. **Забутий `Id` без налаштування ключа.** Якщо назвати ключ `UserCode` і не поставити `[Key]` або `HasKey()`, EF Core викине `InvalidOperationException: The entity type '...' requires a primary key to be defined`.
+
+---
+<!-- lesson-nav -->
+← [2.15. Обов'язкові та необов'язкові властивості](2_15_RequiredAndOptional.md) | [Шпаргалка глави (Runs.md)](Runs.md) | [Зміст курсу (README)](../../README.md) | [2.17. Налаштування індексів](2_17_Indexes.md) →

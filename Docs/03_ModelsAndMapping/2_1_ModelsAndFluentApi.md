@@ -1,8 +1,10 @@
-﻿# 2.1. Моделі, Fluent API та анотації даних
+# 2.1. Моделі, Fluent API та анотації даних
 
 - **Глава:** 03. Створення моделей в EF Core
 - **Джерело Metanit:** [https://metanit.com/sharp/efcore/2.1.php](https://metanit.com/sharp/efcore/2.1.php)
 - **Код прикладу:** [`Lesson_2_1_ModelsAndFluentApi.cs`](../../src/03_ModelsAndMapping/Lesson_2_1_ModelsAndFluentApi.cs)
+- **Запуск уроку:** `dotnet run --project src/EFCoreMastery.ConsoleApp -- 2.1`
+- **Шпаргалка глави:** [Runs.md](Runs.md)
 
 ---
 
@@ -187,3 +189,7 @@ protected override void OnModelCreating(ModelBuilder modelBuilder)
 2. **Виклик `OnModelCreating` при кожному запиті?** Ні — `OnModelCreating` викликається **один раз** при першому створенні екземпляра `DbContext` для певної моделі, після чого збудована модель `IModel` кешується на рівні застосунку. Не варто покладатися на динамічні змінні всередині `OnModelCreating`, якщо не налаштовано власний `IModelCacheKeyFactory`.
 3. **Забутий `using System.ComponentModel.DataAnnotations.Schema;`.** Атрибути `[Key]` та `[Required]` знаходяться в `System.ComponentModel.DataAnnotations`, тоді як `[Table]`, `[Column]`, `[NotMapped]` — у підпросторі `.Schema`.
 4. **Надмірне розростання `OnModelCreating`.** Коли сутностей стає десятки, писати всю конфігурацію в одному методі незручно. Для цього в EF Core існує інтерфейс `IEntityTypeConfiguration<T>`, який детально розглядається в уроці **2.13**.
+
+---
+<!-- lesson-nav -->
+← [7.3. Провайдер PostgreSQL (та адаптація під SQLite)](../02_DatabaseProviders/7_3_PostgreSqlProvider.md) | [Шпаргалка глави (Runs.md)](Runs.md) | [Зміст курсу (README)](../../README.md) | [2.3. Визначення моделей](2_3_DefiningModels.md) →

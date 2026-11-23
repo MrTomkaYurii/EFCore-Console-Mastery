@@ -1,8 +1,10 @@
-﻿# 5.5. Агрегатні операції (Any, All, Count, Sum, Min, Max, Average)
+# 5.5. Агрегатні операції (Any, All, Count, Sum, Min, Max, Average)
 
 - **Глава:** 06. Запити та LINQ to Entities
 - **Джерело Metanit:** [Агрегатные операции](https://metanit.com/sharp/efcore/5.5.php)
 - **Код прикладу:** [Lesson_5_5_Aggregates.cs](../../src/06_QueriesAndLinq/Lesson_5_5_Aggregates.cs)
+- **Запуск уроку:** `dotnet run --project src/EFCoreMastery.ConsoleApp -- 5.5`
+- **Шпаргалка глави:** [Runs.md](Runs.md)
 
 ## Мета уроку
 
@@ -105,3 +107,7 @@ SQLite-запит використовує `COALESCE(SUM("u"."Age"), 0)`, що �
   int minAge = db.Users.Min(u => (int?)u.Age) ?? 0;
   ```
 - **Поєднання фільтра та агрегату:** Замість `db.Users.Where(u => ...).Count()` можна писати коротше: `db.Users.Count(u => ...)`. Але для `Sum`, `Min`, `Max`, `Average` умова завжди задається через попередній `.Where(...)`.
+
+---
+<!-- lesson-nav -->
+← [5.4. Операції з множинами: Union, Intersect, Except](5_4_SetOperations.md) | [Шпаргалка глави (Runs.md)](Runs.md) | [Зміст курсу (README)](../../README.md) | [5.7. Відстеження об'єктів та AsNoTracking](5_7_TrackingAndAsNoTracking.md) →

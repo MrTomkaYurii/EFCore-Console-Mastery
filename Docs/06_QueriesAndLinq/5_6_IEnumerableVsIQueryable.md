@@ -1,8 +1,10 @@
-﻿# 5.6. IEnumerable та IQueryable
+# 5.6. IEnumerable та IQueryable
 
 - **Глава:** 06. Запити та LINQ to Entities
 - **Джерело Metanit:** [IEnumerable и IQueryable](https://metanit.com/sharp/efcore/5.6.php)
 - **Код прикладу:** [Lesson_5_6_IEnumerableVsIQueryable.cs](../../src/06_QueriesAndLinq/Lesson_5_6_IEnumerableVsIQueryable.cs)
+- **Запуск уроку:** `dotnet run --project src/EFCoreMastery.ConsoleApp -- 5.6`
+- **Шпаргалка глави:** [Runs.md](Runs.md)
 
 ## Мета уроку
 
@@ -99,3 +101,7 @@ WHERE "u"."Id" < 10 AND "u"."Name" = 'Tom'
 - **Приховане перетворення в `IEnumerable` у методах-репозиторіях:** Якщо метод має сигнатуру `public IEnumerable<User> GetUsers() => _db.Users;`, то будь-яке подальше `.Where(...)` чи `.Take(10)` у сервісі виконуватиметься **в пам'яті**, а не в SQL! Для відкладеної композиції запитів повертайте `IQueryable<User>` або приймайте параметри фільтрації всередині методу.
 - **Коли `AsEnumerable()` справді потрібен:** Якщо частину фільтрації неможливо перекласти в SQL (наприклад, виклик складної бібліотечної C#-функції), спочатку максимально звузьте вибірку через `IQueryable` (`Where`, `OrderBy`, `Take`), потім явно викличте `.AsEnumerable()`, і вже після нього застосовуйте C#-логіку.
 - **Обережно з `var` та явними типами:** `var query = db.Users;` має тип `DbSet<User>` (який реалізує `IQueryable<User>`), тому тут усе гаразд. Проблема виникає лише при явному вказанні типу `IEnumerable<User>` або виклику `.AsEnumerable()` / `.ToList()` раніше, ніж потрібно.
+
+---
+<!-- lesson-nav -->
+← [5.8. Виконання запитів (відкладене та негайне виконання)](5_8_QueryExecution.md) | [Шпаргалка глави (Runs.md)](Runs.md) | [Зміст курсу (README)](../../README.md) | [5.9. Фільтри запитів рівня моделі (HasQueryFilter)](5_9_GlobalQueryFilters.md) →

@@ -1,8 +1,10 @@
-﻿# 3.12. Комплексні типи (Complex Types)
+# 3.12. Комплексні типи (Complex Types)
 
 - **Глава:** 04. Відносини між моделями
 - **Оригінал на Metanit:** [https://metanit.com/sharp/efcore/3.12.php](https://metanit.com/sharp/efcore/3.12.php)
 - **Код прикладу:** [Lesson_3_12_ComplexTypes.cs](../../src/04_Relations/Lesson_3_12_ComplexTypes.cs)
+- **Запуск уроку:** `dotnet run --project src/EFCoreMastery.ConsoleApp -- 3.12`
+- **Шпаргалка глави:** [Runs.md](Runs.md)
 
 ## Мета уроку
 
@@ -141,3 +143,7 @@ using (var db = new AppContextL3_12())
 
 - **Забутий `required` або `null`-значення:** у EF Core 8/9 властивості комплексних типів не могли бути `null` (у EF Core 10+ підтримку nullable complex types розширено). Для надійності та чистоти коду використовуйте модифікатор `required` або ініціалізуйте властивість за замовчуванням (`= new();`), або ж використовуйте `struct` / `record struct`.
 - **Побічний ефект спільного посилання (Mutable Value Objects):** якщо ви передаєте один `class Language` кільком сутностям, а потім мутуєте його властивість, це змінить дані всіх сутностей, що посилаються на нього в межах поточного контексту. **Best Practice:** проєктуйте комплексні типи як **незмінні (immutable)** `record` або `readonly record struct` (наприклад, `public record Language(string Name);`), щоб уникнути випадкових побічних ефектів.
+
+---
+<!-- lesson-nav -->
+← [3.7. Власні типи (Owned Types)](3_7_OwnedTypes.md) | [Шпаргалка глави (Runs.md)](Runs.md) | [Зміст курсу (README)](../../README.md) | [3.11. Ієрархічні дані](3_11_HierarchicalData.md) →

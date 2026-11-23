@@ -1,8 +1,10 @@
-﻿# 2.11. Паралелізм та оптимістичне блокування (Concurrency)
+# 2.11. Паралелізм та оптимістичне блокування (Concurrency)
 
 - **Глава:** 08. Додаткові теми
 - **Джерело Metanit:** [https://metanit.com/sharp/efcore/2.11.php](https://metanit.com/sharp/efcore/2.11.php)
 - **Код прикладу:** [Lesson_2_11_Concurrency.cs](../../src/08_AdvancedTopics/Lesson_2_11_Concurrency.cs)
+- **Запуск уроку:** `dotnet run --project src/EFCoreMastery.ConsoleApp -- 2.11`
+- **Шпаргалка глави:** [Runs.md](Runs.md)
 
 ---
 
@@ -216,3 +218,7 @@ public byte[]? Timestamp { get; set; }
 - **`GetDatabaseValues()` може повернути `null`:** це трапляється, якщо інший користувач вже **видалив** рядок із БД, поки ви його редагували. Завжди перевіряйте `if (databaseValues is not null)` перед викликом `SetValues(...)`.
 - **Повторний конфлікт при `Client Wins`:** між викликом `GetDatabaseValues()` і повторним `SaveChanges()` третій користувач може встигнути знову змінити рядок. У продакшені варто обгортати повторне збереження у цикл з обмеженою кількістю спроб (наприклад, `maxRetries = 3`).
 - **Використання з `AsNoTracking()` та веб-API (Disconnected Entities):** у веб-застосунках токен паралелізму (`RowVersion` у вигляді `string` чи `Guid`) потрібно передавати клієнту (наприклад, у прихованому полі форми або заголовку `ETag`), а при `PUT`/`PATCH` встановлювати `db.Entry(entity).Property(e => e.RowVersion).OriginalValue = dto.RowVersion;` перед `SaveChanges()`.
+
+---
+<!-- lesson-nav -->
+← [6.3. Збережені процедури (обмеження SQLite та параметризований SQL)](../07_SqlAndStoredProcedures/6_3_StoredProcedures.md) | [Шпаргалка глави (Runs.md)](Runs.md) | [Зміст курсу (README)](../../README.md) | [2.12. Провайдери логування (ILoggerFactory, Console Logger)](2_12_LoggingProviders.md) →

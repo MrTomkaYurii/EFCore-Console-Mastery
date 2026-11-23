@@ -1,8 +1,10 @@
-﻿# 3.3. Завантаження пов'язаних даних. Метод Include
+# 3.3. Завантаження пов'язаних даних. Метод Include
 
 - **Глава:** 04. Відносини між моделями
 - **Оригінал на Metanit:** [https://metanit.com/sharp/efcore/3.3.php](https://metanit.com/sharp/efcore/3.3.php)
 - **Код прикладу:** [Lesson_3_3_EagerLoadingInclude.cs](../../src/04_Relations/Lesson_3_3_EagerLoadingInclude.cs)
+- **Запуск уроку:** `dotnet run --project src/EFCoreMastery.ConsoleApp -- 3.3`
+- **Шпаргалка глави:** [Runs.md](Runs.md)
 
 ## Мета уроку
 
@@ -163,3 +165,7 @@ var companies = db.Companies
 - **Ігнорування `Include()` при використанні `.Select(...)`:** якщо ви робите проєкцію в анонімний тип або DTO (наприклад, `db.Users.Select(u => new { u.Name, CompanyName = u.Company!.Name })`), `Include()` **не потрібен і навіть ігнорується** EF Core! Проєкція сама генерує оптимальний `JOIN` і тягне лише потрібні стовпці.
 - **Надмірне використання `Include()`:** завантаження великих графів об'єктів «про всяк випадок» перевантажує пам'ять, мережу та CPU. Завантажуйте лише ті гілки, які реально використовуються в методі.
 - **Циклічна серіалізація в JSON:** після `db.Companies.Include(c => c.Users)` кожен `User` у `company.Users` має посилання `user.Company` назад на ту саму компанію (Relationship Fix-up). При серіалізації в `System.Text.Json` це викличе `JsonException: A possible object cycle was detected`. Рішення — використовувати DTO або `ReferenceHandler.IgnoreCycles`.
+
+---
+<!-- lesson-nav -->
+← [3.2. Каскадне видалення](3_2_CascadeDelete.md) | [Шпаргалка глави (Runs.md)](Runs.md) | [Зміст курсу (README)](../../README.md) | [3.8. Явне завантаження (Explicit loading)](3_8_ExplicitLoading.md) →

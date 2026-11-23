@@ -1,8 +1,10 @@
-﻿# 4.2. Підхід TPT — Table Per Type
+# 4.2. Підхід TPT — Table Per Type
 
 - **Глава:** 05. Спадкування
 - **Оригінал на Metanit:** [https://metanit.com/sharp/efcore/4.2.php](https://metanit.com/sharp/efcore/4.2.php)
 - **Код прикладу:** [Lesson_4_2_TptInheritance.cs](../../src/05_Inheritance/Lesson_4_2_TptInheritance.cs)
+- **Запуск уроку:** `dotnet run --project src/EFCoreMastery.ConsoleApp -- 4.2`
+- **Шпаргалка глави:** [Runs.md](Runs.md)
 
 ---
 
@@ -225,3 +227,7 @@ INNER JOIN "Managers" AS "m" ON "u"."Id" = "m"."Id"
 ### Best Practices
 - Обирайте **TPT** лише тоді, коли нормалізація схеми БД та суворі `NOT NULL` обмеження важливіші за максимальну швидкість запитів, а ієрархія має невелику кількість типів і глибину.
 - Для високопродуктивних систем із великою кількістю поліморфних запитів розгляньте **TPH** або **TPC**.
+
+---
+<!-- lesson-nav -->
+← [4.1. Підхід TPH - Table Per Hierarchy](4_1_TphInheritance.md) | [Шпаргалка глави (Runs.md)](Runs.md) | [Зміст курсу (README)](../../README.md) | [4.3. Підхід TPC - Table Per Class](4_3_TpcInheritance.md) →

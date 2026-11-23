@@ -1,8 +1,10 @@
-﻿# 2.6. Зіставлення таблиць і стовпців
+# 2.6. Зіставлення таблиць і стовпців
 
 - **Глава:** 03. Створення моделей в EF Core
 - **Джерело Metanit:** [https://metanit.com/sharp/efcore/2.6.php](https://metanit.com/sharp/efcore/2.6.php)
 - **Код прикладу:** [`Lesson_2_6_TablesAndColumns.cs`](../../src/03_ModelsAndMapping/Lesson_2_6_TablesAndColumns.cs)
+- **Запуск уроку:** `dotnet run --project src/EFCoreMastery.ConsoleApp -- 2.6`
+- **Шпаргалка глави:** [Runs.md](Runs.md)
 
 ---
 
@@ -126,3 +128,7 @@ modelBuilder.Entity<UserFluent>()
 1. **Використання C#-імен у «сирих» SQL-запитах.** Навіть якщо властивість у `DbContext` називається `Users`, а в класі є `Id`, після `[Table("People")]` та `[Column("user_id")]` у методах `FromSqlRaw` або `ExecuteSqlRaw` потрібно писати `SELECT user_id FROM People`, інакше СУБД поверне помилку *«no such table: Users»*.
 2. **Зміна імені таблиці при наявності зовнішніх ключів.** Якщо перейменувати таблицю після створення початкової міграції, EF Core згенерує операцію `RenameTable` у новій міграції, зберігши наявні дані (на відміну від видалення і створення заново).
 3. **Очікування роботи `schema` в SQLite.** Якщо ваша бізнес-логіка або тести розраховують на ізоляцію таблиць за різними схемами (`sales.Orders` та `archive.Orders`), пам'ятайте, що в SQLite обидві таблиці потраплять в одну площину і спричинять конфлікт імен `Orders`. Для SQLite краще додавати префікс до імені таблиці (`sales_Orders`).
+
+---
+<!-- lesson-nav -->
+← [2.5. Використання полів сутності](2_5_EntityFields.md) | [Шпаргалка глави (Runs.md)](Runs.md) | [Зміст курсу (README)](../../README.md) | [2.15. Обов'язкові та необов'язкові властивості](2_15_RequiredAndOptional.md) →

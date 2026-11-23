@@ -1,8 +1,10 @@
-﻿# 2.15. Обов'язкові та необов'язкові властивості
+# 2.15. Обов'язкові та необов'язкові властивості
 
 - **Глава:** 03. Створення моделей в EF Core
 - **Джерело Metanit:** [https://metanit.com/sharp/efcore/2.15.php](https://metanit.com/sharp/efcore/2.15.php)
 - **Код прикладу:** [`Lesson_2_15_RequiredAndOptional.cs`](../../src/03_ModelsAndMapping/Lesson_2_15_RequiredAndOptional.cs)
+- **Запуск уроку:** `dotnet run --project src/EFCoreMastery.ConsoleApp -- 2.15`
+- **Шпаргалка глави:** [Runs.md](Runs.md)
 
 ---
 
@@ -131,3 +133,7 @@ flowchart TD
 1. **Порожній рядок `""` не є `NULL`.** Якщо властивість ініціалізовано як `public string Name { get; set; } = string.Empty;`, і користувач не заповнив ім'я, у БД запишеться порожній рядок `""` — обмеження `NOT NULL` **не спрацює**! Якщо потрібно заборонити ще й порожні рядки, у БД додають `CHECK` constraint (`HasCheckConstraint`), а в C# — валідацію.
 2. **Відсутність перевірки до `SaveChanges()`.** EF Core не валідує `[Required]` автоматично в пам'яті при виклику `db.Users.Add(user)` — помилка виникає лише під час звернення до БД у `SaveChanges()`.
 3. **Узгодженість C# типів і БД.** Найкраща практика з увімкненим `<Nullable>enable</Nullable>` — оголошувати обов'язкові властивості без `?` (використовуючи `required string Email { get; set; }` у C# 11+ або конструктор), а необов'язкові — з `?`. Тоді компілятор сам захистить вас від випадкового `null` ще до запуску програми.
+
+---
+<!-- lesson-nav -->
+← [2.6. Зіставлення таблиць і стовпців](2_6_TablesAndColumns.md) | [Шпаргалка глави (Runs.md)](Runs.md) | [Зміст курсу (README)](../../README.md) | [2.7. Налаштування ключів](2_7_Keys.md) →

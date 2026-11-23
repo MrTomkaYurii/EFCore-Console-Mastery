@@ -1,8 +1,10 @@
-﻿# 5.2. Вибірка та фільтрація (Where, EF.Functions.Like, Find)
+# 5.2. Вибірка та фільтрація (Where, EF.Functions.Like, Find)
 
 - **Глава:** 06. Запити та LINQ to Entities
 - **Джерело Metanit:** [Выборка и фильтрация](https://metanit.com/sharp/efcore/5.2.php)
 - **Код прикладу:** [Lesson_5_2_Filtering.cs](../../src/06_QueriesAndLinq/Lesson_5_2_Filtering.cs)
+- **Запуск уроку:** `dotnet run --project src/EFCoreMastery.ConsoleApp -- 5.2`
+- **Шпаргалка глави:** [Runs.md](Runs.md)
 
 ## Мета уроку
 
@@ -109,3 +111,7 @@ Console.WriteLine(ReferenceEquals(user3, cachedUser3)); // True
 - **Застарілі дані при повторному `Find()`:** Якщо між двома викликами `Find(id)` у тому самому контексті інший процес оновив запис у БД, `Find` поверне стару версію з кешу `ChangeTracker`. Для отримання свіжих даних використовуйте `AsNoTracking().FirstOrDefault(u => u.Id == id)`.
 - **`Find` не поєднується з `Include`:** Не можна написати `db.Users.Include(u => u.Company).Find(3)`, оскільки `Find` є методом `DbSet<T>`, а `Include` повертає `IIncludableQueryable<T, P>`. У таких випадках використовуйте `FirstOrDefault(u => u.Id == 3)`.
 - **Безпека від SQL-ін'єкцій:** Передавайте шаблон у `EF.Functions.Like` як змінну або параметр — EF Core автоматично параметризує запит (`LIKE @__pattern_0`).
+
+---
+<!-- lesson-nav -->
+← [5.1. Вступ до LINQ to Entities](5_1_LinqIntro.md) | [Шпаргалка глави (Runs.md)](Runs.md) | [Зміст курсу (README)](../../README.md) | [5.10. Сортування та проекція з бази даних](5_10_SortingAndProjection.md) →

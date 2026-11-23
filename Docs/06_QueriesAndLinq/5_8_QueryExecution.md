@@ -1,8 +1,10 @@
-﻿# 5.8. Виконання запитів (відкладене та негайне виконання)
+# 5.8. Виконання запитів (відкладене та негайне виконання)
 
 - **Глава:** 06. Запити та LINQ to Entities
 - **Джерело Metanit:** [Выполнение запросов](https://metanit.com/sharp/efcore/5.8.php)
 - **Код прикладу:** [Lesson_5_8_QueryExecution.cs](../../src/06_QueriesAndLinq/Lesson_5_8_QueryExecution.cs)
+- **Запуск уроку:** `dotnet run --project src/EFCoreMastery.ConsoleApp -- 5.8`
+- **Шпаргалка глави:** [Runs.md](Runs.md)
 
 ## Мета уроку
 
@@ -101,3 +103,7 @@ Console.WriteLine(ReferenceEquals(user1, user2)); // False
 - **«Застарілі» дані в довгоживучому `DbContext`:** Якщо хтось змінив рядок у БД зовнішнім процесом, а ваш `DbContext` уже має цю сутність у `ChangeTracker`, повторний відстежуваний запит поверне **старі значення з пам'яті**, а не нові з БД! Рішення: тримайте час життя `DbContext` коротким (один `DbContext` на один бізнес-запит / HTTP-запит) або використовуйте `AsNoTracking()`.
 - **Подвійне виконання запиту:** Не пишіть `if (query.Any()) { var list = query.ToList(); }` — це робить два SQL-запити. Краще одразу `var list = query.ToList(); if (list.Count > 0) { ... }`.
 - **Замикання змінних у відкладених запитах:** Якщо ви зміните локальну змінну, використану в `Where(u => u.Age > minAge)`, **до** виклику `ToList()`, то при виконанні запиту використається **нове** значення `minAge`.
+
+---
+<!-- lesson-nav -->
+← [5.7. Відстеження об'єктів та AsNoTracking](5_7_TrackingAndAsNoTracking.md) | [Шпаргалка глави (Runs.md)](Runs.md) | [Зміст курсу (README)](../../README.md) | [5.6. IEnumerable та IQueryable](5_6_IEnumerableVsIQueryable.md) →

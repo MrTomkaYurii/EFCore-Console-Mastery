@@ -1,8 +1,10 @@
-﻿# 5.3. З'єднання та групування таблиць (Join, GroupBy)
+# 5.3. З'єднання та групування таблиць (Join, GroupBy)
 
 - **Глава:** 06. Запити та LINQ to Entities
 - **Джерело Metanit:** [Соединение и группировка таблиц](https://metanit.com/sharp/efcore/5.3.php)
 - **Код прикладу:** [Lesson_5_3_JoinAndGroupBy.cs](../../src/06_QueriesAndLinq/Lesson_5_3_JoinAndGroupBy.cs)
+- **Запуск уроку:** `dotnet run --project src/EFCoreMastery.ConsoleApp -- 5.3`
+- **Шпаргалка глави:** [Runs.md](Runs.md)
 
 ## Мета уроку
 
@@ -123,3 +125,7 @@ GROUP BY "c"."Name"
 - **Повернення неагрегованих елементів групи в `GroupBy`:** У SQLite та інших реляційних СУБД `GROUP BY` дозволяє вибирати лише ключ групування (`g.Key`) та агрегатні функції. Якщо написати `.GroupBy(u => u.CompanyId).Select(g => new { g.Key, Users = g.ToList() })`, у старих версіях EF Core це могло викликати помилку трансляції або проблему N+1. Якщо потрібна саме ієрархія об'єктів, краще завантажити `db.Companies.Include(c => c.Users)`.
 - **Порушення порядку ключів у `join ... on ... equals`:** У виразі `join c in db.Companies on user.CompanyId equals company.Id` ліворуч від `equals` має бути змінна із зовнішньої таблиці (`user`), а праворуч — змінна з таблиці, яку приєднуємо (`company`). Перестановка місцями призведе до помилки компіляції.
 - **Використовуйте навігаційні властивості там, де вони вже є:** Якщо зв'язок налаштований у моделі, запис `db.Users.Select(u => new { u.Name, Company = u.Company!.Name })` коротший і зрозуміліший за ручний `Join`.
+
+---
+<!-- lesson-nav -->
+← [5.10. Сортування та проекція з бази даних](5_10_SortingAndProjection.md) | [Шпаргалка глави (Runs.md)](Runs.md) | [Зміст курсу (README)](../../README.md) | [5.4. Операції з множинами: Union, Intersect, Except](5_4_SetOperations.md) →

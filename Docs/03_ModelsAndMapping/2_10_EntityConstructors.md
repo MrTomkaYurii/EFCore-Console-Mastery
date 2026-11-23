@@ -1,8 +1,10 @@
-﻿# 2.10. Конструктори сутностей
+# 2.10. Конструктори сутностей
 
 - **Глава:** 03. Створення моделей в EF Core
 - **Джерело Metanit:** [https://metanit.com/sharp/efcore/2.10.php](https://metanit.com/sharp/efcore/2.10.php)
 - **Код прикладу:** [`Lesson_2_10_EntityConstructors.cs`](../../src/03_ModelsAndMapping/Lesson_2_10_EntityConstructors.cs)
+- **Запуск уроку:** `dotnet run --project src/EFCoreMastery.ConsoleApp -- 2.10`
+- **Шпаргалка глави:** [Runs.md](Runs.md)
 
 ---
 
@@ -142,3 +144,7 @@ public class Company
 2. **Неузгоджені імена параметрів.** Якщо властивість називається `FullName`, а параметр конструктора — `name` (або `userName`), EF Core не зможе їх зіставити. Імена мають збігатися з точністю до регістру (`fullName` $\leftrightarrow$ `FullName`).
 3. **Забутий `AsNoTracking()` або новий контекст при тестуванні.** Якщо перевіряти виклик конструктора в межах того ж `DbContext`, де об'єкт щойно додали через `Add()`, конструктор при читанні не спрацює через Identity Resolution у `ChangeTracker`.
 4. **Побічні ефекти в конструкторі.** Не варто виконувати важкі операції (мережеві запити, запис у файл тощо) всередині конструктора сутності, адже EF Core викликатиме його для **кожного** рядка, повернутого запитом `ToList()`.
+
+---
+<!-- lesson-nav -->
+← [2.4. Властивості сутності](2_4_EntityProperties.md) | [Шпаргалка глави (Runs.md)](Runs.md) | [Зміст курсу (README)](../../README.md) | [2.5. Використання полів сутності](2_5_EntityFields.md) →

@@ -1,8 +1,10 @@
-﻿# 6.2. Збережені функції (SQLite UDF / HasDbFunction адаптація)
+# 6.2. Збережені функції (SQLite UDF / HasDbFunction адаптація)
 
 - **Глава:** 07. SQL в Entity Framework Core
 - **Джерело Metanit:** [https://metanit.com/sharp/efcore/6.2.php](https://metanit.com/sharp/efcore/6.2.php)
 - **Код прикладу:** [Lesson_6_2_StoredFunctions.cs](../../src/07_SqlAndStoredProcedures/Lesson_6_2_StoredFunctions.cs)
+- **Запуск уроку:** `dotnet run --project src/EFCoreMastery.ConsoleApp -- 6.2`
+- **Шпаргалка глави:** [Runs.md](Runs.md)
 
 ---
 
@@ -229,3 +231,7 @@ var youngerUsers = db.Users
 
 4. **Прапорець `isDeterministic: true`:**
    - Якщо результат вашої UDF залежить виключно від переданих аргументів (без `DateTime.Now`, `Random` чи зовнішнього стану), завжди передавайте `isDeterministic: true` — це дозволяє планувальнику SQLite кешувати результати та ефективніше використовувати індекси.
+
+---
+<!-- lesson-nav -->
+← [6.1. Виконання SQL-запитів (FromSqlRaw, FromSqlInterpolated, SqlQuery, ExecuteSqlRaw)](6_1_RawSqlQueries.md) | [Шпаргалка глави (Runs.md)](Runs.md) | [Зміст курсу (README)](../../README.md) | [6.3. Збережені процедури (обмеження SQLite та параметризований SQL)](6_3_StoredProcedures.md) →

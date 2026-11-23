@@ -1,8 +1,10 @@
-﻿# 5.7. Відстеження об'єктів та AsNoTracking
+# 5.7. Відстеження об'єктів та AsNoTracking
 
 - **Глава:** 06. Запити та LINQ to Entities
 - **Джерело Metanit:** [Отслеживание объектов и AsNoTracking](https://metanit.com/sharp/efcore/5.7.php)
 - **Код прикладу:** [Lesson_5_7_TrackingAndAsNoTracking.cs](../../src/06_QueriesAndLinq/Lesson_5_7_TrackingAndAsNoTracking.cs)
+- **Запуск уроку:** `dotnet run --project src/EFCoreMastery.ConsoleApp -- 5.7`
+- **Шпаргалка глави:** [Runs.md](Runs.md)
 
 ## Мета уроку
 
@@ -106,3 +108,7 @@ var trackedUser = db.Users.AsTracking().FirstOrDefault(); // відстежує�
 - **Запити з проекцією `Select` не потребують `AsNoTracking()`:** Якщо ви проектуєте результат у DTO або анонімний тип (`Select(u => new UserDto { ... })`), EF Core і так **не відстежує** ці об'єкти. Але якщо всередині `Select` ви повертаєте саму сутність моделі (наприклад, `Select(u => u.Company)`), то така сутність **буде** відстежуватися, якщо не додати `AsNoTracking()`.
 - **Оновлення об'єкта, завантаженого з `AsNoTracking()`:** Якщо ви все ж вирішили змінити та зберегти невідстежувану сутність, потрібно явно прикріпити її до контексту через `db.Users.Update(user)` (оновить усі поля) або `db.Attach(user)` з ручним позначенням змінених властивостей.
 - **Дублювання графа об'єктів при `AsNoTracking()` + `Include()`:** Якщо завантажити 100 користувачів однієї компанії через `db.Users.Include(u => u.Company).AsNoTracking()`, EF Core створить **100 окремих екземплярів** `Company` у пам'яті. Щоб уникнути цього без увімкнення `ChangeTracker`, використовуйте `AsNoTrackingWithIdentityResolution()`.
+
+---
+<!-- lesson-nav -->
+← [5.5. Агрегатні операції (Any, All, Count, Sum, Min, Max, Average)](5_5_Aggregates.md) | [Шпаргалка глави (Runs.md)](Runs.md) | [Зміст курсу (README)](../../README.md) | [5.8. Виконання запитів (відкладене та негайне виконання)](5_8_QueryExecution.md) →

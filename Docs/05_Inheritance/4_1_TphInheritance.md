@@ -1,8 +1,10 @@
-﻿# 4.1. Підхід TPH — Table Per Hierarchy
+# 4.1. Підхід TPH — Table Per Hierarchy
 
 - **Глава:** 05. Спадкування
 - **Оригінал на Metanit:** [https://metanit.com/sharp/efcore/4.1.php](https://metanit.com/sharp/efcore/4.1.php)
 - **Код прикладу:** [Lesson_4_1_TphInheritance.cs](../../src/05_Inheritance/Lesson_4_1_TphInheritance.cs)
+- **Запуск уроку:** `dotnet run --project src/EFCoreMastery.ConsoleApp -- 4.1`
+- **Шпаргалка глави:** [Runs.md](Runs.md)
 
 ---
 
@@ -275,3 +277,7 @@ foreach (var u in db.Users.AsNoTracking().ToList())
 - Використовуйте **TPH за замовчуванням**, якщо кількість специфічних полів у нащадків невелика і не критична вимога `NOT NULL` на рівні схеми БД.
 - Явно викликайте `modelBuilder.Entity<User>().UseTphMappingStrategy();` для прозорості архітектури.
 - Якщо два різні похідні класи мають властивості з однаковим ім'ям і типом (наприклад, `Phone` у `Employee` і `Manager`), за замовчуванням EF Core у TPH **спільно використовує один стовпець** або створює окремі (`Employee_Phone`, `Manager_Phone`) — це можна явно контролювати через `.HasColumnName(...)`.
+
+---
+<!-- lesson-nav -->
+← [3.11. Ієрархічні дані](../04_Relations/3_11_HierarchicalData.md) | [Шпаргалка глави (Runs.md)](Runs.md) | [Зміст курсу (README)](../../README.md) | [4.2. Підхід TPT - Table Per Type](4_2_TptInheritance.md) →

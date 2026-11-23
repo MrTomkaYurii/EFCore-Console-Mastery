@@ -1,8 +1,10 @@
-﻿# 2.8. Генерація значень властивостей і стовпців
+# 2.8. Генерація значень властивостей і стовпців
 
 - **Глава:** 03. Створення моделей в EF Core
 - **Джерело Metanit:** [https://metanit.com/sharp/efcore/2.8.php](https://metanit.com/sharp/efcore/2.8.php)
 - **Код прикладу:** [`Lesson_2_8_ValueGeneration.cs`](../../src/03_ModelsAndMapping/Lesson_2_8_ValueGeneration.cs)
+- **Запуск уроку:** `dotnet run --project src/EFCoreMastery.ConsoleApp -- 2.8`
+- **Шпаргалка глави:** [Runs.md](Runs.md)
 
 ---
 
@@ -138,3 +140,7 @@ flowchart TD
 1. **Проблема «сентинельного» значення `0` у `HasDefaultValue(18)`.** Якщо властивість `int Age` має `HasDefaultValue(18)`, ви **не зможете** зберегти користувача з реальним віком `0` (немовля), бо EF Core вважатиме `0` незаданим значенням і підставить `18` із БД! Для таких випадків використовуйте nullable-тип `int? Age` або встановлюйте значення за замовчуванням прямо в C# (`public int Age { get; set; } = 18;`).
 2. **Використання `+` замість `||` у SQLite.** Якщо написати `HasComputedColumnSql("FirstName + ' ' + LastName")` для SQLite, замість склеювання рядків SQLite спробує перетворити імена на числа і поверне `0`!
 3. **Забутий `Id` при `ValueGeneratedNever()`.** Завжди гарантуйте унікальність ключа на стороні клієнта, якщо вимкнули автогенерацію в БД.
+
+---
+<!-- lesson-nav -->
+← [2.17. Налаштування індексів](2_17_Indexes.md) | [Шпаргалка глави (Runs.md)](Runs.md) | [Зміст курсу (README)](../../README.md) | [2.9. Обмеження властивостей](2_9_PropertyConstraints.md) →

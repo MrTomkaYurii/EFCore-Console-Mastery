@@ -1,8 +1,10 @@
-﻿# 8.2. Проєкція запитів на представлення (Views / ToView)
+# 8.2. Проєкція запитів на представлення (Views / ToView)
 
 - **Глава:** 08. Додаткові теми
 - **Джерело Metanit:** [https://metanit.com/sharp/efcore/8.2.php](https://metanit.com/sharp/efcore/8.2.php)
 - **Код прикладу:** [Lesson_8_2_DatabaseViews.cs](../../src/08_AdvancedTopics/Lesson_8_2_DatabaseViews.cs)
+- **Запуск уроку:** `dotnet run --project src/EFCoreMastery.ConsoleApp -- 8.2`
+- **Шпаргалка глави:** [Runs.md](Runs.md)
 
 ---
 
@@ -131,3 +133,7 @@ erDiagram
 - **Можливі `NULL` при агрегації:** якщо в `VIEW` використовується `LEFT JOIN` або `SUM(...)` по порожній таблиці, SQL може повернути `NULL`. Для таких випадків у C#-класі використовуйте nullable-типи (`int?`, `decimal?`) або `COALESCE(SUM(...), 0)` у SQL.
 - **Забутий `ToView(...)`:** якщо викликати лише `HasNoKey()` без `ToView(...)`, EF Core вважатиме, що це звичайна безключова таблиця, і під час `EnsureCreated()` або міграції спробує створити фізичну таблицю.
 - **Продуктивність вкладених фільтрів:** пам'ятайте, що кожен LINQ-запит до `ToView` обгортає `SELECT` представлення. Уникайте важких корельованих підзапитів усередині самого `VIEW`, якщо звертаєтеся до нього з високою частотою.
+
+---
+<!-- lesson-nav -->
+← [8.1. Скомпільовані запити (EF.CompileQuery / CompileAsyncQuery)](8_1_CompiledQueries.md) | [Шпаргалка глави (Runs.md)](Runs.md) | [Зміст курсу (README)](../../README.md) | [8.3. Зберігання історії змін (Temporal Tables / SQLite Audit Trigger)](8_3_ChangeHistory.md) →

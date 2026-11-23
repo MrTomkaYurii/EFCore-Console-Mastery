@@ -1,8 +1,10 @@
-﻿# 7.3. Провайдер PostgreSQL (та адаптація під SQLite)
+# 7.3. Провайдер PostgreSQL (та адаптація під SQLite)
 
 - **Глава:** 02. Провайдери баз даних
 - **Джерело Metanit:** [https://metanit.com/sharp/efcore/7.3.php](https://metanit.com/sharp/efcore/7.3.php)
 - **Код прикладу:** [Lesson_7_3_PostgreSqlProvider.cs](../../src/02_DatabaseProviders/Lesson_7_3_PostgreSqlProvider.cs)
+- **Запуск уроку:** `dotnet run --project src/EFCoreMastery.ConsoleApp -- 7.3`
+- **Шпаргалка глави:** [Runs.md](Runs.md)
 
 ---
 
@@ -213,3 +215,7 @@ flowchart LR
 
 3. **Змішування `EnsureCreated()` і міграцій:**
    Якщо база даних була створена через `Database.EnsureCreated()`, у ній відсутня таблиця історії міграцій `__EFMigrationsHistory`, тому подальше застосування `Update-Database` завершиться помилкою. Використовуйте або `EnsureCreated()` (для швидких прототипів/тестів), або міграції (для реальної розробки).
+
+---
+<!-- lesson-nav -->
+← [7.2. Провайдер MySQL (та адаптація під SQLite)](7_2_MySqlProvider.md) | [Шпаргалка глави (Runs.md)](Runs.md) | [Зміст курсу (README)](../../README.md) | [2.1. Моделі, Fluent API та анотації даних](../03_ModelsAndMapping/2_1_ModelsAndFluentApi.md) →

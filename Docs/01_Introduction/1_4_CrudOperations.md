@@ -1,8 +1,10 @@
-﻿# 1.4. Основні операції з даними. CRUD
+# 1.4. Основні операції з даними. CRUD
 
 - **Глава:** 01. Вступ до Entity Framework Core
 - **Джерело Metanit:** [https://metanit.com/sharp/efcore/1.4.php](https://metanit.com/sharp/efcore/1.4.php)
 - **Код прикладу:** [`Lesson_1_4_CrudOperations.cs`](../../src/01_Introduction/Lesson_1_4_CrudOperations.cs)
+- **Запуск уроку:** `dotnet run --project src/EFCoreMastery.ConsoleApp -- 1.4`
+- **Шпаргалка глави:** [Runs.md](Runs.md)
 
 ## Мета уроку
 
@@ -156,3 +158,7 @@ if (user is not null)
 2. **Втрата змін у від'єднаному сценарії:** Якщо ви отримали об'єкт із веб-запиту (DTO → Entity) або з іншого `DbContext`, не забудьте прикріпити його через `Update()` або `Attach()` перед `SaveChanges()`.
 3. **Завантаження сутності лише для видалення:** Щоб видалити запис за відомим `Id`, не обов'язково спочатку робити `SELECT` через `FirstOrDefault()`. Можна передати stub-сутність `db.Users.Remove(new User { Id = 5 })`, або у сучасному EF Core 7+ використати `db.Users.Where(u => u.Id == 5).ExecuteDelete()`, який виконує миттєвий `DELETE` без завантаження об'єкта в пам'ять.
 4. **Не забувайте про `Microsoft.EntityFrameworkCore` для async-методів:** Методи `ToListAsync()` та `FirstOrDefaultAsync()` — це методи розширення, що знаходяться у просторі імен `Microsoft.EntityFrameworkCore`, а не `System.Linq`.
+
+---
+<!-- lesson-nav -->
+← [2.16. Управління базою даних](2_16_DatabaseManagement.md) | [Шпаргалка глави (Runs.md)](Runs.md) | [Зміст курсу (README)](../../README.md) | [1.5. Конфігурація підключення](1_5_ConnectionConfiguration.md) →

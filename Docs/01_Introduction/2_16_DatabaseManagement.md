@@ -1,8 +1,10 @@
-﻿# 2.16. Управління базою даних
+# 2.16. Управління базою даних
 
 - **Глава:** 01. Вступ до Entity Framework Core
 - **Джерело Metanit:** [https://metanit.com/sharp/efcore/2.16.php](https://metanit.com/sharp/efcore/2.16.php)
 - **Код прикладу:** [`Lesson_2_16_DatabaseManagement.cs`](../../src/01_Introduction/Lesson_2_16_DatabaseManagement.cs)
+- **Запуск уроку:** `dotnet run --project src/EFCoreMastery.ConsoleApp -- 2.16`
+- **Шпаргалка глави:** [Runs.md](Runs.md)
 
 ## Мета уроку
 
@@ -105,3 +107,7 @@ bool canConnectAsync = await db.Database.CanConnectAsync();
 1. **Несумісність `EnsureCreated()` та `Migrate()`:** Це одна з найпоширеніших помилок. `EnsureCreated()` створює таблиці напряму і **не** створює системну таблицю `__EFMigrationsHistory`. Якщо пізніше ви додасте міграції і викличете `db.Database.Migrate()`, EF Core спробує застосувати початкову міграцію з нуля і впаде з помилкою `SQLite Error 1: 'table "Users" already exists'`.
 2. **Виклик `EnsureDeleted()` у конструкторі `DbContext`:** Навіть у навчальних проєктах тримати `EnsureDeleted()` усередині конструктора `DbContext` небезпечно — кожне створення контексту (наприклад, для простого `SELECT`) знищуватиме всю базу даних! Викликайте його явно лише в точці ініціалізації тестів.
 3. **Використовуйте `await` без `.GetAwaiter().GetResult()` у реальних проєктах:** У консольному раннері цього курсу метод `ILesson.Run()` синхронний, тому застосовано `RunAsync().GetAwaiter().GetResult()`. У реальних застосунках робіть `Main` асинхронним (`static async Task Main`) і використовуйте повноцінний `await`.
+
+---
+<!-- lesson-nav -->
+← [1.3. Підключення до існуючої бази даних](1_3_ExistingDatabase.md) | [Шпаргалка глави (Runs.md)](Runs.md) | [Зміст курсу (README)](../../README.md) | [1.4. Основні операції з даними. CRUD](1_4_CrudOperations.md) →

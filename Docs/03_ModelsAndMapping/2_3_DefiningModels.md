@@ -1,8 +1,10 @@
-﻿# 2.3. Визначення моделей
+# 2.3. Визначення моделей
 
 - **Глава:** 03. Створення моделей в EF Core
 - **Джерело Metanit:** [https://metanit.com/sharp/efcore/2.3.php](https://metanit.com/sharp/efcore/2.3.php)
 - **Код прикладу:** [`Lesson_2_3_DefiningModels.cs`](../../src/03_ModelsAndMapping/Lesson_2_3_DefiningModels.cs)
+- **Запуск уроку:** `dotnet run --project src/EFCoreMastery.ConsoleApp -- 2.3`
+- **Шпаргалка глави:** [Runs.md](Runs.md)
 
 ---
 
@@ -137,3 +139,7 @@ flowchart TD
 1. **Неочікувана поява зайвих таблиць у БД.** Якщо додати до сутності властивість на кшталт `public UserDto? TempData { get; set; }` або `public ValidationResult? LastValidation { get; set; }` і забути `[NotMapped]`, EF Core спробує включити `UserDto` / `ValidationResult` до моделі та впаде з помилкою, якщо в того немає первинного ключа `Id`.
 2. **Різниця в іменах таблиць.** Зверніть увагу: сутність із `DbSet<User> Users` отримує таблицю в множині (`Users`), тоді як сутність `Company`, включена лише через навігацію або `modelBuilder.Entity<Company>()`, отримує таблицю в однині (`Company`), якщо не задати ім'я явно через `.ToTable("Companies")`.
 3. **Уникайте `= null!;` на користь `=> Set<T>()`.** Оголошення `public DbSet<User> Users => Set<User>();` позбавляє від «магічного» пригнічення попереджень компілятора і робить контекст безпечнішим при рефакторингу.
+
+---
+<!-- lesson-nav -->
+← [2.1. Моделі, Fluent API та анотації даних](2_1_ModelsAndFluentApi.md) | [Шпаргалка глави (Runs.md)](Runs.md) | [Зміст курсу (README)](../../README.md) | [2.4. Властивості сутності](2_4_EntityProperties.md) →

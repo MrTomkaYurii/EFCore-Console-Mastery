@@ -1,8 +1,10 @@
-﻿# 3.6. Відношення багато до багатьох
+# 3.6. Відношення багато до багатьох
 
 - **Глава:** 04. Відносини між моделями
 - **Оригінал на Metanit:** [https://metanit.com/sharp/efcore/3.6.php](https://metanit.com/sharp/efcore/3.6.php)
 - **Код прикладу:** [Lesson_3_6_ManyToMany.cs](../../src/04_Relations/Lesson_3_6_ManyToMany.cs)
+- **Запуск уроку:** `dotnet run --project src/EFCoreMastery.ConsoleApp -- 3.6`
+- **Шпаргалка глави:** [Runs.md](Runs.md)
 
 ## Мета уроку
 
@@ -63,6 +65,15 @@ public class Enrollment
     public int Mark { get; set; }
 }
 ```
+
+### Порівняння підходів до M:N в EF Core
+
+| Критерій | Неявна проміжна таблиця (Skip Navigation) | Явна проміжна сутність (`Enrollment`) |
+| :--- | :--- | :--- |
+| **Додатковий C#-клас** | Не потрібен | Потрібен (`Enrollment` із двома FK) |
+| **Додаткові стовпці (оцінка, дата)** | Неможливо зберігати в моделі | Повноцінна підтримка будь-яких полів (payload) |
+| **Простота коду додавання** | `course.Students.Add(tom)` | `db.Enrollments.Add(new Enrollment { ... })` |
+| **Ім'я таблиці в БД** | `CourseStudent` (або через `UsingEntity`) | Задається як звичайний `DbSet` / `ToTable` |
 
 Тоді в `OnModelCreating` можна зберегти зручні прямі колекції `Courses` / `Students` (Skip Navigations) і водночас налаштувати `Enrollment` через узагальнений `UsingEntity<Enrollment>(...)`:
 
@@ -180,3 +191,7 @@ db.SaveChanges();
 - **Забутий `Include()` перед `Remove()`:** найчастіша помилка при роботі з M:N. Якщо завантажити `alice` без `.Include(s => s.Courses)`, виклик `alice.Courses.Remove(algorithms)` поверне `false` і запис у БД залишиться.
 - **Спроба додати дублікатний зв'язок:** якщо `Tom` уже записаний на `algorithms`, повторне додавання `algorithms` у `tom.Courses` і `SaveChanges()` викличе порушення складеного первинного ключа (`UNIQUE constraint failed: Enrollments.CoursesId, Enrollments.StudentsId`).
 - **Best Practice:** якщо проміжна таблиця має бізнес-сенс і може розростатися додатковими полями в майбутньому (дата, статус, роль, оцінка), одразу проєктуйте її як явну сутність `Enrollment` через `UsingEntity<Enrollment>(...)` або як два явних зв'язки `1:N`.
+
+---
+<!-- lesson-nav -->
+← [3.5. Відношення один до багатьох](3_5_OneToMany.md) | [Шпаргалка глави (Runs.md)](Runs.md) | [Зміст курсу (README)](../../README.md) | [3.7. Власні типи (Owned Types)](3_7_OwnedTypes.md) →

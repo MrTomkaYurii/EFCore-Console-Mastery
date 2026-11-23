@@ -1,8 +1,10 @@
-﻿# 3.5. Відношення один до багатьох
+# 3.5. Відношення один до багатьох
 
 - **Глава:** 04. Відносини між моделями
 - **Оригінал на Metanit:** [https://metanit.com/sharp/efcore/3.5.php](https://metanit.com/sharp/efcore/3.5.php)
 - **Код прикладу:** [Lesson_3_5_OneToMany.cs](../../src/04_Relations/Lesson_3_5_OneToMany.cs)
+- **Запуск уроку:** `dotnet run --project src/EFCoreMastery.ConsoleApp -- 3.5`
+- **Шпаргалка глави:** [Runs.md](Runs.md)
 
 ## Мета уроку
 
@@ -106,3 +108,7 @@ db.SaveChanges();
 - **Неініціалізована колекція:** якщо не написати `= new();` (або `= [];`) для `List<User> Users`, спроба додати елемент через `company.Users.Add(user)` призведе до `NullReferenceException`.
 - **Дублювання головної сутності при невідстежуваному об'єкті:** якщо ви отримали `google` з `AsNoTracking()` або створили новий екземпляр `new Company { Id = 2, Name = "Google" }` і присвоїли `bob.Company = google` у новому контексті, EF Core може спробувати вставити *нову* компанію замість прив'язки до існуючої. Для прив'язки до існуючої компанії за ID безпечніше використовувати `bob.CompanyId = 2;`.
 - **Продуктивність `Include(c => c.Users)`:** якщо у компанії 10 000 співробітників, завантажувати всю колекцію через `Include` для відображення лише кількості співробітників неефективно — краще використати проєкцію `db.Companies.Select(c => new { c.Name, Count = c.Users.Count })`.
+
+---
+<!-- lesson-nav -->
+← [3.4. Відношення один до одного](3_4_OneToOne.md) | [Шпаргалка глави (Runs.md)](Runs.md) | [Зміст курсу (README)](../../README.md) | [3.6. Відношення багато до багатьох](3_6_ManyToMany.md) →

@@ -1,8 +1,10 @@
-﻿# 3.1. Зовнішні ключі та навігаційні властивості
+# 3.1. Зовнішні ключі та навігаційні властивості
 
 - **Глава:** 04. Відносини між моделями
 - **Оригінал на Metanit:** [https://metanit.com/sharp/efcore/3.1.php](https://metanit.com/sharp/efcore/3.1.php)
 - **Код прикладу:** [Lesson_3_1_ForeignKeysAndNavigation.cs](../../src/04_Relations/Lesson_3_1_ForeignKeysAndNavigation.cs)
+- **Запуск уроку:** `dotnet run --project src/EFCoreMastery.ConsoleApp -- 3.1`
+- **Шпаргалка глави:** [Runs.md](Runs.md)
 
 ## Мета уроку
 
@@ -167,3 +169,7 @@ db.SaveChanges();
 - **Помилка `FOREIGN KEY constraint failed`:** виникає при спробі вставити `User` із неіснуючим `CompanyId` (наприклад, `CompanyId = 0`, якщо забули зберегти `Company` або не задали навігаційну властивість).
 - **Неявний `ON DELETE CASCADE`:** через те що `int CompanyId` не допускає `null`, видалення компанії за замовчуванням видалить усіх її користувачів. Якщо такий зв'язок має бути захищеним від випадкового видалення, використовуйте `int?` або налаштовуйте `DeleteBehavior.Restrict`.
 - **Best Practice:** завжди явно оголошуйте і властивість зовнішнього ключа (`CompanyId`), і навігаційну властивість (`Company`), а в головній сутності ініціалізуйте колекцію (`= new();` або `= [];`), щоб уникнути `NullReferenceException` при додаванні елементів.
+
+---
+<!-- lesson-nav -->
+← [2.14. Ініціалізація бази даних початковими даними](../03_ModelsAndMapping/2_14_DataSeeding.md) | [Шпаргалка глави (Runs.md)](Runs.md) | [Зміст курсу (README)](../../README.md) | [3.10. Налаштування зовнішнього ключа через анотації та Fluent API](3_10_ForeignKeyConfig.md) →

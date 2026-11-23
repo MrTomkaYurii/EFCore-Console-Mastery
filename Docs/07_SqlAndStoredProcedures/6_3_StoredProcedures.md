@@ -1,8 +1,10 @@
-﻿# 6.3. Збережені процедури (обмеження SQLite та параметризований SQL)
+# 6.3. Збережені процедури (обмеження SQLite та параметризований SQL)
 
 - **Глава:** 07. SQL в Entity Framework Core
 - **Джерело Metanit:** [https://metanit.com/sharp/efcore/6.3.php](https://metanit.com/sharp/efcore/6.3.php)
 - **Код прикладу:** [Lesson_6_3_StoredProcedures.cs](../../src/07_SqlAndStoredProcedures/Lesson_6_3_StoredProcedures.cs)
+- **Запуск уроку:** `dotnet run --project src/EFCoreMastery.ConsoleApp -- 6.3`
+- **Шпаргалка глави:** [Runs.md](Runs.md)
 
 ---
 
@@ -215,3 +217,7 @@ catch
 
 4. **Портабельність коду між SQLite (тести) та SQL Server (продакшен):**
    - Якщо ваш проєкт використовує SQL Server у продакшені та SQLite в інтеграційних тестах, уникайте розкиданих по контролерах викликів `EXEC ProcName` — інкапсулюйте доступ до даних у сервісах/репозиторіях або використовуйте стандартні LINQ-запити та `SqlQuery<T>`.
+
+---
+<!-- lesson-nav -->
+← [6.2. Збережені функції (SQLite UDF / HasDbFunction адаптація)](6_2_StoredFunctions.md) | [Шпаргалка глави (Runs.md)](Runs.md) | [Зміст курсу (README)](../../README.md) | [2.11. Паралелізм та оптимістичне блокування (Concurrency)](../08_AdvancedTopics/2_11_Concurrency.md) →

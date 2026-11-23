@@ -1,8 +1,10 @@
-﻿# 1.5. Конфігурація підключення
+# 1.5. Конфігурація підключення
 
 - **Глава:** 01. Вступ до Entity Framework Core
 - **Джерело Metanit:** [https://metanit.com/sharp/efcore/1.5.php](https://metanit.com/sharp/efcore/1.5.php)
 - **Код прикладу:** [`Lesson_1_5_ConnectionConfiguration.cs`](../../src/01_Introduction/Lesson_1_5_ConnectionConfiguration.cs)
+- **Запуск уроку:** `dotnet run --project src/EFCoreMastery.ConsoleApp -- 1.5`
+- **Шпаргалка глави:** [Runs.md](Runs.md)
 
 ## Мета уроку
 
@@ -180,3 +182,7 @@ var resolvedConnStr = config.GetConnectionString("DefaultConnection");
    ```
 2. **Використання `Directory.GetCurrentDirectory()` замість `AppContext.BaseDirectory`:** Якщо консольний застосунок запущено з іншої робочої директорії (наприклад, через планувальник завдань або з кореня рішення), `Directory.GetCurrentDirectory()` вказуватиме не на папку з `.exe` та `appsettings.json`. Надійніше використовувати `AppContext.BaseDirectory`.
 3. **Захист секретів:** Для SQLite рядок підключення зазвичай не містить паролів, але для SQL Server / PostgreSQL ніколи не зберігайте реальні паролі в `appsettings.json` у Git-репозиторії — використовуйте **User Secrets** (`dotnet user-secrets`) під час розробки або змінні середовища на сервері.
+
+---
+<!-- lesson-nav -->
+← [1.4. Основні операції з даними. CRUD](1_4_CrudOperations.md) | [Шпаргалка глави (Runs.md)](Runs.md) | [Зміст курсу (README)](../../README.md) | [1.6. Логування операцій](1_6_Logging.md) →

@@ -1,8 +1,10 @@
-﻿# 2.13. Конфігурація моделей (`IEntityTypeConfiguration`)
+# 2.13. Конфігурація моделей (`IEntityTypeConfiguration`)
 
 - **Глава:** 03. Створення моделей в EF Core
 - **Джерело Metanit:** [https://metanit.com/sharp/efcore/2.13.php](https://metanit.com/sharp/efcore/2.13.php)
 - **Код прикладу:** [`Lesson_2_13_ModelConfiguration.cs`](../../src/03_ModelsAndMapping/Lesson_2_13_ModelConfiguration.cs)
+- **Запуск уроку:** `dotnet run --project src/EFCoreMastery.ConsoleApp -- 2.13`
+- **Шпаргалка глави:** [Runs.md](Runs.md)
 
 ---
 
@@ -85,9 +87,9 @@ public class Order
 flowchart TD
     A["DbContext.OnModelCreating(ModelBuilder)"] --> B["Спосіб 1: ApplyConfiguration(new UserConfiguration())"]
     A --> C["Спосіб 2: ApplyConfigurationsFromAssembly(Assembly)"]
-    A --> D["Спосіб 3: Entity<User>(UserConfigure) (метод-делегат)"]
-    E["Клас сутності [EntityTypeConfiguration(typeof(OrderConfiguration))]"] --> F["Спосіб 4: Автоматичне виявлення EF Core 7+"]
-    B --> G["IEntityTypeConfiguration<T>.Configure(EntityTypeBuilder<T>)"]
+    A --> D["Спосіб 3: Entity of User з методом-делегатом UserConfigure"]
+    E["Атрибут EntityTypeConfiguration(typeof(OrderConfiguration))"] --> F["Спосіб 4: Автоматичне виявлення EF Core 7+"]
+    B --> G["IEntityTypeConfiguration.Configure(EntityTypeBuilder)"]
     C --> G
     F --> G
     D --> H["Фінальна модель IModel"]
@@ -134,3 +136,7 @@ flowchart TD
 1. **Пастка `ApplyConfigurationsFromAssembly` у багатоконтекстних проєктах.** Якщо в одній збірці є кілька різних `DbContext` (як у нашому навчальному проєкті з десятками уроків, або в мікросервісах із різними контекстами для різних БД), виклик `ApplyConfigurationsFromAssembly` підтягне в поточний контекст конфігурації сутностей з інших контекстів і створить зайві таблиці! У таких випадках використовуйте точковий `ApplyConfiguration(...)` або фільтруйте класи за простором імен.
 2. **Змішування домену та інфраструктури при `[EntityTypeConfiguration]`.** Хоча `[EntityTypeConfiguration]` дуже зручний, він змушує доменний клас `Order` залежати від `Microsoft.EntityFrameworkCore` і знати про існування `OrderConfiguration`. Якщо ви дотримуєтеся Clean Architecture, краще тримати класи `*Configuration` в шарі Infrastructure і підключати їх через `ApplyConfigurationsFromAssembly` у `DbContext`.
 3. **Забутий публічний конструктор без параметрів у `*Configuration`.** Для роботи `ApplyConfigurationsFromAssembly` та `[EntityTypeConfiguration]` клас конфігурації повинен мати публічний конструктор без параметрів.
+
+---
+<!-- lesson-nav -->
+← [2.9. Обмеження властивостей](2_9_PropertyConstraints.md) | [Шпаргалка глави (Runs.md)](Runs.md) | [Зміст курсу (README)](../../README.md) | [2.14. Ініціалізація бази даних початковими даними](2_14_DataSeeding.md) →

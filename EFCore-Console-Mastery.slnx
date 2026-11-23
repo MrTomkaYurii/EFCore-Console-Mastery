@@ -17,6 +17,7 @@
     <Project Path="src/08_AdvancedTopics/EFCoreMastery.Ch08.AdvancedTopics.csproj" />
   </Folder>
   <Folder Name="/Docs/01_Introduction/">
+    <File Path="Docs/01_Introduction/Runs.md" />
     <File Path="Docs/01_Introduction/1_1_WhatIsEfCore.md" />
     <File Path="Docs/01_Introduction/1_2_FirstApp.md" />
     <File Path="Docs/01_Introduction/1_3_ExistingDatabase.md" />
@@ -27,11 +28,13 @@
     <File Path="Docs/01_Introduction/2_2_Migrations.md" />
   </Folder>
   <Folder Name="/Docs/02_DatabaseProviders/">
+    <File Path="Docs/02_DatabaseProviders/Runs.md" />
     <File Path="Docs/02_DatabaseProviders/7_1_SqlServerProvider.md" />
     <File Path="Docs/02_DatabaseProviders/7_2_MySqlProvider.md" />
     <File Path="Docs/02_DatabaseProviders/7_3_PostgreSqlProvider.md" />
   </Folder>
   <Folder Name="/Docs/03_ModelsAndMapping/">
+    <File Path="Docs/03_ModelsAndMapping/Runs.md" />
     <File Path="Docs/03_ModelsAndMapping/2_1_ModelsAndFluentApi.md" />
     <File Path="Docs/03_ModelsAndMapping/2_10_EntityConstructors.md" />
     <File Path="Docs/03_ModelsAndMapping/2_13_ModelConfiguration.md" />
@@ -47,6 +50,7 @@
     <File Path="Docs/03_ModelsAndMapping/2_9_PropertyConstraints.md" />
   </Folder>
   <Folder Name="/Docs/04_Relations/">
+    <File Path="Docs/04_Relations/Runs.md" />
     <File Path="Docs/04_Relations/3_1_ForeignKeysAndNavigation.md" />
     <File Path="Docs/04_Relations/3_10_ForeignKeyConfig.md" />
     <File Path="Docs/04_Relations/3_11_HierarchicalData.md" />
@@ -61,11 +65,13 @@
     <File Path="Docs/04_Relations/3_9_LazyLoading.md" />
   </Folder>
   <Folder Name="/Docs/05_Inheritance/">
+    <File Path="Docs/05_Inheritance/Runs.md" />
     <File Path="Docs/05_Inheritance/4_1_TphInheritance.md" />
     <File Path="Docs/05_Inheritance/4_2_TptInheritance.md" />
     <File Path="Docs/05_Inheritance/4_3_TpcInheritance.md" />
   </Folder>
   <Folder Name="/Docs/06_QueriesAndLinq/">
+    <File Path="Docs/06_QueriesAndLinq/Runs.md" />
     <File Path="Docs/06_QueriesAndLinq/5_1_LinqIntro.md" />
     <File Path="Docs/06_QueriesAndLinq/5_10_SortingAndProjection.md" />
     <File Path="Docs/06_QueriesAndLinq/5_11_BulkExecuteUpdateDelete.md" />
@@ -79,11 +85,13 @@
     <File Path="Docs/06_QueriesAndLinq/5_9_GlobalQueryFilters.md" />
   </Folder>
   <Folder Name="/Docs/07_SqlAndStoredProcedures/">
+    <File Path="Docs/07_SqlAndStoredProcedures/Runs.md" />
     <File Path="Docs/07_SqlAndStoredProcedures/6_1_RawSqlQueries.md" />
     <File Path="Docs/07_SqlAndStoredProcedures/6_2_StoredFunctions.md" />
     <File Path="Docs/07_SqlAndStoredProcedures/6_3_StoredProcedures.md" />
   </Folder>
   <Folder Name="/Docs/08_AdvancedTopics/">
+    <File Path="Docs/08_AdvancedTopics/Runs.md" />
     <File Path="Docs/08_AdvancedTopics/2_11_Concurrency.md" />
     <File Path="Docs/08_AdvancedTopics/2_12_LoggingProviders.md" />
     <File Path="Docs/08_AdvancedTopics/8_1_CompiledQueries.md" />

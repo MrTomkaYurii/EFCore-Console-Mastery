@@ -1,8 +1,10 @@
-﻿# 3.8. Явне завантаження (Explicit loading)
+# 3.8. Явне завантаження (Explicit loading)
 
 - **Глава:** 04. Відносини між моделями
 - **Оригінал на Metanit:** [https://metanit.com/sharp/efcore/3.8.php](https://metanit.com/sharp/efcore/3.8.php)
 - **Код прикладу:** [Lesson_3_8_ExplicitLoading.cs](../../src/04_Relations/Lesson_3_8_ExplicitLoading.cs)
+- **Запуск уроку:** `dotnet run --project src/EFCoreMastery.ConsoleApp -- 3.8`
+- **Шпаргалка глави:** [Runs.md](Runs.md)
 
 ## Мета уроку
 
@@ -63,6 +65,15 @@
   ```csharp
   db.Entry(company).Collection(c => c.Users).Query().Where(u => u.Name!.StartsWith("A")).Load();
   ```
+
+### Зведена таблиця методів Explicit Loading
+
+| Метод | Для якого зв'язку | Перевага |
+| :--- | :--- | :--- |
+| `db.Users.Where(u => u.CompanyId == id).Load()` | Будь-який `DbSet` | Можна завантажити довільну вибірку, EF зв'яже її через Relationship Fix-up |
+| `db.Entry(c).Collection(x => x.Users).Load()` | Колекція (`1:N`, `M:N`) | Не потрібно вручну писати `Where` по зовнішньому ключу |
+| `db.Entry(u).Reference(x => x.Company).Load()` | Одиночне посилання (`N:1`, `1:1`) | Лаконічно підвантажує один зв'язаний об'єкт |
+| `db.Entry(c).Collection(x => x.Users).Query()` | Фільтрація / агрегація | Виконує `Count()`, `Any()`, `Where()` на стороні БД без повного завантаження |
 
 ### Повторне звернення до завантажених даних через `.Local`
 
@@ -157,3 +168,7 @@ if (user != null)
 - **Виклик `Entry()` для невідстежуваної сутності (`AsNoTracking`):** якщо об'єкт отримано через `db.Companies.AsNoTracking().FirstOrDefault()`, виклик `db.Entry(company).Collection(...).Load()` викине `InvalidOperationException`, оскільки EF Core не може завантажити навігацію для сутності, що не відстежується контекстом.
 - **Перевірка `IsLoaded`:** перед викликом `.Load()` можна перевірити прапорець `if (!db.Entry(company).Collection(c => c.Users).IsLoaded)`, щоб уникнути зайвого повторного SQL-запиту, якщо колекція вже була завантажена раніше.
 - **Уникайте `Load()` у циклі:** виклик `Entry(c).Collection(c => c.Users).Load()` усередині `foreach` по 100 компаніях виконає 100 окремих SQL-запитів (проблема N+1). Якщо дані потрібні для всіх елементів списку — використовуйте `Include()`.
+
+---
+<!-- lesson-nav -->
+← [3.3. Завантаження пов'язаних даних. Метод Include](3_3_EagerLoadingInclude.md) | [Шпаргалка глави (Runs.md)](Runs.md) | [Зміст курсу (README)](../../README.md) | [3.9. Ліниве завантаження (Lazy loading)](3_9_LazyLoading.md) →

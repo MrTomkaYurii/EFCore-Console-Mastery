@@ -1,8 +1,10 @@
-﻿# 1.6. Логування операцій
+# 1.6. Логування операцій
 
 - **Глава:** 01. Вступ до Entity Framework Core
 - **Джерело Metanit:** [https://metanit.com/sharp/efcore/1.6.php](https://metanit.com/sharp/efcore/1.6.php)
 - **Код прикладу:** [`Lesson_1_6_Logging.cs`](../../src/01_Introduction/Lesson_1_6_Logging.cs)
+- **Запуск уроку:** `dotnet run --project src/EFCoreMastery.ConsoleApp -- 1.6`
+- **Шпаргалка глави:** [Runs.md](Runs.md)
 
 ## Мета уроку
 
@@ -182,3 +184,7 @@ var categoryOptions = new DbContextOptionsBuilder<L1_6.LoggedContext>()
 2. **Незакритий `StreamWriter`:** Якщо ви передаєте `logStream.WriteLine` у `LogTo` всередині `DbContext`, але забуваєте перевизначити `Dispose()` / `DisposeAsync()`, файл логів може виявитися порожнім або заблокованим після завершення роботи контексту.
 3. **Продуктивність:** Логування на рівні `LogLevel.Trace` або `Debug` під високим навантаженням створює значне навантаження на CPU та диск. У продакшені обмежуйтеся `Warning`/`Error` або інтегруйтеся з `ILoggerFactory` (`UseLoggerFactory`).
 4. **Не забувайте про `ToQueryString()`:** Якщо вам потрібно швидко подивитися SQL конкретного LINQ-запиту без увімкнення глобального `LogTo()`, викличте `var sql = db.Users.Where(...).ToQueryString();` (для запитів читання).
+
+---
+<!-- lesson-nav -->
+← [1.5. Конфігурація підключення](1_5_ConnectionConfiguration.md) | [Шпаргалка глави (Runs.md)](Runs.md) | [Зміст курсу (README)](../../README.md) | [2.2. Управління схемою БД та міграції](2_2_Migrations.md) →

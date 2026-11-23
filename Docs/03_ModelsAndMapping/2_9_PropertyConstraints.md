@@ -1,8 +1,10 @@
-﻿# 2.9. Обмеження властивостей
+# 2.9. Обмеження властивостей
 
 - **Глава:** 03. Створення моделей в EF Core
 - **Джерело Metanit:** [https://metanit.com/sharp/efcore/2.9.php](https://metanit.com/sharp/efcore/2.9.php)
 - **Код прикладу:** [`Lesson_2_9_PropertyConstraints.cs`](../../src/03_ModelsAndMapping/Lesson_2_9_PropertyConstraints.cs)
+- **Запуск уроку:** `dotnet run --project src/EFCoreMastery.ConsoleApp -- 2.9`
+- **Шпаргалка глави:** [Runs.md](Runs.md)
 
 ---
 
@@ -107,3 +109,7 @@ flowchart TD
 1. **Покладатися на `[MaxLength]` у SQLite для захисту БД.** Якщо ваш застосунок працює з SQLite (або використовує SQLite в інтеграційних тестах), пам'ятайте, що база даних **не зупинить** занадто довгий рядок. Завжди додавайте серверну валідацію (DataAnnotations `Validator.TryValidateObject`, FluentValidation або `CHECK (LENGTH("Name") <= 10)`).
 2. **Забутий `ChangeTracker.Clear()` після `DbUpdateException`.** Якщо після невдалого `SaveChanges()` не від'єднати або не виправити невалідну сутність у `ChangeTracker`, наступний виклик `SaveChanges()` знову спробує виконати той самий невалідний `INSERT` і впаде з тією самою помилкою.
 3. **Застарілий синтаксис `HasCheckConstraint`.** У старих версіях EF Core (до 7.0) `HasCheckConstraint` викликався напряму на `EntityTypeBuilder`. У сучасних версіях EF Core 7/8/9+ його слід викликати всередині `ToTable(t => t.HasCheckConstraint(...))`.
+
+---
+<!-- lesson-nav -->
+← [2.8. Генерація значень властивостей і стовпців](2_8_ValueGeneration.md) | [Шпаргалка глави (Runs.md)](Runs.md) | [Зміст курсу (README)](../../README.md) | [2.13. Конфігурація моделей (IEntityTypeConfiguration)](2_13_ModelConfiguration.md) →

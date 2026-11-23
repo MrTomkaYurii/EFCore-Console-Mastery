@@ -1,8 +1,10 @@
-﻿# 3.2. Каскадне видалення
+# 3.2. Каскадне видалення
 
 - **Глава:** 04. Відносини між моделями
 - **Оригінал на Metanit:** [https://metanit.com/sharp/efcore/3.2.php](https://metanit.com/sharp/efcore/3.2.php)
 - **Код прикладу:** [Lesson_3_2_CascadeDelete.cs](../../src/04_Relations/Lesson_3_2_CascadeDelete.cs)
+- **Запуск уроку:** `dotnet run --project src/EFCoreMastery.ConsoleApp -- 3.2`
+- **Шпаргалка глави:** [Runs.md](Runs.md)
 
 ## Мета уроку
 
@@ -110,3 +112,7 @@ CREATE TABLE "Contractors" (
 - **Ілюзія nullable-навігації:** розробники часто пишуть `public Company? Company { get; set; }` разом із `public int CompanyId { get; set; }` і дивуються, чому при видаленні компанії зникають користувачі. Пам'ятайте: обов'язковість зв'язку визначається передусім типом **зовнішнього ключа** (`int` vs `int?`).
 - **Спроба застосувати `DeleteBehavior.SetNull` до не-nullable FK:** якщо `CompanyId` має тип `int` (не `int?`), виклик `.OnDelete(DeleteBehavior.SetNull)` призведе до помилки під час побудови моделі або вставки/видалення, оскільки стовпець `NOT NULL` не може прийняти `NULL`.
 - **Best Practice для бізнес-критичних даних:** для фінансових транзакцій, замовлень, аудит-логів або історії дій **завжди вимикайте каскадне видалення** через `.OnDelete(DeleteBehavior.Restrict)` (або використовуйте м'яке видалення — *Soft Delete* через `IsDeleted` і глобальні фільтри запитів), щоб випадкове видалення батьківського запису не знищило історичні дані.
+
+---
+<!-- lesson-nav -->
+← [3.10. Налаштування зовнішнього ключа через анотації та Fluent API](3_10_ForeignKeyConfig.md) | [Шпаргалка глави (Runs.md)](Runs.md) | [Зміст курсу (README)](../../README.md) | [3.3. Завантаження пов'язаних даних. Метод Include](3_3_EagerLoadingInclude.md) →
